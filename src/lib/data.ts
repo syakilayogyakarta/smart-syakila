@@ -383,3 +383,34 @@ export const academicJournalLog = [
     personalNotes: []
   }
 ];
+
+// Dummy data for the stimulation/activity journal log
+export const stimulationJournalLog = [
+  {
+    id: 1,
+    timestamp: "2024-07-25T09:30:00.000Z",
+    facilitatorName: "Lisa Purwandari",
+    kegiatan: "Senam Pagi Ceria",
+    namaPemateri: "",
+    jenisStimulasi: "Stimulasi Kesehatan Mental",
+    lokasi: "Halaman Sekolah",
+    catatanPenting: "Semua siswa mengikuti dengan gembira. Musik yang digunakan sangat disukai anak-anak.",
+    personalNotes: [
+      { id: 301, studentName: "Muhammad Aqifan al-Fatih", note: "Aqifan terlihat paling bersemangat dan mengikuti semua gerakan dengan baik.", facilitatorName: "Lisa Purwandari" }
+    ]
+  },
+  {
+    id: 2,
+    timestamp: "2024-07-24T14:00:00.000Z",
+    facilitatorName: "Evan Setiawan Parusa",
+    kegiatan: "Workshop Robotik Dasar",
+    namaPemateri: "Komunitas Robotika UGM",
+    jenisStimulasi: "Stimulasi Bakat",
+    lokasi: "Aula",
+    catatanPenting: "Kerjasama dengan komunitas eksternal berjalan sukses. Perlu dijadwalkan lagi untuk sesi lanjutan.",
+    personalNotes: [
+      { id: 401, studentName: "Avicenna Akthar Dhiyaulhaq", note: "Akhtar sangat tertarik pada bagian perakitan, menunjukkan ketelitian yang baik.", facilitatorName: "Evan Setiawan Parusa" },
+      { id: 402, studentName: "Ibrahim Viday Hafuza", note: "Menunjukkan minat pada logika pemrograman robot.", facilitatorName: "Evan Setiawan Parusa" }
+    ]
+  }
+];
