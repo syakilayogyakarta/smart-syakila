@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { 
   ArrowLeft, Calendar as CalendarIcon, Clock, Trash2, User, StickyNote, PlusCircle, Send, MessageSquare, RefreshCw
@@ -34,6 +34,23 @@ import { Input } from "@/components/ui/input";
 
 type JournalEntry = typeof academicJournalLog[0];
 type PersonalNote = JournalEntry['personalNotes'][0];
+
+// Component to safely render dates on the client
+const ClientFormattedDate = ({ timestamp }: { timestamp: string }) => {
+  const [formattedDate, setFormattedDate] = useState("");
+
+  useEffect(() => {
+    setFormattedDate(
+      new Date(timestamp).toLocaleString('id-ID', {
+        dateStyle: 'long',
+        timeStyle: 'short',
+      })
+    );
+  }, [timestamp]);
+
+  return <span>{formattedDate}</span>;
+};
+
 
 export default function JournalRecapPage() {
   const router = useRouter();
@@ -96,7 +113,7 @@ export default function JournalRecapPage() {
     setNewNotes(prev => ({
       ...prev,
       [journalId]: {
-        ...prev[journalId],
+        ...(prev[journalId] || {}),
         [field]: value
       }
     }));
@@ -140,7 +157,7 @@ export default function JournalRecapPage() {
                     <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4 text-left w-full">
                         <div className="font-semibold text-base">{journal.subject} - Kelas {journal.class}</div>
                         <div className="text-sm text-muted-foreground">
-                            <span>{journal.facilitatorName}</span> | <span>{new Date(journal.timestamp).toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' })}</span>
+                            <span>{journal.facilitatorName}</span> | <ClientFormattedDate timestamp={journal.timestamp} />
                         </div>
                     </div>
                   </AccordionTrigger>
