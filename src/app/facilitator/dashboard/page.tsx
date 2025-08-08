@@ -2,7 +2,7 @@
 "use client"
 
 import Link from "next/link"
-import { ClipboardCheck, PiggyBank, ArrowRight, User, BookOpen } from "lucide-react"
+import { ClipboardCheck, PiggyBank, ArrowRight, User, BookOpen, HeartPulse } from "lucide-react"
 
 import {
   Card,
@@ -39,7 +39,7 @@ export default function FacilitatorDashboard() {
         </header>
 
         <main>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <Link href="/facilitator/attendance" passHref>
               <Card className="group relative overflow-hidden text-center transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 h-full flex flex-col justify-between">
                 <CardHeader>
@@ -47,7 +47,7 @@ export default function FacilitatorDashboard() {
                     <ClipboardCheck className="h-12 w-12 text-accent" />
                   </div>
                   <CardTitle>Presensi</CardTitle>
-                  <CardDescription>Kelola kehadiran siswa di kelas Anda.</CardDescription>
+                  <CardDescription>Kelola kehadiran siswa.</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="font-semibold text-accent flex items-center justify-center">
@@ -65,7 +65,7 @@ export default function FacilitatorDashboard() {
                     <PiggyBank className="h-12 w-12 text-primary" />
                   </div>
                   <CardTitle>Tabungan</CardTitle>
-                  <CardDescription>Catat setoran dan penarikan tabungan siswa.</CardDescription>
+                  <CardDescription>Catat tabungan siswa.</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="font-semibold text-primary flex items-center justify-center">
@@ -83,11 +83,29 @@ export default function FacilitatorDashboard() {
                     <BookOpen className="h-12 w-12 text-green-500" />
                   </div>
                   <CardTitle>Jurnal Akademik</CardTitle>
-                  <CardDescription>Isi jurnal pembelajaran dan perkembangan siswa.</CardDescription>
+                  <CardDescription>Isi jurnal pembelajaran.</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="font-semibold text-green-500 flex items-center justify-center">
                     Buka Jurnal
+                    <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+
+            <Link href="/facilitator/stimulation" passHref>
+              <Card className="group relative overflow-hidden text-center transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 h-full flex flex-col justify-between">
+                <CardHeader>
+                  <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-blue-500/10 transition-transform duration-300 group-hover:scale-110">
+                    <HeartPulse className="h-12 w-12 text-blue-500" />
+                  </div>
+                  <CardTitle>Kegiatan/Stimulasi</CardTitle>
+                  <CardDescription>Catat kegiatan & stimulasi.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="font-semibold text-blue-500 flex items-center justify-center">
+                    Buka Form
                     <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                   </div>
                 </CardContent>
