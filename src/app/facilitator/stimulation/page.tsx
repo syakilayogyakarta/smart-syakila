@@ -5,7 +5,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { 
   ArrowLeft, Calendar as CalendarIcon, Clock, Check, Loader2, PlusCircle, X, Trash2, 
-  Activity, MapPin, StickyNote
+  Activity, MapPin, StickyNote, User, Layers
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,9 +23,20 @@ type PersonalNote = {
   note: string;
 }
 
+const stimulationTypes = [
+  "Stimulasi Fitrah",
+  "Stimulasi KHD/KHL",
+  "Stimulasi Kesehatan Mental",
+  "Stimulasi Bakat",
+  "Stimulasi Kemandirian & Ketahanan Pangan",
+  "Stimulasi Berkelanjutan & Green Campus"
+];
+
 export default function StimulationPage() {
   const [timestamp, setTimestamp] = useState("");
   const [kegiatan, setKegiatan] = useState("");
+  const [namaPemateri, setNamaPemateri] = useState("");
+  const [jenisStimulasi, setJenisStimulasi] = useState("");
   const [lokasi, setLokasi] = useState("");
   const [catatanPenting, setCatatanPenting] = useState("");
   const [showPersonalNotes, setShowPersonalNotes] = useState(false);
@@ -78,6 +89,8 @@ export default function StimulationPage() {
     console.log("Saving stimulation data:", {
       timestamp,
       kegiatan,
+      namaPemateri,
+      jenisStimulasi,
       lokasi,
       catatanPenting,
       personalNotes
@@ -121,6 +134,31 @@ export default function StimulationPage() {
               <div className="relative">
                 <Activity className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Textarea id="kegiatan" placeholder="Contoh: Bermain peran profesi, membaca buku cerita..." className="pl-10" value={kegiatan} onChange={(e) => setKegiatan(e.target.value)} />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="pemateri" className="font-semibold">Nama Pemateri (Opsional)</Label>
+              <div className="relative">
+                <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input id="pemateri" placeholder="Contoh: Pak Budi" className="pl-10" value={namaPemateri} onChange={(e) => setNamaPemateri(e.target.value)} />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="jenis-stimulasi" className="font-semibold">Jenis Stimulasi (Opsional)</Label>
+              <div className="relative">
+                <Select onValueChange={setJenisStimulasi} value={jenisStimulasi}>
+                  <SelectTrigger id="jenis-stimulasi" className="w-full">
+                    <div className="flex items-center gap-3">
+                       <Layers className="h-4 w-4 text-muted-foreground" />
+                       <SelectValue placeholder="Pilih Jenis Stimulasi..." />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {stimulationTypes.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
