@@ -3,13 +3,13 @@
 
 import React from 'react';
 import { studentProfile, academicData } from "@/lib/data";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
-import { CheckCircle2, AlertCircle, Briefcase, Activity, User, LogOut, BadgePercent, Wallet, BookCopy, Star, StickyNote, CheckSquare, Calendar as CalendarIcon, UserCircle } from "lucide-react";
+import { CheckCircle2, AlertCircle, Briefcase, Activity, User, LogOut, BadgePercent, Wallet, BookCopy, Star, StickyNote, Calendar as CalendarIcon, UserCircle } from "lucide-react";
 import Image from "next/image";
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -139,39 +139,33 @@ export default function StudentDashboard() {
                 <CardDescription>Pantau progres, keaktifan, dan tugas dari setiap mata pelajaran.</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {academicData.subjects.map(subject => (
                      <Dialog key={subject.name}>
                         <DialogTrigger asChild>
                            <Card className="hover:bg-primary/5 hover:shadow-md transition-all cursor-pointer">
-                              <CardContent className="p-4 flex items-center justify-between">
+                              <CardContent className="p-3 flex items-center justify-between">
                                  <div className="flex items-center gap-4">
-                                     <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${subject.color}/10`}>
-                                       <subject.icon className={`h-6 w-6 ${subject.color}`}/>
+                                     <div className={cn('flex h-10 w-10 items-center justify-center rounded-lg', `${subject.color}/10`)}>
+                                       <subject.icon className={cn('h-5 w-5', subject.color)}/>
                                      </div>
                                      <div>
-                                        <p className="font-bold text-lg">{subject.name}</p>
+                                        <p className="font-bold text-base">{subject.name}</p>
                                         <div className="flex items-center gap-1 text-yellow-500">
                                             <Star className="h-4 w-4 fill-current" />
-                                            <span className="font-semibold">{subject.averageActivity.toFixed(1)}</span>
+                                            <span className="font-semibold text-sm">{subject.averageActivity.toFixed(1)}</span>
                                             <span className="text-xs text-muted-foreground">(Rerata Keaktifan)</span>
                                         </div>
                                      </div>
                                  </div>
-                                 {subject.task && (
-                                    <div className="flex items-center gap-2 text-destructive">
-                                      <CheckSquare className="h-5 w-5" />
-                                      <span className="hidden sm:inline font-semibold">Ada Tugas!</span>
-                                    </div>
-                                 )}
                               </CardContent>
                            </Card>
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-[625px]">
                           <DialogHeader>
                             <DialogTitle className="flex items-center gap-3 text-2xl">
-                               <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${subject.color}/10`}>
-                                 <subject.icon className={`h-6 w-6 ${subject.color}`}/>
+                               <div className={cn('flex h-12 w-12 items-center justify-center rounded-lg', `${subject.color}/10`)}>
+                                 <subject.icon className={cn('h-6 w-6', subject.color)}/>
                                </div>
                                {subject.name}
                             </DialogTitle>
@@ -182,10 +176,9 @@ export default function StudentDashboard() {
                           
                           {subject.task && (
                             <div className="mt-4 p-4 rounded-lg border bg-secondary/50">
-                                <h3 className="font-bold text-lg mb-2 flex items-center gap-2"><CheckSquare className="h-5 w-5 text-primary" /> Tugas Aktif</h3>
+                                <h3 className="font-bold text-lg mb-2 flex items-center gap-2"><CalendarIcon className="h-5 w-5 text-primary" /> Tugas Aktif</h3>
                                 <p>{subject.task.description}</p>
                                 <Badge variant="destructive" className="mt-2">
-                                    <CalendarIcon className="mr-1.5 h-3.5 w-3.5" />
                                     Deadline: {subject.task.deadline}
                                 </Badge>
                             </div>
