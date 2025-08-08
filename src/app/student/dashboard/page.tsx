@@ -2,14 +2,14 @@
 "use client";
 
 import React from 'react';
-import { studentProfile, academicData } from "@/lib/data";
+import { studentProfile, academicData, kegiatanData } from "@/lib/data";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
-import { CheckCircle2, AlertCircle, Briefcase, Activity, User, LogOut, BadgePercent, Wallet, BookCopy, Star, StickyNote, Calendar as CalendarIcon, UserCircle, Bell } from "lucide-react";
+import { CheckCircle2, AlertCircle, Briefcase, Activity, User, LogOut, BadgePercent, Wallet, BookCopy, Star, StickyNote, Calendar as CalendarIcon, UserCircle, Bell, MapPin, HeartPulse } from "lucide-react";
 import Image from "next/image";
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -78,7 +78,7 @@ export default function StudentDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="bg-accent/10 p-6 rounded-lg text-center mb-6">
-                  <p className="text-sm font-medium text-accent">Total Saldo Tabungan</p>
+                  <p className="text-sm font-medium text-accent-foreground/80">Total Saldo Tabungan</p>
                   <p className="text-4xl font-bold text-accent">{formatCurrency(studentProfile.savings.balance)}</p>
                 </div>
                  <Tabs defaultValue="deposits" className="w-full">
@@ -135,11 +135,58 @@ export default function StudentDashboard() {
           <div className="lg:col-span-2">
             <Card className="shadow-lg h-full">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2"><BookCopy className="text-blue-500" /> Ringkasan Akademik</CardTitle>
-                <CardDescription>Pantau progres, keaktifan, dan tugas dari setiap mata pelajaran.</CardDescription>
+                <CardTitle className="flex items-center gap-2"><BookCopy className="text-blue-500" /> Ringkasan Akademik & Kegiatan</CardTitle>
+                <CardDescription>Pantau progres, keaktifan, tugas, dan kegiatan Anda.</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
+
+                  {/* Kegiatan & Stimulasi Card */}
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Card className="hover:shadow-md transition-all cursor-pointer bg-primary/5 border-primary/20">
+                          <CardContent className="p-4 flex items-center justify-between">
+                              <div className="flex items-center gap-4">
+                                  <div className={cn('flex h-12 w-12 items-center justify-center rounded-lg', `${kegiatanData.color}/10`)}>
+                                    <kegiatanData.icon className={cn('h-6 w-6', kegiatanData.color)}/>
+                                  </div>
+                                  <div>
+                                    <p className="font-bold text-base">Kegiatan & Stimulasi</p>
+                                    <p className="text-sm text-muted-foreground">Lihat riwayat aktivitas</p>
+                                  </div>
+                              </div>
+                          </CardContent>
+                      </Card>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[625px]">
+                      <DialogHeader>
+                          <DialogTitle className="flex items-center gap-3 text-2xl">
+                              <div className={cn('flex h-12 w-12 items-center justify-center rounded-lg', `${kegiatanData.color}/10`)}>
+                                <kegiatanData.icon className={cn('h-6 w-6', kegiatanData.color)}/>
+                              </div>
+                              Kegiatan & Stimulasi
+                          </DialogTitle>
+                          <DialogDescription className="pt-2">Riwayat semua kegiatan dan stimulasi yang Anda ikuti.</DialogDescription>
+                      </DialogHeader>
+
+                      <div className="mt-4">
+                        <h3 className="font-bold text-lg mb-2">Riwayat Kegiatan</h3>
+                        <ScrollArea className="h-60">
+                          <div className="space-y-3 pr-4">
+                            {kegiatanData.history.map((keg, index) => (
+                              <div key={index} className="text-sm p-3 rounded-md bg-card border">
+                                <p className="font-semibold text-muted-foreground">{keg.date}</p>
+                                <p className="text-foreground">{keg.activity}</p>
+                                <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1"><MapPin className="h-3 w-3" /> {keg.location}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </ScrollArea>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+
+                  {/* Subject Cards */}
                   {academicData.subjects.map(subject => (
                      <Dialog key={subject.name}>
                         <DialogTrigger asChild>

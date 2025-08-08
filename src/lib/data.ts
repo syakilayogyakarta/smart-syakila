@@ -1,5 +1,5 @@
 
-import { Atom, FunctionSquare, Laptop, Palette, BookText, Languages, Drama, BookOpen, BookHeart, BrainCircuit, BookOpenCheck } from 'lucide-react';
+import { Atom, FunctionSquare, Laptop, Palette, BookText, Languages, Drama, BookOpen, BookHeart, BrainCircuit, BookOpenCheck, HeartPulse } from 'lucide-react';
 
 export const facilitators = [
     { fullName: "Evan Setiawan Parusa", nickname: "Evan", email: "evansparusa@gmail.com", class: "Ta'lim 2" },
@@ -310,3 +310,37 @@ export const academicData = {
     },
   ]
 };
+
+export const kegiatanData = {
+  icon: HeartPulse,
+  color: "text-rose-500",
+  history: [
+    {
+      date: "22 Juli 2024",
+      activity: "Bermain peran profesi (Dokter, Polisi, Guru)",
+      location: "Ruang Kelas Tarbiyah",
+    },
+    {
+      date: "15 Juli 2024",
+      activity: "Membaca buku cerita bersama di taman",
+      location: "Taman Sekolah",
+    },
+    {
+      date: "08 Juli 2024",
+      activity: "Senam pagi dan permainan tradisional",
+      location: "Halaman Sekolah",
+    }
+  ],
+  personalNotes: [
+    {
+      studentName: "Athaniya Ghina Rafifa",
+      date: "22 Juli 2024",
+      note: "Sangat antusias saat berperan sebagai dokter. Menunjukkan jiwa kepemimpinan saat bermain dengan teman-temannya."
+    },
+    {
+      studentName: "Muhammad Irhab Mirza",
+      date: "15 Juli 2024",
+      note: "Membutuhkan dorongan untuk mau bercerita di depan teman-temannya, namun pendengar yang baik."
+    }
+  ]
+}
