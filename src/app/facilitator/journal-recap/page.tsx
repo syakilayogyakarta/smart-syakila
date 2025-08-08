@@ -174,7 +174,7 @@ export default function JournalRecapPage() {
                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <Select 
                                 onValueChange={(value) => handleNewNoteChange(journal.id, 'studentName', value)} 
-                                value={newNotes[journalId]?.studentName || ""}
+                                value={newNotes[journal.id]?.studentName || ""}
                             >
                                 <SelectTrigger>
                                 <SelectValue placeholder="Pilih Siswa..." />
@@ -185,7 +185,7 @@ export default function JournalRecapPage() {
                             </Select>
                             <Input 
                                 placeholder="Tulis catatan..." 
-                                value={newNotes[journalId]?.note || ""}
+                                value={newNotes[journal.id]?.note || ""}
                                 onChange={(e) => handleNewNoteChange(journal.id, 'note', e.target.value)}
                             />
                          </div>
