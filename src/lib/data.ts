@@ -9,8 +9,8 @@ export const facilitators = [
     { fullName: "Rahmanisa Widhia Anggraini", nickname: "Nisa", email: "rahmanisaanggraini11@gmail.com", class: "Ta'lim 2" },
 ];
 
-// Set a default, valid facilitator to prevent crashes.
-export const facilitator = facilitators[0]; // Directly assign "Evan"
+// Set the currently logged-in facilitator.
+export const facilitator = facilitators.find(f => f.fullName === "Evan Setiawan Parusa")!;
 
 export const classes = ["Tarbiyah", "Ta'dib", "Ta'lim 1", "Ta'lim 2"];
 
@@ -57,6 +57,50 @@ export const subjects = [
     "Al-Qur'an & Tajwid",
     "Quran Tematik"
 ];
+
+// New data structure for facilitator teaching assignments
+export const facilitatorSubjects: { [facilitatorName: string]: { [subject: string]: string[] | 'all' } } = {
+  "Evan Setiawan Parusa": {
+    "IoT": "all",
+    "IPA": ["Ta'lim 1", "Ta'lim 2"],
+    "MFM": "all",
+    "Minhaj": "all",
+    "Al-Qur'an & Tajwid": "all",
+    "Quran Tematik": "all"
+  },
+  "Naashiih Aamiinul Basyiir": {
+    "B. Indonesia": ["Tarbiyah", "Ta'dib"],
+    "IPSKn": ["Ta'lim 1", "Ta'lim 2"],
+    "MFM": "all",
+    "Minhaj": "all",
+    "Al-Qur'an & Tajwid": "all",
+    "Quran Tematik": "all"
+  },
+  "Lisa Purwandari": {
+    "B. Jawa": "all",
+    "MFM": "all",
+    "Minhaj": "all",
+    "Al-Qur'an & Tajwid": "all",
+    "Quran Tematik": "all"
+  },
+  "Amirotun Nafisah": {
+    "IPSKn": ["Tarbiyah", "Ta'dib"],
+    "B. Indonesia": ["Ta'lim 1", "Ta'lim 2"],
+    "MFM": "all",
+    "Minhaj": "all",
+    "Al-Qur'an & Tajwid": "all",
+    "Quran Tematik": "all"
+  },
+  "Rahmanisa Widhia Anggraini": {
+    "B. Inggris": "all",
+    "IPA": ["Tarbiyah", "Ta'dib"],
+    "MFM": "all",
+    "Minhaj": "all",
+    "Al-Qur'an & Tajwid": "all",
+    "Quran Tematik": "all"
+  }
+};
+
 
 export const studentDetails: { [fullName: string]: any } = {
   "Muhammad Abdan Khioiri Tsabit": { nickname: "abdan", dob: "14 November 2012", email: "abdan.muhammad2012@gmail.com" },

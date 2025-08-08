@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { 
   ArrowLeft, Calendar as CalendarIcon, Clock, Check, Loader2, Book, 
@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { studentsByClass, classes, subjects } from "@/lib/data";
+import { studentsByClass, classes, facilitator, facilitatorSubjects } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -54,10 +54,28 @@ export default function JournalPage() {
     setTimestamp(new Intl.DateTimeFormat('id-ID', options).format(now).replace('.', ':'));
   }, []);
 
+  const availableSubjects = useMemo(() => {
+    if (!selectedClass || !facilitator) {
+      return [];
+    }
+    const assignments = facilitatorSubjects[facilitator.fullName];
+    if (!assignments) {
+      return [];
+    }
+    return Object.keys(assignments).filter(subject => {
+      const taughtIn = assignments[subject];
+      if (taughtIn === 'all') {
+        return true;
+      }
+      return taughtIn.includes(selectedClass);
+    });
+  }, [selectedClass]);
+
   const handleClassChange = (value: string) => {
     setSelectedClass(value);
     setStudentOptions(studentsByClass[value] || []);
-    // Reset activity levels when class changes
+    setSelectedSubject(""); // Reset subject when class changes
+    
     const initialActivity: { [studentName: string]: number } = {};
     (studentsByClass[value] || []).forEach(student => {
       initialActivity[student] = 0;
@@ -154,12 +172,12 @@ export default function JournalPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="subject-select" className="font-semibold">Mata Pelajaran <span className="text-destructive">*</span></Label>
-                <Select onValueChange={setSelectedSubject} value={selectedSubject}>
+                <Select onValueChange={setSelectedSubject} value={selectedSubject} disabled={!selectedClass}>
                   <SelectTrigger id="subject-select" className="w-full">
                     <SelectValue placeholder="Pilih Mata Pelajaran..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {subjects.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    {availableSubjects.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
