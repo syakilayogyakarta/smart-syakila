@@ -194,7 +194,7 @@ export default function ParentDashboard() {
                                 {relevantKegiatanNotes.map((pnote, index) => (
                                   <div key={index} className="text-sm p-3 rounded-md bg-accent/10 border border-accent/20">
                                     <p className="font-semibold text-muted-foreground">{pnote.date}</p>
-                                    <p className="text-accent-foreground/90">{pnote.note}</p>
+                                    <p className="text-foreground/90">{pnote.note}</p>
                                   </div>
                                 ))}
                               </div>
@@ -272,7 +272,7 @@ export default function ParentDashboard() {
                                     {subject.personalNotes.map((pnote, index) => (
                                       <div key={index} className="text-sm p-3 rounded-md bg-accent/10 border border-accent/20">
                                         <p className="font-semibold text-muted-foreground">{pnote.date}</p>
-                                        <p className="text-accent-foreground/90">{pnote.note}</p>
+                                        <p className="text-foreground/90">{pnote.note}</p>
                                       </div>
                                     ))}
                                   </div>
@@ -292,3 +292,5 @@ export default function ParentDashboard() {
     </div>
   );
 }
+
+    
