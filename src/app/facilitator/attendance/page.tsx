@@ -74,13 +74,13 @@ export default function AttendancePage() {
 
         <Card>
           <CardContent className="p-0">
-            <Accordion type="multiple" className="w-full" defaultValue={['kelas-a']}>
+            <Accordion type="multiple" className="w-full" defaultValue={classes.length > 0 ? [`kelas-${classes[0].toLowerCase().replace(' ', '-')}`] : []}>
               {classes.map((className) => (
                 <AccordionItem value={`kelas-${className.toLowerCase().replace(' ', '-')}`} key={className}>
                   <AccordionTrigger className="px-6 py-4 text-lg font-semibold hover:bg-primary/5">{className}</AccordionTrigger>
                   <AccordionContent className="px-6 pt-0 pb-4">
                     <div className="space-y-4">
-                      {studentsByClass[className].map((student, index) => (
+                      {(studentsByClass[className] || []).map((student, index) => (
                         <div key={student} className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-lg bg-card ${index % 2 === 0 ? 'bg-secondary/50' : ''}`}>
                           <p className="font-medium text-foreground mb-2 sm:mb-0">{student}</p>
                           <RadioGroup 

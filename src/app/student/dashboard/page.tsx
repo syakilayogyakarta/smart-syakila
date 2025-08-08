@@ -29,7 +29,7 @@ export default function StudentDashboard() {
           <Card className="p-6 flex flex-col sm:flex-row items-center justify-between shadow-md">
             <div className="flex items-center gap-6">
               <Avatar className="h-24 w-24 border-4 border-primary">
-                <Image src={studentProfile.photoUrl} alt={studentProfile.fullName} width={100} height={100} data-ai-hint={studentProfile.photoHint} />
+                {studentProfile.photoUrl && <Image src={studentProfile.photoUrl} alt={studentProfile.fullName} width={100} height={100} data-ai-hint={studentProfile.photoHint} />}
                 <AvatarFallback className="bg-primary/20 text-primary">
                   <User className="h-10 w-10" />
                 </AvatarFallback>
@@ -92,7 +92,7 @@ export default function StudentDashboard() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {studentProfile.savings.deposits.map((item, index) => (
+                        {studentProfile.savings.deposits.map((item: any, index: number) => (
                           <TableRow key={index}>
                             <TableCell>{item.date}</TableCell>
                             <TableCell>{item.description}</TableCell>
@@ -112,7 +112,7 @@ export default function StudentDashboard() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {studentProfile.savings.withdrawals.map((item, index) => (
+                        {studentProfile.savings.withdrawals.map((item: any, index: number) => (
                            <TableRow key={index}>
                             <TableCell>{item.date}</TableCell>
                             <TableCell>{item.description}</TableCell>
