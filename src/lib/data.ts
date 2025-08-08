@@ -343,4 +343,43 @@ export const kegiatanData = {
       note: "Membutuhkan dorongan untuk mau bercerita di depan teman-temannya, namun pendengar yang baik."
     }
   ]
-}
+};
+
+// Dummy data for the academic journal log
+export const academicJournalLog = [
+  {
+    id: 1,
+    timestamp: "2024-07-23T10:00:00.000Z",
+    facilitatorName: "Evan Setiawan Parusa",
+    class: "Ta'lim 2",
+    subject: "IoT",
+    topic: "Pengenalan Proyek Smart School",
+    importantNotes: "Siswa sangat antusias. Perlu disiapkan komponen tambahan untuk pertemuan berikutnya.",
+    personalNotes: [
+      { id: 101, studentName: "Muhammad Nabil", note: "Nabil menunjukkan bakat dalam programming, idenya sangat inovatif.", facilitatorName: "Evan Setiawan Parusa" },
+      { id: 102, studentName: "Mayyada Zuhro", note: "Perlu bimbingan lebih dalam hal perakitan komponen.", facilitatorName: "Evan Setiawan Parusa" }
+    ]
+  },
+  {
+    id: 2,
+    timestamp: "2024-07-23T08:00:00.000Z",
+    facilitatorName: "Rahmanisa Widhia Anggraini",
+    class: "Ta'dib",
+    subject: "IPA",
+    topic: "Praktikum Rantai Makanan",
+    importantNotes: "Praktikum berjalan lancar. Semua kelompok berhasil menyelesaikan tugasnya.",
+    personalNotes: [
+      { id: 201, studentName: "Athaniya Ghina Rafifa", note: "Sangat aktif bertanya dan memimpin diskusi di kelompoknya.", facilitatorName: "Rahmanisa Widhia Anggraini" }
+    ]
+  },
+  {
+    id: 3,
+    timestamp: "2024-07-22T09:00:00.000Z",
+    facilitatorName: "Amirotun Nafisah",
+    class: "Ta'lim 1",
+    subject: "B. Indonesia",
+    topic: "Menganalisis Puisi Chairil Anwar",
+    importantNotes: "",
+    personalNotes: []
+  }
+];

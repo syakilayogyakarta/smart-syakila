@@ -2,7 +2,7 @@
 "use client"
 
 import Link from "next/link"
-import { ClipboardCheck, PiggyBank, ArrowRight, User, BookOpen, HeartPulse } from "lucide-react"
+import { ClipboardCheck, PiggyBank, ArrowRight, User, BookOpen, HeartPulse, BookCopy } from "lucide-react"
 
 import {
   Card,
@@ -16,6 +16,17 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { facilitator } from "@/lib/data";
 
 export default function FacilitatorDashboard() {
+  
+  if (!facilitator) {
+    return (
+        <div className="min-h-screen bg-background p-8">
+            <div className="max-w-7xl mx-auto">
+                <p>Memuat data fasilitator...</p>
+            </div>
+        </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
@@ -39,7 +50,7 @@ export default function FacilitatorDashboard() {
         </header>
 
         <main>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <Link href="/facilitator/attendance" passHref>
               <Card className="group relative overflow-hidden text-center transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 h-full flex flex-col justify-between">
                 <CardHeader>
@@ -106,6 +117,24 @@ export default function FacilitatorDashboard() {
                 <CardContent>
                   <div className="font-semibold text-blue-500 flex items-center justify-center">
                     Buka Form
+                    <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+            
+            <Link href="/facilitator/journal-recap" passHref>
+              <Card className="group relative overflow-hidden text-center transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 h-full flex flex-col justify-between">
+                <CardHeader>
+                  <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-indigo-500/10 transition-transform duration-300 group-hover:scale-110">
+                    <BookCopy className="h-12 w-12 text-indigo-500" />
+                  </div>
+                  <CardTitle>Rekap Jurnal</CardTitle>
+                  <CardDescription>Lihat semua jurnal akademik.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="font-semibold text-indigo-500 flex items-center justify-center">
+                    Lihat Rekap
                     <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                   </div>
                 </CardContent>
