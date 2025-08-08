@@ -16,19 +16,34 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useRouter } from 'next/navigation';
 
+type StudentProfile = {
+    fullName: string;
+    nickname: string;
+    nisn: string;
+    photoUrl: string;
+    photoHint: string;
+    class: string | undefined;
+    attendance: { present: number; late: number; sick: number; excused: number };
+    savings: {
+        balance: number;
+        deposits: { date: string; description: string; amount: number }[];
+        withdrawals: { date: string; description: string; amount: number }[];
+    }
+}
+
 export default function StudentDetailPage({ params }: { params: { studentId: string } }) {
   const router = useRouter();
-  const [studentProfile, setStudentProfile] = useState<any>(null);
+  const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null);
 
   useEffect(() => {
     const studentName = decodeURIComponent(params.studentId);
     const details = studentDetails[studentName];
+    
     if (details) {
         const className = Object.keys(studentsByClass).find(key => studentsByClass[key].includes(studentName));
         
-        // This is where you would fetch real data. For now, we use dummy data.
-        // We are assuming the dummy `studentProfile` data applies to any student being viewed.
-        // In a real app, you would fetch the profile for `studentName`.
+        // In a real app, you would fetch all this data based on studentName.
+        // For this prototype, we're combining static details with simulated data.
         setStudentProfile({
             fullName: studentName,
             nickname: details.nickname,
@@ -36,9 +51,10 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
             photoUrl: `https://placehold.co/100x100.png`,
             photoHint: 'student portrait',
             class: className,
-            attendance: { present: 110, late: 2, sick: 1, excused: 0 },
+            // Simulating data that would normally be fetched from a database
+            attendance: { present: Math.floor(Math.random() * 20) + 100, late: Math.floor(Math.random() * 5), sick: Math.floor(Math.random() * 3), excused: Math.floor(Math.random() * 2) },
             savings: {
-                balance: 250000,
+                balance: Math.floor(Math.random() * 200000) + 50000,
                 deposits: [ { date: "15 Jul 2024", description: "Setoran rutin", amount: 50000 }, { date: "08 Jul 2024", description: "Setoran rutin", amount: 50000 } ],
                 withdrawals: [ { date: "10 Jul 2024", description: "Beli buku", amount: 25000 } ]
             }
@@ -62,6 +78,11 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
   if (!studentProfile) {
     return <div className="flex min-h-screen items-center justify-center">Memuat data siswa...</div>;
   }
+
+  // NOTE: academicData and kegiatanData are still dummy data for a single student.
+  // In a real app, this would be fetched dynamically for `studentProfile.fullName`.
+  const studentAcademicData = academicData; 
+  const studentKegiatanData = kegiatanData;
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
@@ -188,8 +209,8 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
                       <Card className="hover:shadow-md transition-all cursor-pointer bg-primary/5 border-primary/20">
                           <CardContent className="p-4 flex items-center justify-between">
                               <div className="flex items-center gap-4">
-                                  <div className={cn('flex h-12 w-12 items-center justify-center rounded-lg', `${kegiatanData.color}/10`)}>
-                                    <kegiatanData.icon className={cn('h-6 w-6', kegiatanData.color)}/>
+                                  <div className={cn('flex h-12 w-12 items-center justify-center rounded-lg', `${studentKegiatanData.color}/10`)}>
+                                    <studentKegiatanData.icon className={cn('h-6 w-6', studentKegiatanData.color)}/>
                                   </div>
                                   <div>
                                     <p className="font-bold text-base">Kegiatan & Stimulasi</p>
@@ -202,8 +223,8 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
                     <DialogContent className="sm:max-w-[625px]">
                       <DialogHeader>
                           <DialogTitle className="flex items-center gap-3 text-2xl">
-                              <div className={cn('flex h-12 w-12 items-center justify-center rounded-lg', `${kegiatanData.color}/10`)}>
-                                <kegiatanData.icon className={cn('h-6 w-6', kegiatanData.color)}/>
+                              <div className={cn('flex h-12 w-12 items-center justify-center rounded-lg', `${studentKegiatanData.color}/10`)}>
+                                <studentKegiatanData.icon className={cn('h-6 w-6', studentKegiatanData.color)}/>
                               </div>
                               Kegiatan & Stimulasi
                           </DialogTitle>
@@ -214,7 +235,7 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
                         <h3 className="font-bold text-lg mb-2">Riwayat Kegiatan</h3>
                         <ScrollArea className="h-60">
                           <div className="space-y-3 pr-4">
-                            {kegiatanData.history.map((keg, index) => (
+                            {studentKegiatanData.history.map((keg, index) => (
                               <div key={index} className="text-sm p-3 rounded-md bg-card border">
                                 <p className="font-semibold text-muted-foreground">{keg.date}</p>
                                 <p className="text-foreground">{keg.activity}</p>
@@ -245,7 +266,7 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
 
 
                   {/* Subject Cards */}
-                  {academicData.subjects.map(subject => (
+                  {studentAcademicData.subjects.map(subject => (
                      <Dialog key={subject.name}>
                         <DialogTrigger asChild>
                            <Card className="hover:bg-primary/5 hover:shadow-md transition-all cursor-pointer">
@@ -331,5 +352,3 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
     </div>
   );
 }
-
-    
