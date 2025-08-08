@@ -13,7 +13,11 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { facilitator } from "@/lib/data";
+
+// Menggunakan data statis untuk sementara waktu demi stabilitas absolut
+const facilitator = {
+  nickname: "Fasilitator"
+};
 
 export default function FacilitatorDashboard() {
   return (
