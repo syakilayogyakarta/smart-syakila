@@ -27,8 +27,8 @@ export default function FacilitatorDashboard() {
                 </AvatarFallback>
               </Avatar>
               <div>
-                <h1 className="text-2xl font-bold text-foreground">Selamat Datang, {facilitator.name}</h1>
-                <p className="text-muted-foreground">Anda mengajar di {facilitator.class}</p>
+                <h1 className="text-2xl font-bold text-foreground">Selamat Datang, {facilitator.fullName}</h1>
+                <p className="text-muted-foreground">Anda adalah Wali Kelas {facilitator.class}</p>
               </div>
             </div>
             <Button variant="outline" className="mt-4 sm:mt-0" onClick={() => window.location.href = '/login'}>
