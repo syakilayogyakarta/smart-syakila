@@ -10,7 +10,7 @@ export const facilitators = [
 ];
 
 // Set a default, valid facilitator to prevent crashes.
-export const facilitator = facilitators[3]; // Directly assign "Sasa"
+export const facilitator = facilitators[0]; // Directly assign "Evan"
 
 export const classes = ["Tarbiyah", "Ta'dib", "Ta'lim 1", "Ta'lim 2"];
 
