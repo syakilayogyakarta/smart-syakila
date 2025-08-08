@@ -4,7 +4,7 @@
 import Link from "next/link"
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { ClipboardCheck, PiggyBank, ArrowRight, User, BookOpen, HeartPulse, BookCopy, Calendar, Clock } from "lucide-react"
+import { ClipboardCheck, PiggyBank, ArrowRight, User, BookOpen, HeartPulse, BookCopy, Calendar, Clock, Users } from "lucide-react"
 
 import {
   Card,
@@ -173,9 +173,29 @@ export default function FacilitatorDashboard() {
                 </CardContent>
               </Card>
             </Link>
+
+            <Link href="/facilitator/students" passHref>
+              <Card className="group relative overflow-hidden text-center transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 h-full flex flex-col justify-between">
+                <CardHeader>
+                  <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-orange-500/10 transition-transform duration-300 group-hover:scale-110">
+                    <Users className="h-12 w-12 text-orange-500" />
+                  </div>
+                  <CardTitle>Data Siswa</CardTitle>
+                  <CardDescription>Lihat profil lengkap siswa.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="font-semibold text-orange-500 flex items-center justify-center">
+                    Lihat Data
+                    <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
           </div>
         </main>
       </div>
     </div>
   )
 }
+
+    
