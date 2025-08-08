@@ -13,11 +13,7 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-
-// Menggunakan data statis untuk sementara waktu demi stabilitas absolut
-const facilitator = {
-  nickname: "Fasilitator"
-};
+import { facilitator } from "@/lib/data";
 
 export default function FacilitatorDashboard() {
   return (
@@ -50,8 +46,8 @@ export default function FacilitatorDashboard() {
                   <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-accent/10 transition-transform duration-300 group-hover:scale-110">
                     <ClipboardCheck className="h-12 w-12 text-accent" />
                   </div>
-                  <CardTitle className="text-2xl font-bold">Presensi</CardTitle>
-                  <CardDescription className="mt-2">Kelola kehadiran siswa di kelas Anda.</CardDescription>
+                  <CardTitle>Presensi</CardTitle>
+                  <CardDescription>Kelola kehadiran siswa di kelas Anda.</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="font-semibold text-accent flex items-center justify-center">
@@ -68,8 +64,8 @@ export default function FacilitatorDashboard() {
                   <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-primary/10 transition-transform duration-300 group-hover:scale-110">
                     <PiggyBank className="h-12 w-12 text-primary" />
                   </div>
-                  <CardTitle className="text-2xl font-bold">Tabungan</CardTitle>
-                  <CardDescription className="mt-2">Catat setoran dan penarikan tabungan siswa.</CardDescription>
+                  <CardTitle>Tabungan</CardTitle>
+                  <CardDescription>Catat setoran dan penarikan tabungan siswa.</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="font-semibold text-primary flex items-center justify-center">
@@ -86,8 +82,8 @@ export default function FacilitatorDashboard() {
                   <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-green-500/10 transition-transform duration-300 group-hover:scale-110">
                     <BookOpen className="h-12 w-12 text-green-500" />
                   </div>
-                  <CardTitle className="text-2xl font-bold">Jurnal Akademik</CardTitle>
-                  <CardDescription className="mt-2">Isi jurnal pembelajaran dan perkembangan siswa.</CardDescription>
+                  <CardTitle>Jurnal Akademik</CardTitle>
+                  <CardDescription>Isi jurnal pembelajaran dan perkembangan siswa.</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="font-semibold text-green-500 flex items-center justify-center">
