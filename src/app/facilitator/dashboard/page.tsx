@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { facilitator } from "@/lib/data"
 
 export default function FacilitatorDashboard() {
   return (
@@ -26,7 +27,7 @@ export default function FacilitatorDashboard() {
                 </AvatarFallback>
               </Avatar>
               <div>
-                <h1 className="text-2xl font-bold text-foreground">Selamat Datang, Fasilitator</h1>
+                <h1 className="text-2xl font-bold text-foreground">Selamat Datang, {facilitator.nickname}</h1>
                 <p className="text-muted-foreground">Dasbor Pengelolaan Kelas Anda</p>
               </div>
             </div>
