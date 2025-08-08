@@ -2,7 +2,9 @@
 "use client"
 
 import Link from "next/link"
-import { ClipboardCheck, PiggyBank, ArrowRight, User, BookOpen, HeartPulse, BookCopy } from "lucide-react"
+import React, { useState, useEffect } from "react";
+import Image from "next/image";
+import { ClipboardCheck, PiggyBank, ArrowRight, User, BookOpen, HeartPulse, BookCopy, Calendar, Clock } from "lucide-react"
 
 import {
   Card,
@@ -16,7 +18,20 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { facilitator } from "@/lib/data";
 
 export default function FacilitatorDashboard() {
-  
+  const [currentDateTime, setCurrentDateTime] = useState("");
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const now = new Date();
+      const options: Intl.DateTimeFormatOptions = {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+        hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'Asia/Jakarta'
+      };
+      setCurrentDateTime(new Intl.DateTimeFormat('id-ID', options).format(now).replace(/\./g, ':'));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   if (!facilitator) {
     return (
         <div className="min-h-screen bg-background p-8">
@@ -30,6 +45,13 @@ export default function FacilitatorDashboard() {
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
+        <div className="text-center mb-10">
+          <Image src="/logo.png" alt="Syakila Logo" width={80} height={80} className="mx-auto mb-4" />
+          <h1 className="text-4xl font-bold text-foreground tracking-tight">SMART SYAKILA</h1>
+          <p className="text-muted-foreground text-lg mt-1">Sistem Monitoring Aktivitas & Rapor Terpadu</p>
+          <p className="text-muted-foreground text-lg">Sekolah Syakila Yogyakarta</p>
+        </div>
+
         <header className="mb-8">
           <Card className="p-6 flex flex-col sm:flex-row items-center justify-between">
             <div className="flex items-center gap-4">
@@ -39,7 +61,7 @@ export default function FacilitatorDashboard() {
                 </AvatarFallback>
               </Avatar>
               <div>
-                <h1 className="text-2xl font-bold text-foreground">Selamat Datang, {facilitator.nickname}</h1>
+                <h2 className="text-2xl font-bold text-foreground">Selamat Datang, {facilitator.nickname}</h2>
                 <p className="text-muted-foreground">Dasbor Pengelolaan Kelas Anda</p>
               </div>
             </div>
@@ -48,6 +70,17 @@ export default function FacilitatorDashboard() {
             </Button>
           </Card>
         </header>
+
+        <div className="mb-8 p-4 bg-card border rounded-lg shadow-sm flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 text-center">
+            <div className="flex items-center gap-3">
+                <Calendar className="h-6 w-6 text-primary" />
+                <span className="text-lg font-semibold text-foreground">{currentDateTime.split('pukul')[0]}</span>
+            </div>
+            <div className="flex items-center gap-3">
+                <Clock className="h-6 w-6 text-primary" />
+                <span className="text-lg font-semibold text-foreground">Pukul {currentDateTime.split('pukul')[1]}</span>
+            </div>
+        </div>
 
         <main>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

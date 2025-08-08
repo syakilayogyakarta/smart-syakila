@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation"
 import { KeyRound, Mail, Briefcase, GraduationCap, Shield } from "lucide-react"
-import Image from "next/image"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -34,10 +33,8 @@ export default function LoginPage() {
     <main className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="text-center">
-          <Image src="/logo.png" alt="Syakila Logo" width={100} height={100} className="mx-auto mb-4" />
-          <CardTitle className="text-2xl font-bold text-foreground">SMART Syakila</CardTitle>
-          <CardDescription>Sistem Monitoring Aktivitas & Rapor Terpadu</CardDescription>
-          <p className="text-sm text-muted-foreground">Sekolah Syakila Yogyakarta</p>
+          <CardTitle className="text-2xl font-bold text-foreground">Login</CardTitle>
+          <CardDescription>Masuk ke akun Anda untuk melanjutkan</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
