@@ -102,8 +102,8 @@ export default function SavingsPage() {
               <Label>Jenis Transaksi</Label>
                <div className="grid grid-cols-2 gap-4">
                 <Button 
-                  variant={transactionType === 'setoran' ? 'accent' : 'outline'}
-                  className={cn("py-6 text-lg", transactionType === 'setoran' && "ring-2 ring-accent-foreground/50")}
+                  variant={transactionType === 'setoran' ? 'success' : 'outline'}
+                  className={cn("py-6 text-lg", transactionType === 'setoran' && "ring-2 ring-green-500/50")}
                   onClick={() => setTransactionType('setoran')}
                 >
                   <Landmark className="mr-3 h-6 w-6" /> Setoran
@@ -139,7 +139,7 @@ export default function SavingsPage() {
               className="w-full transition-all duration-300"
               onClick={handleSave}
               disabled={buttonState !== 'idle' || !selectedStudent}
-              variant="accent"
+              variant="success"
             >
               {buttonState === 'loading' ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : buttonState === 'saved' ? <Check className="mr-2 h-5 w-5" /> : null}
               {buttonState === 'loading' ? 'Menyimpan...' : buttonState === 'saved' ? 'Tersimpan' : 'Simpan Transaksi'}
