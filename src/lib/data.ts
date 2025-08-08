@@ -1,5 +1,5 @@
 
-import { Atom, FunctionSquare, Laptop, Palette, BookText, Languages, Drama, BookOpen, BookHeart, BrainCircuit } from 'lucide-react';
+import { Atom, FunctionSquare, Laptop, Palette, BookText, Languages, Drama, BookOpen, BookHeart, BrainCircuit, BookOpenCheck } from 'lucide-react';
 
 export const facilitators = [
     { fullName: "Evan Setiawan Parusa", nickname: "Evan", email: "evansparusa@gmail.com", class: "Ta'lim 2" },
@@ -9,7 +9,8 @@ export const facilitators = [
     { fullName: "Rahmanisa Widhia Anggraini", nickname: "Nisa", email: "rahmanisaanggraini11@gmail.com", class: "Ta'lim 2" },
 ];
 
-export const facilitator = facilitators.find(f => f.nickname === "Sasa") || facilitators[0];
+// Set a default, valid facilitator to prevent crashes.
+export const facilitator = facilitators[3]; // Directly assign "Sasa"
 
 export const classes = ["Tarbiyah", "Ta'dib", "Ta'lim 1", "Ta'lim 2"];
 

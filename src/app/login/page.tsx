@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { KeyRound, Mail } from "lucide-react"
+import { KeyRound, Mail, Briefcase, GraduationCap, Shield } from "lucide-react"
 import Image from "next/image"
 
 import { Button } from "@/components/ui/button"
@@ -19,6 +19,18 @@ import Link from "next/link"
 
 export default function LoginPage() {
   const router = useRouter()
+
+  const handleLogin = (role: 'facilitator' | 'student' | 'parent') => {
+    // For now, just navigate. Later, this can involve actual authentication.
+    if (role === 'facilitator') {
+      router.push('/facilitator/dashboard');
+    } else if (role === 'student') {
+      router.push('/student/dashboard');
+    } else {
+      // Placeholder for parent dashboard
+      router.push('/student/dashboard'); // Temporarily point to student dashboard
+    }
+  }
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
@@ -46,12 +58,15 @@ export default function LoginPage() {
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
-          <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2">
-            <Button className="w-full" variant="outline" onClick={() => router.push('/student/dashboard')}>
-              Masuk sebagai Siswa
+          <div className="flex w-full flex-col gap-3">
+             <Button className="w-full" variant="outline" size="lg" onClick={() => handleLogin('facilitator')}>
+              <Briefcase className="mr-2 h-5 w-5" /> Masuk sebagai Fasilitator
             </Button>
-            <Button className="w-full" variant="accent" onClick={() => router.push('/facilitator/dashboard')}>
-              Masuk sebagai Fasilitator
+            <Button className="w-full" variant="outline" size="lg" onClick={() => handleLogin('student')}>
+              <GraduationCap className="mr-2 h-5 w-5" /> Masuk sebagai Siswa
+            </Button>
+            <Button className="w-full" variant="outline" size="lg" onClick={() => handleLogin('parent')}>
+              <Shield className="mr-2 h-5 w-5" /> Masuk sebagai Orang Tua
             </Button>
           </div>
           <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">

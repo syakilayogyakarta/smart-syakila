@@ -11,7 +11,6 @@ import {
   CardDescription
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { facilitator } from "@/lib/data"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
 export default function FacilitatorDashboard() {
@@ -27,8 +26,8 @@ export default function FacilitatorDashboard() {
                 </AvatarFallback>
               </Avatar>
               <div>
-                <h1 className="text-2xl font-bold text-foreground">Selamat Datang, {facilitator.fullName}</h1>
-                <p className="text-muted-foreground">Anda adalah Wali Kelas {facilitator.class}</p>
+                <h1 className="text-2xl font-bold text-foreground">Selamat Datang, Fasilitator</h1>
+                <p className="text-muted-foreground">Dasbor Pengelolaan Kelas Anda</p>
               </div>
             </div>
             <Button variant="outline" className="mt-4 sm:mt-0" onClick={() => window.location.href = '/login'}>
