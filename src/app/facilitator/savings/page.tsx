@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -21,7 +22,10 @@ export default function SavingsPage() {
   const [studentOptions, setStudentOptions] = useState<string[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<string>("");
   const [transactionType, setTransactionType] = useState<TransactionType>('setoran');
+  const [amount, setAmount] = useState("");
+  const [description, setDescription] = useState("");
   const [buttonState, setButtonState] = useState<"idle" | "loading" | "saved">("idle");
+  const [isShaking, setIsShaking] = useState(false);
   
   const router = useRouter();
   const { toast } = useToast();
@@ -42,18 +46,44 @@ export default function SavingsPage() {
   };
 
   const handleSave = () => {
+    if (!selectedStudent || !amount) {
+      setIsShaking(true);
+      toast({
+        title: "Data Tidak Lengkap",
+        description: "Mohon pilih siswa dan isi nominal transaksi.",
+        variant: "destructive",
+      });
+      setTimeout(() => setIsShaking(false), 500);
+      return;
+    }
+
     setButtonState("loading");
+    console.log("Saving transaction:", {
+      student: selectedStudent,
+      type: transactionType,
+      amount: parseFloat(amount),
+      description,
+    });
+    
     setTimeout(() => {
       setButtonState("saved");
       toast({
         title: "Transaksi Berhasil!",
-        description: "Data tabungan telah berhasil diperbarui.",
+        description: `Transaksi ${transactionType} sebesar Rp${parseFloat(amount).toLocaleString('id-ID')} untuk ${selectedStudent} telah disimpan.`,
       });
-      // Reset form or redirect
+      // Reset form
+      setSelectedStudent("");
+      setSelectedClass("");
+      setAmount("");
+      setDescription("");
+      setTransactionType("setoran");
+      
       setTimeout(() => setButtonState("idle"), 2000);
     }, 1500);
   };
   
+  const isSaveDisabled = buttonState !== 'idle' || !selectedStudent || !amount;
+
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
       <div className="max-w-2xl mx-auto">
@@ -102,8 +132,11 @@ export default function SavingsPage() {
               <Label>Jenis Transaksi</Label>
                <div className="grid grid-cols-2 gap-4">
                 <Button 
-                  variant={transactionType === 'setoran' ? 'success' : 'outline'}
-                  className={cn("py-6 text-lg", transactionType === 'setoran' && "ring-2 ring-green-500/50")}
+                  variant={transactionType === 'setoran' ? 'default' : 'outline'}
+                  className={cn(
+                    "py-6 text-lg",
+                    transactionType === 'setoran' ? "bg-green-600 hover:bg-green-700 text-white ring-2 ring-green-500/50" : "text-foreground"
+                  )}
                   onClick={() => setTransactionType('setoran')}
                 >
                   <Landmark className="mr-3 h-6 w-6" /> Setoran
@@ -122,7 +155,14 @@ export default function SavingsPage() {
               <Label htmlFor="amount">Nominal</Label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">Rp</span>
-                <Input id="amount" type="number" placeholder="Contoh: 50000" className="pl-10 font-mono" />
+                <Input 
+                  id="amount" 
+                  type="number" 
+                  placeholder="Contoh: 50000" 
+                  className="pl-10 font-mono"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                />
               </div>
             </div>
 
@@ -130,16 +170,25 @@ export default function SavingsPage() {
               <Label htmlFor="description">Keterangan (Opsional)</Label>
               <div className="relative">
                  <Edit3 className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Textarea id="description" placeholder="Contoh: Uang saku mingguan" className="pl-10" />
+                <Textarea 
+                  id="description" 
+                  placeholder="Contoh: Uang saku mingguan" 
+                  className="pl-10"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)} 
+                />
               </div>
             </div>
           </CardContent>
           <CardFooter>
             <Button
-              className="w-full transition-all duration-300"
+              className={cn(
+                "w-full transition-all duration-300",
+                isShaking && 'animate-shake'
+              )}
               onClick={handleSave}
-              disabled={buttonState !== 'idle' || !selectedStudent}
-              variant="success"
+              disabled={buttonState !== 'idle'}
+              variant={transactionType === 'setoran' ? 'default' : 'destructive'}
             >
               {buttonState === 'loading' ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : buttonState === 'saved' ? <Check className="mr-2 h-5 w-5" /> : null}
               {buttonState === 'loading' ? 'Menyimpan...' : buttonState === 'saved' ? 'Tersimpan' : 'Simpan Transaksi'}
