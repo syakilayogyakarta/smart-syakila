@@ -175,6 +175,10 @@ export const academicData = {
         { date: "16 Juli 2024", topic: "Mempelajari Ekosistem dan Komponennya" },
         { date: "09 Juli 2024", topic: "Praktikum Fotosintesis" },
         { date: "02 Juli 2024", topic: "Klasifikasi Makhluk Hidup" },
+      ],
+      personalNotes: [
+        { date: "16 Juli 2024", note: "Ghina menunjukkan peningkatan signifikan dalam diskusi kelompok, sangat proaktif." },
+        { date: "09 Juli 2024", note: "Perlu lebih teliti dalam mencatat hasil praktikum, namun antusiasmenya sangat baik." },
       ]
     },
     {
@@ -188,7 +192,8 @@ export const academicData = {
         { date: "17 Juli 2024", topic: "Sejarah Kerajaan Majapahit" },
         { date: "10 Juli 2024", topic: "Pahlawan Kemerdekaan Indonesia" },
         { date: "03 Juli 2024", topic: "Memahami Pancasila" },
-      ]
+      ],
+      personalNotes: []
     },
     {
       name: "IoT",
@@ -200,7 +205,8 @@ export const academicData = {
       meetings: [
         { date: "18 Juli 2024", topic: "Dasar-dasar Arduino dan Sensor" },
         { date: "11 Juli 2024", topic: "Proyek Lampu Otomatis" },
-      ]
+      ],
+      personalNotes: []
     },
      {
       name: "MFM",
@@ -215,7 +221,8 @@ export const academicData = {
        meetings: [
         { date: "15 Juli 2024", topic: "Aljabar dan Persamaan Linear" },
         { date: "08 Juli 2024", topic: "Geometri Bidang Datar" },
-      ]
+      ],
+      personalNotes: []
     },
     {
       name: "B. Indonesia",
@@ -227,7 +234,8 @@ export const academicData = {
        meetings: [
         { date: "19 Juli 2024", topic: "Menganalisis Unsur Intrinsik Cerpen" },
         { date: "12 Juli 2024", topic: "Menulis Puisi dengan Tema Bebas" },
-      ]
+      ],
+      personalNotes: []
     },
     {
       name: "B. Jawa",
@@ -239,7 +247,8 @@ export const academicData = {
        meetings: [
         { date: "19 Juli 2024", topic: "Nulis Aksara Jawa" },
         { date: "12 Juli 2024", topic: "Maca Geguritan" },
-      ]
+      ],
+      personalNotes: []
     },
      {
       name: "B. Inggris",
@@ -254,7 +263,8 @@ export const academicData = {
        meetings: [
         { date: "20 Juli 2024", topic: "Simple Present Tense" },
         { date: "13 Juli 2024", topic: "Introduction and Greetings" },
-      ]
+      ],
+      personalNotes: []
     },
      {
       name: "Minhaj",
@@ -266,7 +276,8 @@ export const academicData = {
        meetings: [
         { date: "20 Juli 2024", topic: "Adab dan Akhlak Seorang Muslim" },
         { date: "13 Juli 2024", topic: "Kisah Sahabat Nabi" },
-      ]
+      ],
+      personalNotes: []
     },
      {
       name: "Al-Qur'an & Tajwid",
@@ -281,7 +292,8 @@ export const academicData = {
        meetings: [
         { date: "21 Juli 2024", topic: "Hukum Nun Sukun dan Tanwin" },
         { date: "14 Juli 2024", topic: "Makharijul Huruf" },
-      ]
+      ],
+      personalNotes: []
     },
      {
       name: "Quran Tematik",
@@ -293,7 +305,8 @@ export const academicData = {
        meetings: [
         { date: "21 Juli 2024", topic: "Kisah Nabi Musa dalam Al-Qur'an" },
         { date: "14 Juli 2024", topic: "Tadabbur Alam" },
-      ]
+      ],
+      personalNotes: []
     },
   ]
 };
