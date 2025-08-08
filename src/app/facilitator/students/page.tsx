@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { studentDetails, studentsByClass, classes } from '@/lib/data';
+import { Label } from '@/components/ui/label';
 
 export default function StudentsListPage() {
   const router = useRouter();
@@ -88,7 +89,7 @@ export default function StudentsListPage() {
                   {filteredStudents.length > 0 ? (
                     filteredStudents.map((student) => (
                       <TableRow key={student.fullName} className="cursor-pointer hover:bg-muted/50" onClick={() => handleStudentClick(student.fullName)}>
-                        <TableCell className="font-medium text-primary hover:underline">{student.fullName}</TableCell>
+                        <TableCell className="font-medium text-foreground hover:text-primary hover:underline">{student.fullName}</TableCell>
                         <TableCell>{student.nickname}</TableCell>
                         <TableCell>{student.className}</TableCell>
                         <TableCell>{student.nisn}</TableCell>
@@ -110,10 +111,3 @@ export default function StudentsListPage() {
     </div>
   );
 }
-
-// Add a Label component for the filter
-const Label = (props: React.LabelHTMLAttributes<HTMLLabelElement>) => {
-    return <label {...props} />;
-};
-
-    
