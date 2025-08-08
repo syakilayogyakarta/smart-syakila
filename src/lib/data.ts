@@ -88,6 +88,7 @@ export const studentProfile = {
   nisn: "0123456789",
   photoUrl: "https://placehold.co/100x100.png",
   photoHint: "student portrait",
+  class: "Ta'dib",
   attendance: {
     present: 110,
     late: 2,
@@ -110,12 +111,14 @@ export const studentProfile = {
 };
 
 // Dummy data for academic overview
+// The facilitator name will be dynamically assigned based on the student's class.
+// This is a sample for a student in "Ta'dib" class.
 export const academicData = {
   studentName: "Athaniya Ghina Rafifa",
   subjects: [
     {
       name: "IPA",
-      facilitator: "Amirotun Nafisah",
+      facilitator: "Rahmanisa Widhia Anggraini", // Mengajar IPA di Tarbiyah & Ta'dib
       averageActivity: 4.5,
       icon: Atom,
       color: "text-green-500",
@@ -131,7 +134,7 @@ export const academicData = {
     },
     {
       name: "IPSKn",
-      facilitator: "Amirotun Nafisah",
+      facilitator: "Amirotun Nafisah", // Mengajar IPSKn di Tarbiyah & Ta'dib
       averageActivity: 4.0,
       icon: Drama,
       color: "text-red-500",
@@ -144,7 +147,7 @@ export const academicData = {
     },
     {
       name: "IoT",
-      facilitator: "Evan Setiawan Parusa",
+      facilitator: "Evan Setiawan Parusa", // Mengajar IoT di semua kelas
       averageActivity: 4.8,
       icon: BrainCircuit,
       color: "text-blue-500",
@@ -156,7 +159,7 @@ export const academicData = {
     },
      {
       name: "MFM",
-      facilitator: "Naashiih Aamiinul Basyiir",
+      facilitator: "Naashiih Aamiinul Basyiir", // Asumsi
       averageActivity: 4.2,
       icon: FunctionSquare,
       color: "text-purple-500",
@@ -171,7 +174,7 @@ export const academicData = {
     },
     {
       name: "B. Indonesia",
-      facilitator: "Lisa Purwandari",
+      facilitator: "Naashiih Aamiinul Basyiir", // Mengajar B. Indonesia di Tarbiyah & Ta'dib
       averageActivity: 4.3,
       icon: BookText,
       color: "text-orange-500",
@@ -179,6 +182,72 @@ export const academicData = {
        meetings: [
         { date: "19 Juli 2024", topic: "Menganalisis Unsur Intrinsik Cerpen" },
         { date: "12 Juli 2024", topic: "Menulis Puisi dengan Tema Bebas" },
+      ]
+    },
+    {
+      name: "B. Jawa",
+      facilitator: "Lisa Purwandari", // Mengajar B. Jawa di semua kelas
+      averageActivity: 4.1,
+      icon: Languages,
+      color: "text-yellow-600",
+      task: null,
+       meetings: [
+        { date: "19 Juli 2024", topic: "Nulis Aksara Jawa" },
+        { date: "12 Juli 2024", topic: "Maca Geguritan" },
+      ]
+    },
+     {
+      name: "B. Inggris",
+      facilitator: "Rahmanisa Widhia Anggraini", // Mengajar B. Inggris di semua kelas
+      averageActivity: 4.6,
+      icon: Languages,
+      color: "text-pink-500",
+      task: {
+        description: "Write a short story about your holiday.",
+        deadline: "28 Juli 2024"
+      },
+       meetings: [
+        { date: "20 Juli 2024", topic: "Simple Present Tense" },
+        { date: "13 Juli 2024", topic: "Introduction and Greetings" },
+      ]
+    },
+     {
+      name: "Minhaj",
+      facilitator: "Amirotun Nafisah", // Asumsi
+      averageActivity: 4.7,
+      icon: BookHeart,
+      color: "text-indigo-500",
+      task: null,
+       meetings: [
+        { date: "20 Juli 2024", topic: "Adab dan Akhlak Seorang Muslim" },
+        { date: "13 Juli 2024", topic: "Kisah Sahabat Nabi" },
+      ]
+    },
+     {
+      name: "Al-Qur'an & Tajwid",
+      facilitator: "Lisa Purwandari", // Asumsi
+      averageActivity: 4.9,
+      icon: BookOpen,
+      color: "text-teal-500",
+      task: {
+        description: "Hafalan surat Al-Mulk ayat 1-5",
+        deadline: "24 Juli 2024"
+      },
+       meetings: [
+        { date: "21 Juli 2024", topic: "Hukum Nun Sukun dan Tanwin" },
+        { date: "14 Juli 2024", topic: "Makharijul Huruf" },
+      ]
+    },
+     {
+      name: "Quran Tematik",
+      facilitator: "Evan Setiawan Parusa", // Asumsi
+      averageActivity: 4.4,
+      icon: BookOpenCheck,
+      color: "text-cyan-500",
+      task: null,
+       meetings: [
+        { date: "21 Juli 2024", topic: "Kisah Nabi Musa dalam Al-Qur'an" },
+        { date: "14 Juli 2024", topic: "Tadabbur Alam" },
       ]
     },
   ]
