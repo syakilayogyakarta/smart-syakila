@@ -43,6 +43,19 @@ export const studentsByClass: { [key: string]: string[] } = {
   ]
 };
 
+export const subjects = [
+    "IPA",
+    "IPSKn",
+    "IoT",
+    "MFM",
+    "B. Indonesia",
+    "B. Jawa",
+    "B. Inggris",
+    "Minhaj",
+    "Al-Qur'an & Tajwid",
+    "Quran Tematik"
+];
+
 export const studentDetails: { [fullName: string]: any } = {
   "Muhammad Abdan Khioiri Tsabit": { nickname: "Abdan", dob: "14 November 2012", email: "abdan.muhammad2012@gmail.com" },
   "Muhammad Aqifan al-Fatih": { nickname: "Aqif", dob: "12 April 2012", email: "aqif.muhammad2012@gmail.com" },

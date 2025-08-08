@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { ClipboardCheck, PiggyBank, ArrowRight, User } from "lucide-react"
+import { ClipboardCheck, PiggyBank, ArrowRight, User, BookOpen } from "lucide-react"
 
 import {
   Card,
@@ -38,7 +38,7 @@ export default function FacilitatorDashboard() {
         </header>
 
         <main>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <Link href="/facilitator/attendance" passHref>
               <Card className="group relative overflow-hidden text-center transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 h-full flex flex-col justify-between">
                 <CardHeader>
@@ -69,6 +69,24 @@ export default function FacilitatorDashboard() {
                 <CardContent>
                   <div className="font-semibold text-primary flex items-center justify-center">
                     Buka Tabungan
+                    <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+            
+            <Link href="/facilitator/journal" passHref>
+              <Card className="group relative overflow-hidden text-center transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 h-full flex flex-col justify-between">
+                <CardHeader>
+                  <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-green-500/10 transition-transform duration-300 group-hover:scale-110">
+                    <BookOpen className="h-12 w-12 text-green-500" />
+                  </div>
+                  <CardTitle className="text-2xl font-bold">Jurnal Akademik</CardTitle>
+                  <CardDescription className="mt-2">Isi jurnal pembelajaran dan perkembangan siswa.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="font-semibold text-green-500 flex items-center justify-center">
+                    Buka Jurnal
                     <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                   </div>
                 </CardContent>
