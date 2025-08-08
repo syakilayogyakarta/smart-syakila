@@ -9,12 +9,11 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { studentsByClass, classes } from "@/lib/data";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 type AttendanceStatus = "Hadir" | "Terlambat" | "Sakit" | "Izin";
 
@@ -26,6 +25,15 @@ export default function AttendancePage() {
   const { toast } = useToast();
 
   useEffect(() => {
+    // Initialize all students with 'Hadir' status
+    const initialAttendance: { [studentName: string]: AttendanceStatus } = {};
+    classes.forEach(className => {
+      (studentsByClass[className] || []).forEach(student => {
+        initialAttendance[student] = 'Hadir';
+      });
+    });
+    setAttendance(initialAttendance);
+
     const now = new Date();
     const options: Intl.DateTimeFormatOptions = {
       weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
@@ -51,11 +59,11 @@ export default function AttendancePage() {
     }, 1500);
   };
 
-  const attendanceOptions: { id: AttendanceStatus, label: string }[] = [
-    { id: 'Hadir', label: 'Hadir' },
-    { id: 'Terlambat', label: 'Terlambat' },
-    { id: 'Sakit', label: 'Sakit' },
-    { id: 'Izin', label: 'Izin' },
+  const attendanceOptions: { id: AttendanceStatus; label: string; style: string; }[] = [
+    { id: 'Hadir', label: 'Hadir', style: 'border-green-500 text-green-600 hover:bg-green-500/10 data-[active=true]:bg-green-500 data-[active=true]:text-white' },
+    { id: 'Terlambat', label: 'Terlambat', style: 'border-yellow-500 text-yellow-600 hover:bg-yellow-500/10 data-[active=true]:bg-yellow-500 data-[active=true]:text-white' },
+    { id: 'Sakit', label: 'Sakit', style: 'border-blue-500 text-blue-600 hover:bg-blue-500/10 data-[active=true]:bg-blue-500 data-[active=true]:text-white' },
+    { id: 'Izin', label: 'Izin', style: 'border-red-500 text-red-600 hover:bg-red-500/10 data-[active=true]:bg-red-500 data-[active=true]:text-white' },
   ];
 
   return (
@@ -77,24 +85,28 @@ export default function AttendancePage() {
             <Accordion type="multiple" className="w-full" defaultValue={classes.length > 0 ? [`kelas-${classes[0].toLowerCase().replace(' ', '-')}`] : []}>
               {classes.map((className) => (
                 <AccordionItem value={`kelas-${className.toLowerCase().replace(' ', '-')}`} key={className}>
-                  <AccordionTrigger className="px-6 py-4 text-lg font-semibold hover:bg-primary/5">{className}</AccordionTrigger>
+                  <AccordionTrigger className="px-6 py-4 text-lg font-semibold hover:bg-primary/5">{`Kelas ${className}`}</AccordionTrigger>
                   <AccordionContent className="px-6 pt-0 pb-4">
                     <div className="space-y-4">
                       {(studentsByClass[className] || []).map((student, index) => (
                         <div key={student} className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-lg bg-card ${index % 2 === 0 ? 'bg-secondary/50' : ''}`}>
-                          <p className="font-medium text-foreground mb-2 sm:mb-0">{student}</p>
-                          <RadioGroup 
-                            defaultValue="Hadir" 
-                            className="flex flex-wrap gap-4"
-                            onValueChange={(value) => handleStatusChange(student, value as AttendanceStatus)}
-                          >
+                          <p className="font-medium text-foreground mb-4 sm:mb-0">{student}</p>
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                             {attendanceOptions.map(option => (
-                              <div className="flex items-center space-x-2" key={option.id}>
-                                <RadioGroupItem value={option.id} id={`${student}-${option.id}`} />
-                                <Label htmlFor={`${student}-${option.id}`}>{option.label}</Label>
-                              </div>
+                              <Button
+                                key={option.id}
+                                variant="outline"
+                                data-active={attendance[student] === option.id}
+                                className={cn(
+                                  "border-2 transition-all duration-200",
+                                  option.style
+                                )}
+                                onClick={() => handleStatusChange(student, option.id)}
+                              >
+                                {option.label}
+                              </Button>
                             ))}
-                          </RadioGroup>
+                          </div>
                         </div>
                       ))}
                     </div>
