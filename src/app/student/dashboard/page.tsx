@@ -1,13 +1,19 @@
+
 "use client";
 
-import { studentProfile } from "@/lib/data";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import React from 'react';
+import { studentProfile, academicData } from "@/lib/data";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CheckCircle2, AlertCircle, Briefcase, Activity, User, LogOut, BadgePercent, Wallet } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
+import { CheckCircle2, AlertCircle, Briefcase, Activity, User, LogOut, BadgePercent, Wallet, BookCopy, Star, Bell, CheckSquare, Calendar as CalendarIcon, UserCircle } from "lucide-react";
 import Image from "next/image";
+import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function StudentDashboard() {
 
@@ -47,6 +53,8 @@ export default function StudentDashboard() {
         </header>
 
         <main className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          {/* Left Column */}
           <div className="lg:col-span-1 space-y-8">
             <Card className="shadow-lg">
               <CardHeader>
@@ -63,66 +71,143 @@ export default function StudentDashboard() {
                 ))}
               </CardContent>
             </Card>
-          </div>
 
-          <div className="lg:col-span-2">
             <Card className="shadow-lg">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2"><Wallet className="text-accent" /> Informasi Tabungan</CardTitle>
-                <CardDescription>Rincian saldo dan riwayat transaksi tabungan Anda.</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="bg-accent/10 p-6 rounded-lg text-center mb-6">
                   <p className="text-sm font-medium text-accent-foreground/80">Total Saldo Tabungan</p>
                   <p className="text-4xl font-bold text-accent">{formatCurrency(studentProfile.savings.balance)}</p>
                 </div>
-
-                <Tabs defaultValue="deposits" className="w-full">
+                 <Tabs defaultValue="deposits" className="w-full">
                   <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="deposits">Riwayat Setoran</TabsTrigger>
-                    <TabsTrigger value="withdrawals">Riwayat Penarikan</TabsTrigger>
+                    <TabsTrigger value="deposits">Setoran</TabsTrigger>
+                    <TabsTrigger value="withdrawals">Penarikan</TabsTrigger>
                   </TabsList>
                   <TabsContent value="deposits">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Tanggal</TableHead>
-                          <TableHead>Keterangan</TableHead>
-                          <TableHead className="text-right">Jumlah</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {studentProfile.savings.deposits.map((item: any, index: number) => (
-                          <TableRow key={index}>
-                            <TableCell>{item.date}</TableCell>
-                            <TableCell>{item.description}</TableCell>
-                            <TableCell className="text-right font-medium text-green-600">{formatCurrency(item.amount)}</TableCell>
+                     <ScrollArea className="h-48">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Tanggal</TableHead>
+                            <TableHead className="text-right">Jumlah</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                        </TableHeader>
+                        <TableBody>
+                          {studentProfile.savings.deposits.map((item: any, index: number) => (
+                            <TableRow key={index}>
+                              <TableCell>{item.date}</TableCell>
+                              <TableCell className="text-right font-medium text-green-600">{formatCurrency(item.amount)}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                     </ScrollArea>
                   </TabsContent>
                   <TabsContent value="withdrawals">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Tanggal</TableHead>
-                           <TableHead>Keterangan</TableHead>
-                          <TableHead className="text-right">Jumlah</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {studentProfile.savings.withdrawals.map((item: any, index: number) => (
-                           <TableRow key={index}>
-                            <TableCell>{item.date}</TableCell>
-                            <TableCell>{item.description}</TableCell>
-                            <TableCell className="text-right font-medium text-red-600">-{formatCurrency(item.amount)}</TableCell>
+                     <ScrollArea className="h-48">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Tanggal</TableHead>
+                            <TableHead className="text-right">Jumlah</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                        </TableHeader>
+                        <TableBody>
+                          {studentProfile.savings.withdrawals.map((item: any, index: number) => (
+                            <TableRow key={index}>
+                              <TableCell>{item.date}</TableCell>
+                              <TableCell className="text-right font-medium text-red-600">-{formatCurrency(item.amount)}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </ScrollArea>
                   </TabsContent>
                 </Tabs>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right Column */}
+          <div className="lg:col-span-2">
+            <Card className="shadow-lg h-full">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2"><BookCopy className="text-blue-500" /> Ringkasan Akademik</CardTitle>
+                <CardDescription>Pantau progres, keaktifan, dan tugas dari setiap mata pelajaran.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {academicData.subjects.map(subject => (
+                     <Dialog key={subject.name}>
+                        <DialogTrigger asChild>
+                           <Card className="hover:bg-primary/5 hover:shadow-md transition-all cursor-pointer">
+                              <CardContent className="p-4 flex items-center justify-between">
+                                 <div className="flex items-center gap-4">
+                                     <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${subject.color}/10`}>
+                                       <subject.icon className={`h-6 w-6 ${subject.color}`}/>
+                                     </div>
+                                     <div>
+                                        <p className="font-bold text-lg">{subject.name}</p>
+                                        <div className="flex items-center gap-1 text-yellow-500">
+                                            <Star className="h-4 w-4 fill-current" />
+                                            <span className="font-semibold">{subject.averageActivity.toFixed(1)}</span>
+                                            <span className="text-xs text-muted-foreground">(Rerata Keaktifan)</span>
+                                        </div>
+                                     </div>
+                                 </div>
+                                 {subject.task && (
+                                    <div className="flex items-center gap-2 text-destructive">
+                                      <Bell className="h-5 w-5 animate-pulse" />
+                                      <span className="hidden sm:inline font-semibold">Ada Tugas!</span>
+                                    </div>
+                                 )}
+                              </CardContent>
+                           </Card>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[625px]">
+                          <DialogHeader>
+                            <DialogTitle className="flex items-center gap-3 text-2xl">
+                               <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${subject.color}/10`}>
+                                 <subject.icon className={`h-6 w-6 ${subject.color}`}/>
+                               </div>
+                               {subject.name}
+                            </DialogTitle>
+                             <DialogDescription className="flex items-center gap-2 pt-2">
+                                <UserCircle className="h-4 w-4" /> Pengampu: {subject.facilitator}
+                             </DialogDescription>
+                          </DialogHeader>
+                          
+                          {subject.task && (
+                            <div className="mt-4 p-4 rounded-lg border bg-secondary/50">
+                                <h3 className="font-bold text-lg mb-2 flex items-center gap-2"><CheckSquare className="h-5 w-5 text-primary" /> Tugas Aktif</h3>
+                                <p>{subject.task.description}</p>
+                                <Badge variant="destructive" className="mt-2">
+                                    <CalendarIcon className="mr-1.5 h-3.5 w-3.5" />
+                                    Deadline: {subject.task.deadline}
+                                </Badge>
+                            </div>
+                          )}
+
+                          <div className="mt-4">
+                            <h3 className="font-bold text-lg mb-2">Riwayat Pertemuan</h3>
+                            <ScrollArea className="h-60">
+                              <div className="space-y-3 pr-4">
+                                {subject.meetings.map(meeting => (
+                                  <div key={meeting.date} className="text-sm p-3 rounded-md bg-card border">
+                                    <p className="font-semibold text-muted-foreground">{meeting.date}</p>
+                                    <p className="text-foreground">{meeting.topic}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            </ScrollArea>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                  ))}
+                </div>
               </CardContent>
             </Card>
           </div>
