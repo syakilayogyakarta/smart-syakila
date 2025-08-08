@@ -9,13 +9,13 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
-import { CheckCircle2, AlertCircle, Briefcase, Activity, User, LogOut, BadgePercent, Wallet, BookCopy, Star, StickyNote, Calendar as CalendarIcon, UserCircle, Bell } from "lucide-react";
+import { CheckCircle2, AlertCircle, Briefcase, Activity, User, LogOut, BadgePercent, Wallet, BookCopy, Star, StickyNote, Calendar as CalendarIcon, UserCircle } from "lucide-react";
 import Image from "next/image";
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-export default function StudentDashboard() {
+export default function ParentDashboard() {
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount);
@@ -41,8 +41,8 @@ export default function StudentDashboard() {
                 </AvatarFallback>
               </Avatar>
               <div>
+                <p className="text-muted-foreground text-base">Wali dari</p>
                 <h1 className="text-3xl font-bold text-foreground">{studentProfile.fullName}</h1>
-                <p className="text-muted-foreground text-lg">Nama Panggilan: {studentProfile.nickname}</p>
                 <p className="text-muted-foreground text-lg">NISN: {studentProfile.nisn}</p>
               </div>
             </div>
@@ -59,7 +59,7 @@ export default function StudentDashboard() {
             <Card className="shadow-lg">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2"><BadgePercent className="text-primary" /> Rekapitulasi Presensi</CardTitle>
-                <CardDescription>Ringkasan kehadiran Anda semester ini.</CardDescription>
+                <CardDescription>Ringkasan kehadiran ananda semester ini.</CardDescription>
               </CardHeader>
               <CardContent className="grid grid-cols-2 gap-4">
                 {attendanceStats.map(stat => (
@@ -136,7 +136,7 @@ export default function StudentDashboard() {
             <Card className="shadow-lg h-full">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2"><BookCopy className="text-blue-500" /> Ringkasan Akademik</CardTitle>
-                <CardDescription>Pantau progres, keaktifan, dan tugas dari setiap mata pelajaran.</CardDescription>
+                <CardDescription>Pantau progres, keaktifan, dan tugas ananda dari setiap mata pelajaran.</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
@@ -158,12 +158,6 @@ export default function StudentDashboard() {
                                         </div>
                                      </div>
                                  </div>
-                                  {subject.task && (
-                                    <div className="flex items-center gap-2 text-destructive">
-                                      <Bell className="h-4 w-4" />
-                                      <span className="text-xs font-semibold">Ada Tugas!</span>
-                                    </div>
-                                  )}
                               </CardContent>
                            </Card>
                         </DialogTrigger>
@@ -203,6 +197,23 @@ export default function StudentDashboard() {
                               </div>
                             </ScrollArea>
                           </div>
+                          
+                          {subject.personalNotes && subject.personalNotes.length > 0 && (
+                             <div className="mt-4">
+                                <h3 className="font-bold text-lg mb-2 flex items-center gap-2"><StickyNote className="h-5 w-5 text-accent" /> Catatan Personal Fasilitator</h3>
+                                <ScrollArea className="h-40">
+                                  <div className="space-y-3 pr-4">
+                                    {subject.personalNotes.map((pnote, index) => (
+                                      <div key={index} className="text-sm p-3 rounded-md bg-accent/10 border border-accent/20">
+                                        <p className="font-semibold text-muted-foreground">{pnote.date}</p>
+                                        <p className="text-accent-foreground/90">{pnote.note}</p>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </ScrollArea>
+                              </div>
+                          )}
+
                         </DialogContent>
                       </Dialog>
                   ))}

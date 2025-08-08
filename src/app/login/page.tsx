@@ -21,14 +21,12 @@ export default function LoginPage() {
   const router = useRouter()
 
   const handleLogin = (role: 'facilitator' | 'student' | 'parent') => {
-    // For now, just navigate. Later, this can involve actual authentication.
     if (role === 'facilitator') {
       router.push('/facilitator/dashboard');
     } else if (role === 'student') {
       router.push('/student/dashboard');
     } else {
-      // Placeholder for parent dashboard
-      router.push('/student/dashboard'); // Temporarily point to student dashboard
+      router.push('/parent/dashboard');
     }
   }
 
