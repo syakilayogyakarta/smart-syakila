@@ -2,22 +2,25 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Calendar, Clock, Check, Loader2, Landmark, Wallet, ChevronDown, User, Edit3 } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, Check, Loader2, Landmark, Wallet, Edit3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { studentsByClass, classes } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
+
+type TransactionType = 'setoran' | 'penarikan';
 
 export default function SavingsPage() {
   const [timestamp, setTimestamp] = useState("");
   const [selectedClass, setSelectedClass] = useState<string>("");
   const [studentOptions, setStudentOptions] = useState<string[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<string>("");
+  const [transactionType, setTransactionType] = useState<TransactionType>('setoran');
   const [buttonState, setButtonState] = useState<"idle" | "loading" | "saved">("idle");
   
   const router = useRouter();
@@ -97,16 +100,22 @@ export default function SavingsPage() {
 
             <div className="space-y-3">
               <Label>Jenis Transaksi</Label>
-              <RadioGroup defaultValue="setoran" className="flex gap-4">
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="setoran" id="setoran" />
-                  <Label htmlFor="setoran" className="flex items-center gap-2"><Landmark className="h-4 w-4 text-green-600"/>Setoran</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="penarikan" id="penarikan" />
-                  <Label htmlFor="penarikan" className="flex items-center gap-2"><Wallet className="h-4 w-4 text-red-600"/>Penarikan</Label>
-                </div>
-              </RadioGroup>
+               <div className="grid grid-cols-2 gap-4">
+                <Button 
+                  variant={transactionType === 'setoran' ? 'accent' : 'outline'}
+                  className={cn("py-6 text-lg", transactionType === 'setoran' && "ring-2 ring-accent-foreground/50")}
+                  onClick={() => setTransactionType('setoran')}
+                >
+                  <Landmark className="mr-3 h-6 w-6" /> Setoran
+                </Button>
+                 <Button 
+                  variant={transactionType === 'penarikan' ? 'destructive' : 'outline'}
+                  className={cn("py-6 text-lg", transactionType === 'penarikan' && "ring-2 ring-destructive/50")}
+                  onClick={() => setTransactionType('penarikan')}
+                >
+                  <Wallet className="mr-3 h-6 w-6" /> Penarikan
+                </Button>
+              </div>
             </div>
 
             <div className="space-y-2">
