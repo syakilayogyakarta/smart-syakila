@@ -5,31 +5,31 @@ export const facilitators = [
         fullName: "Evan Setiawan Parusa",
         nickname: "Evan",
         email: "evansparusa@gmail.com",
-        class: "Kelas Tarbiyah",
+        class: "Kelas Ta'lim 2",
     },
     {
         fullName: "Naashiih Aamiinul Basyiir",
         nickname: "Ibas",
         email: "ibnufahrurozi02@gmail.com",
-        class: "Kelas Ta'dib",
+        class: "Kelas Ta'lim 1",
     },
     {
         fullName: "Lisa Purwandari",
         nickname: "Lisa",
         email: "lisasyakila@gmail.com",
-        class: "Kelas Ta'lim 1",
+        class: "Kelas Tarbiyah",
     },
     {
         fullName: "Amirotun Nafisah",
         nickname: "Sasa",
         email: "namirotun@gmail.com",
-        class: "Kelas Ta'lim 2",
+        class: "Kelas Ta'dib",
     },
     {
         fullName: "Rahmanisa Widhia Anggraini",
         nickname: "Nisa",
         email: "rahmanisaanggraini11@gmail.com",
-        class: "Kelas Ta'lim 1",
+        class: "Kelas Ta'lim 2",
     }
 ];
 
