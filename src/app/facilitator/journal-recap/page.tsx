@@ -4,7 +4,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { 
-  ArrowLeft, Calendar as CalendarIcon, Clock, Trash2, User, StickyNote, PlusCircle, Send, MessageSquare
+  ArrowLeft, Calendar as CalendarIcon, Clock, Trash2, User, StickyNote, PlusCircle, Send, MessageSquare, RefreshCw
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,9 +41,25 @@ export default function JournalRecapPage() {
   
   const [journals, setJournals] = useState(academicJournalLog);
   const [newNotes, setNewNotes] = useState<{ [journalId: number]: { studentName: string; note: string } }>({});
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
   const loggedInFacilitator = facilitator;
 
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    // Simulate fetching new data
+    setTimeout(() => {
+      // In a real app, you would fetch data from an API here.
+      // For now, we just reset the state to the initial data.
+      setJournals([...academicJournalLog].sort(() => Math.random() - 0.5)); // shuffle to see change
+      toast({
+        title: "Rekap diperbarui!",
+        description: "Data jurnal terbaru telah dimuat.",
+      });
+      setIsRefreshing(false);
+    }, 1000);
+  };
+  
   const handleAddPersonalNote = (journalId: number) => {
     const noteData = newNotes[journalId];
     if (!noteData || !noteData.studentName || !noteData.note) {
@@ -101,12 +117,17 @@ export default function JournalRecapPage() {
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
       <div className="max-w-4xl mx-auto">
-        <header className="relative mb-8 text-center">
+        <header className="relative mb-8 text-center flex items-center justify-center">
           <Button variant="outline" size="icon" className="absolute left-0 top-1/2 -translate-y-1/2" onClick={() => router.back()}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <h1 className="text-3xl font-bold text-foreground">Rekap Jurnal Pembelajaran</h1>
-          <p className="text-muted-foreground mt-2">Lihat semua catatan jurnal dari seluruh fasilitator.</p>
+          <div className="flex-1">
+            <h1 className="text-3xl font-bold text-foreground">Rekap Jurnal Pembelajaran</h1>
+            <p className="text-muted-foreground mt-2">Lihat semua catatan jurnal dari seluruh fasilitator.</p>
+          </div>
+          <Button variant="ghost" size="icon" className="absolute right-0 top-1/2 -translate-y-1/2" onClick={handleRefresh} disabled={isRefreshing}>
+              <RefreshCw className={cn("h-5 w-5", isRefreshing && "animate-spin")} />
+          </Button>
         </header>
 
         <Card className="shadow-lg">
@@ -153,7 +174,7 @@ export default function JournalRecapPage() {
                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <Select 
                                 onValueChange={(value) => handleNewNoteChange(journal.id, 'studentName', value)} 
-                                value={newNotes[journal.id]?.studentName || ""}
+                                value={newNotes[journalId]?.studentName || ""}
                             >
                                 <SelectTrigger>
                                 <SelectValue placeholder="Pilih Siswa..." />
@@ -164,7 +185,7 @@ export default function JournalRecapPage() {
                             </Select>
                             <Input 
                                 placeholder="Tulis catatan..." 
-                                value={newNotes[journal.id]?.note || ""}
+                                value={newNotes[journalId]?.note || ""}
                                 onChange={(e) => handleNewNoteChange(journal.id, 'note', e.target.value)}
                             />
                          </div>
