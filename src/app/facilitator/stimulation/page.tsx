@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { 
   ArrowLeft, Calendar as CalendarIcon, Clock, Check, Loader2, PlusCircle, X, Trash2, 
@@ -28,8 +28,6 @@ export default function StimulationPage() {
   const [kegiatan, setKegiatan] = useState("");
   const [lokasi, setLokasi] = useState("");
   const [catatanPenting, setCatatanPenting] = useState("");
-  const [selectedClass, setSelectedClass] = useState<string>("");
-  const [studentOptions, setStudentOptions] = useState<string[]>([]);
   const [showPersonalNotes, setShowPersonalNotes] = useState(false);
   const [personalNotes, setPersonalNotes] = useState<PersonalNote[]>([]);
 
@@ -39,6 +37,10 @@ export default function StimulationPage() {
   const router = useRouter();
   const { toast } = useToast();
 
+  const allStudents = useMemo(() => {
+    return Object.values(studentsByClass).flat();
+  }, []);
+
   useEffect(() => {
     const now = new Date();
     const options: Intl.DateTimeFormatOptions = {
@@ -47,13 +49,6 @@ export default function StimulationPage() {
     };
     setTimestamp(new Intl.DateTimeFormat('id-ID', options).format(now).replace('.', ':'));
   }, []);
-
-  const handleClassChange = (value: string) => {
-    setSelectedClass(value);
-    setStudentOptions(studentsByClass[value] || []);
-    // Reset personal notes when class changes
-    setPersonalNotes([]);
-  };
 
   const addPersonalNote = () => {
     setPersonalNotes(prev => [...prev, { id: Date.now(), studentName: "", note: "" }]);
@@ -148,7 +143,7 @@ export default function StimulationPage() {
             {/* --- Personal Notes --- */}
             <div>
               {!showPersonalNotes ? (
-                 <Button variant="outline" onClick={() => setShowPersonalNotes(true)}>
+                 <Button variant="outline" onClick={() => { setShowPersonalNotes(true); if (personalNotes.length === 0) addPersonalNote(); }}>
                     <PlusCircle className="mr-2 h-4 w-4"/> Tambah Catatan Personal (Opsional)
                  </Button>
               ) : (
@@ -160,26 +155,14 @@ export default function StimulationPage() {
                     </Button>
                   </div>
                   
-                  <div className="space-y-2">
-                    <Label htmlFor="class-select" className="text-sm">Pilih Kelas Terlebih Dahulu</Label>
-                    <Select onValueChange={handleClassChange} value={selectedClass}>
-                      <SelectTrigger id="class-select" className="w-full md:w-1/2">
-                        <SelectValue placeholder="Pilih Kelas..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {classes.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {selectedClass && personalNotes.map((note) => (
+                  {personalNotes.map((note) => (
                      <div key={note.id} className="grid grid-cols-1 md:grid-cols-[1fr_2fr_auto] gap-4 items-center rounded-md bg-secondary/30 p-3">
                         <Select onValueChange={(value) => updatePersonalNote(note.id, 'studentName', value)} value={note.studentName}>
                           <SelectTrigger>
                             <SelectValue placeholder="Pilih Siswa..." />
                           </SelectTrigger>
                           <SelectContent>
-                             {studentOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                             {allStudents.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                           </SelectContent>
                         </Select>
                         <Input placeholder="Tulis catatan personal untuk siswa ini..." value={note.note} onChange={(e) => updatePersonalNote(note.id, 'note', e.target.value)} />
@@ -188,11 +171,10 @@ export default function StimulationPage() {
                         </Button>
                      </div>
                   ))}
-                  {selectedClass && (
+                  
                    <Button variant="secondary" onClick={addPersonalNote}>
                       <PlusCircle className="mr-2 h-4 w-4" /> Tambah Catatan Lagi
                    </Button>
-                  )}
                 </div>
               )}
             </div>
