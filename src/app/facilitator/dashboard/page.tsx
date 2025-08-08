@@ -1,0 +1,82 @@
+"use client"
+
+import Link from "next/link"
+import { ClipboardCheck, PiggyBank, ArrowRight, User } from "lucide-react"
+
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription
+} from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { facilitator } from "@/lib/data"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+
+export default function FacilitatorDashboard() {
+  return (
+    <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
+      <div className="max-w-7xl mx-auto">
+        <header className="mb-8">
+          <Card className="p-6 flex flex-col sm:flex-row items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Avatar className="h-16 w-16">
+                <AvatarFallback className="bg-primary/20 text-primary">
+                  <User className="h-8 w-8" />
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <h1 className="text-2xl font-bold text-foreground">Selamat Datang, {facilitator.name}</h1>
+                <p className="text-muted-foreground">Anda mengajar di {facilitator.class}</p>
+              </div>
+            </div>
+            <Button variant="outline" className="mt-4 sm:mt-0" onClick={() => window.location.href = '/login'}>
+              Keluar
+            </Button>
+          </Card>
+        </header>
+
+        <main>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <Link href="/facilitator/attendance" passHref>
+              <Card className="group relative overflow-hidden text-center transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 h-full flex flex-col justify-between">
+                <CardHeader>
+                  <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-accent/10 transition-transform duration-300 group-hover:scale-110">
+                    <ClipboardCheck className="h-12 w-12 text-accent" />
+                  </div>
+                  <CardTitle className="text-2xl font-bold">Presensi</CardTitle>
+                  <CardDescription className="mt-2">Kelola kehadiran siswa di kelas Anda.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="font-semibold text-accent flex items-center justify-center">
+                    Buka Presensi
+                    <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+
+            <Link href="/facilitator/savings" passHref>
+              <Card className="group relative overflow-hidden text-center transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 h-full flex flex-col justify-between">
+                <CardHeader>
+                  <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-primary/10 transition-transform duration-300 group-hover:scale-110">
+                    <PiggyBank className="h-12 w-12 text-primary" />
+                  </div>
+                  <CardTitle className="text-2xl font-bold">Tabungan</CardTitle>
+                  <CardDescription className="mt-2">Catat setoran dan penarikan tabungan siswa.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="font-semibold text-primary flex items-center justify-center">
+                    Buka Tabungan
+                    <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          </div>
+        </main>
+      </div>
+    </div>
+  )
+}
