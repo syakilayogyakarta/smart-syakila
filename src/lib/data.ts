@@ -1,4 +1,5 @@
 
+
 import { Atom, FunctionSquare, Laptop, Palette, BookText, Languages, Drama, BookOpen, BookHeart, BrainCircuit, BookOpenCheck, HeartPulse } from 'lucide-react';
 
 export const facilitators = [
@@ -25,7 +26,7 @@ export const getLoggedInFacilitator = () => {
 };
 
 
-export const classes = ["Tarbiyah", "Ta'dib", "Ta'lim 1", "Ta'lim 2", "Kelompok MFM"];
+export const classes = ["Tarbiyah", "Ta'dib", "Ta'lim 1", "Ta'lim 2"];
 
 export const studentsByClass: { [key: string]: string[] } = {
   "Tarbiyah": [
@@ -92,65 +93,74 @@ export const allStudents = Object.keys(studentDetails).map(fullName => {
     };
 });
 
-export const subjects = [
-    "IPA",
-    "IPSKn",
-    "IoT",
-    "MFM",
-    "B. Indonesia",
-    "B. Jawa",
-    "B. Inggris",
-    "Minhaj",
-    "Al-Qur'an & Tajwid",
-    "Quran Tematik"
-];
 
 // New, more detailed data structure for facilitator assignments
-export const facilitatorAssignments: { [facilitatorName: string]: { [subject: string]: string[] | 'all' } } = {
+export const facilitatorAssignments: { 
+  [facilitatorName: string]: { 
+    classes: { [className: string]: string[] };
+    groups: string[];
+    mfm: string[];
+  } 
+} = {
   "Evan Setiawan Parusa": {
-    "IoT": "all",
-    "IPA": ["Ta'lim 1", "Ta'lim 2"],
-    "Minhaj": "all",
-    "Al-Qur'an & Tajwid": "all",
-    "Quran Tematik": "all",
-    "MFM": ["Assafa Octaviola Putri Ismawan", "Rifa'a Windy Nur Pujiutami", "Ibrahim Viday Hafuza", "Muhammad Hajid Al-Miqdad", "Avicenna Akthar Dhiyaulhaq"]
+    classes: {
+      "Ta'lim 1": ["IPA"],
+      "Ta'lim 2": ["IPA"],
+      "Tarbiyah": ["IoT"],
+      "Ta'dib": ["IoT"],
+    },
+    groups: ["IoT", "Minhaj", "Al-Qur'an & Tajwid", "Quran Tematik"],
+    mfm: ["Assafa Octaviola Putri Ismawan", "Rifa'a Windy Nur Pujiutami", "Ibrahim Viday Hafuza", "Muhammad Hajid Al-Miqdad", "Avicenna Akthar Dhiyaulhaq"]
   },
   "Naashiih Aamiinul Basyiir": {
-    "B. Indonesia": ["Tarbiyah", "Ta'dib"],
-    "IPSKn": ["Ta'lim 1", "Ta'lim 2"],
-    "Minhaj": "all",
-    "Al-Qur'an & Tajwid": "all",
-    "Quran Tematik": "all",
-    "MFM": ["Yahya Ayyasyh Satriawan Hidayat", "Athaniya Ghina Rafifa"]
+    classes: {
+      "Tarbiyah": ["B. Indonesia"],
+      "Ta'dib": ["B. Indonesia"],
+      "Ta'lim 1": ["IPSKn"],
+      "Ta'lim 2": ["IPSKn"],
+    },
+    groups: ["Minhaj", "Al-Qur'an & Tajwid", "Quran Tematik"],
+    mfm: ["Yahya Ayyasyh Satriawan Hidayat", "Athaniya Ghina Rafifa"]
   },
   "Lisa Purwandari": {
-    "B. Jawa": "all",
-    "Minhaj": "all",
-    "Al-Qur'an & Tajwid": "all",
-    "Quran Tematik": "all",
-    "MFM": ["Muhammad Nabil", "Bima Andi Satria", "Mayyada Zuhro"]
+    classes: {
+      "Tarbiyah": ["B. Jawa"],
+      "Ta'dib": ["B. Jawa"],
+      "Ta'lim 1": ["B. Jawa"],
+      "Ta'lim 2": ["B. Jawa"],
+    },
+    groups: ["Minhaj", "Al-Qur'an & Tajwid", "Quran Tematik"],
+    mfm: ["Muhammad Nabil", "Bima Andi Satria", "Mayyada Zuhro"]
   },
   "Amirotun Nafisah": {
-    "IPSKn": ["Tarbiyah", "Ta'dib"],
-    "B. Indonesia": ["Ta'lim 1", "Ta'lim 2"],
-    "Minhaj": "all",
-    "Al-Qur'an & Tajwid": "all",
-    "Quran Tematik": "all",
-    "MFM": ["Ulin Najwa Nafi'a Ashari", "Nailah Amirah Khoirunnisa'"]
+    classes: {
+      "Tarbiyah": ["IPSKn"],
+      "Ta'dib": ["IPSKn"],
+      "Ta'lim 1": ["B. Indonesia"],
+      "Ta'lim 2": ["B. Indonesia"],
+    },
+    groups: ["Minhaj", "Al-Qur'an & Tajwid", "Quran Tematik"],
+    mfm: ["Ulin Najwa Nafi'a Ashari", "Nailah Amirah Khoirunnisa'"]
   },
   "Rahmanisa Widhia Anggraini": {
-    "B. Inggris": "all",
-    "IPA": ["Tarbiyah", "Ta'dib"],
-    "Minhaj": "all",
-    "Al-Qur'an & Tajwid": "all",
-    "Quran Tematik": "all",
-    "MFM": ["Muhammad Aqifan al-Fatih", "Muhammad Irhab Mirza", "Rofi'i Sindy Nur Pujiutami"]
+    classes: {
+      "Tarbiyah": ["B. Inggris", "IPA"],
+      "Ta'dib": ["B. Inggris", "IPA"],
+      "Ta'lim 1": ["B. Inggris"],
+      "Ta'lim 2": ["B. Inggris"],
+    },
+    groups: ["Minhaj", "Al-Qur'an & Tajwid", "Quran Tematik"],
+    mfm: ["Muhammad Aqifan al-Fatih", "Muhammad Irhab Mirza", "Rofi'i Sindy Nur Pujiutami"]
   },
   "Faddliyah": {
-    "MFM": ["Muhammad Abdan Khioiri Tsabit", "Muhammad Ismail Al-Fatih"]
+    classes: {},
+    groups: [],
+    mfm: ["MFM", "Muhammad Abdan Khioiri Tsabit", "Muhammad Ismail Al-Fatih"]
   },
   "Michael": {
-    "MFM": ["Muhammad Nuhaa Naufali Ar-Rasis", "Muhammad Ziyad Dhiyaurrahman"]
+    classes: {},
+    groups: [],
+    mfm: ["MFM", "Muhammad Nuhaa Naufali Ar-Rasis", "Muhammad Ziyad Dhiyaurrahman"]
   }
 };
 
@@ -159,21 +169,20 @@ export const facilitatorAssignments: { [facilitatorName: string]: { [subject: st
 export const getFacilitatorForSubject = (subjectName: string, studentName: string, studentClass: string | undefined): string => {
   for (const facilitatorName in facilitatorAssignments) {
     const assignments = facilitatorAssignments[facilitatorName];
-    if (assignments[subjectName]) {
-      const assignedTo = assignments[subjectName];
-      if (assignedTo === 'all') {
-        return facilitatorName;
-      }
-      if (Array.isArray(assignedTo)) {
-        // Check if it's a class-based assignment
-        if (studentClass && assignedTo.includes(studentClass)) {
-          return facilitatorName;
-        }
-        // Check if it's a student-based assignment (for MFM)
-        if (assignedTo.includes(studentName)) {
-          return facilitatorName;
-        }
-      }
+    // Check class assignments
+    if (studentClass && assignments.classes[studentClass]?.includes(subjectName)) {
+      return facilitatorName;
+    }
+    // Check group assignments
+    if (assignments.groups.includes(subjectName)) {
+      // This is complex as multiple facilitators can teach groups. 
+      // This simplistic check returns the first one found.
+      // A more robust system would be needed for a real app.
+      return facilitatorName;
+    }
+    // Check MFM assignments
+    if (subjectName === 'MFM' && assignments.mfm.includes(studentName)) {
+      return facilitatorName;
     }
   }
   return "N/A"; // Default if no facilitator is found
@@ -491,3 +500,5 @@ export const stimulationJournalLog = [
     ]
   }
 ];
+
+    
