@@ -2,7 +2,7 @@
 "use client";
 
 import React from 'react';
-import { studentProfile, academicData, kegiatanData } from "@/lib/data";
+import { studentProfile, academicData, kegiatanData, getFacilitatorForSubject } from "@/lib/data";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -213,7 +213,9 @@ export default function ParentDashboard() {
 
 
                   {/* Subject Cards */}
-                  {academicData.subjects.map(subject => (
+                  {academicData.subjects.map(subject => {
+                    const facilitatorName = getFacilitatorForSubject(subject.name, studentProfile.fullName, studentProfile.class);
+                    return (
                      <Dialog key={subject.name}>
                         <DialogTrigger asChild>
                            <Card className="hover:bg-primary/5 hover:shadow-md transition-all cursor-pointer">
@@ -243,7 +245,7 @@ export default function ParentDashboard() {
                                {subject.name}
                             </DialogTitle>
                              <DialogDescription className="flex items-center gap-2 pt-2">
-                                <UserCircle className="h-4 w-4" /> Pengampu: {subject.facilitator}
+                                <UserCircle className="h-4 w-4" /> Pengampu: {facilitatorName}
                              </DialogDescription>
                           </DialogHeader>
                           
@@ -289,7 +291,7 @@ export default function ParentDashboard() {
 
                         </DialogContent>
                       </Dialog>
-                  ))}
+                  )})}
                 </div>
               </CardContent>
             </Card>

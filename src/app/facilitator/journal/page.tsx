@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { studentsByClass, classes, facilitator, facilitatorSubjects } from "@/lib/data";
+import { studentsByClass, classes, facilitator, facilitatorAssignments } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -58,7 +58,7 @@ export default function JournalPage() {
     if (!selectedClass || !facilitator) {
       return [];
     }
-    const assignments = facilitatorSubjects[facilitator.fullName];
+    const assignments = facilitatorAssignments[facilitator.fullName];
     if (!assignments) {
       return [];
     }
@@ -67,20 +67,54 @@ export default function JournalPage() {
       if (taughtIn === 'all') {
         return true;
       }
-      return taughtIn.includes(selectedClass);
+      // Check if taughtIn is an array of classes, not students
+      if(Array.isArray(taughtIn) && classes.includes(taughtIn[0])) {
+         return taughtIn.includes(selectedClass);
+      }
+      // For student-specific subjects like MFM, allow if facilitator teaches it at all
+      if(Array.isArray(taughtIn) && !classes.includes(taughtIn[0])) {
+        return true;
+      }
+      return false;
     });
   }, [selectedClass]);
 
   const handleClassChange = (value: string) => {
     setSelectedClass(value);
-    setStudentOptions(studentsByClass[value] || []);
+    const studentsInClass = studentsByClass[value] || [];
+    setStudentOptions(studentsInClass);
     setSelectedSubject(""); // Reset subject when class changes
     
     const initialActivity: { [studentName: string]: number } = {};
-    (studentsByClass[value] || []).forEach(student => {
+    studentsInClass.forEach(student => {
       initialActivity[student] = 0;
     });
     setStudentActivity(initialActivity);
+
+    // Filter students for MFM if MFM is selected
+    if (selectedSubject === 'MFM' && facilitator) {
+        const assignments = facilitatorAssignments[facilitator.fullName];
+        const mfmStudents = assignments['MFM'];
+        if (Array.isArray(mfmStudents)) {
+            const relevantStudents = studentsInClass.filter(s => mfmStudents.includes(s));
+            setStudentOptions(relevantStudents);
+        }
+    }
+  };
+
+  const handleSubjectChange = (subject: string) => {
+    setSelectedSubject(subject);
+    if (subject === 'MFM' && facilitator && selectedClass) {
+        const assignments = facilitatorAssignments[facilitator.fullName];
+        const mfmStudents = assignments['MFM'];
+        const studentsInClass = studentsByClass[selectedClass] || [];
+        if (Array.isArray(mfmStudents)) {
+            const relevantStudents = studentsInClass.filter(s => mfmStudents.includes(s));
+            setStudentOptions(relevantStudents);
+        }
+    } else if (selectedClass) {
+        setStudentOptions(studentsByClass[selectedClass] || []);
+    }
   };
   
   const handleActivityChange = (studentName: string, rating: number) => {
@@ -172,7 +206,7 @@ export default function JournalPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="subject-select" className="font-semibold">Mata Pelajaran <span className="text-destructive">*</span></Label>
-                <Select onValueChange={setSelectedSubject} value={selectedSubject} disabled={!selectedClass}>
+                <Select onValueChange={handleSubjectChange} value={selectedSubject} disabled={!selectedClass}>
                   <SelectTrigger id="subject-select" className="w-full">
                     <SelectValue placeholder="Pilih Mata Pelajaran..." />
                   </SelectTrigger>

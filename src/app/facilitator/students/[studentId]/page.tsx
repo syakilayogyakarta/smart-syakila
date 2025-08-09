@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { studentDetails, studentsByClass, academicData, kegiatanData } from "@/lib/data";
+import { studentDetails, studentsByClass, academicData, kegiatanData, getFacilitatorForSubject } from "@/lib/data";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -42,8 +42,6 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
     if (details) {
         const className = Object.keys(studentsByClass).find(key => studentsByClass[key].includes(studentName));
         
-        // In a real app, you would fetch all this data based on studentName.
-        // For this prototype, we're combining static details with simulated data.
         setStudentProfile({
             fullName: studentName,
             nickname: details.nickname,
@@ -51,7 +49,6 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
             photoUrl: `https://placehold.co/100x100.png`,
             photoHint: 'student portrait',
             class: className,
-            // Simulating data that would normally be fetched from a database
             attendance: { present: Math.floor(Math.random() * 20) + 100, late: Math.floor(Math.random() * 5), sick: Math.floor(Math.random() * 3), excused: Math.floor(Math.random() * 2) },
             savings: {
                 balance: Math.floor(Math.random() * 200000) + 50000,
@@ -79,8 +76,6 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
     return <div className="flex min-h-screen items-center justify-center">Memuat data siswa...</div>;
   }
 
-  // NOTE: academicData and kegiatanData are still dummy data for a single student.
-  // In a real app, this would be fetched dynamically for `studentProfile.fullName`.
   const studentAcademicData = academicData; 
   const studentKegiatanData = kegiatanData;
 
@@ -266,7 +261,9 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
 
 
                   {/* Subject Cards */}
-                  {studentAcademicData.subjects.map(subject => (
+                  {studentAcademicData.subjects.map(subject => {
+                    const facilitatorName = getFacilitatorForSubject(subject.name, studentProfile.fullName, studentProfile.class);
+                    return (
                      <Dialog key={subject.name}>
                         <DialogTrigger asChild>
                            <Card className="hover:bg-primary/5 hover:shadow-md transition-all cursor-pointer">
@@ -296,7 +293,7 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
                                {subject.name}
                             </DialogTitle>
                              <DialogDescription className="flex items-center gap-2 pt-2">
-                                <UserCircle className="h-4 w-4" /> Pengampu: {subject.facilitator}
+                                <UserCircle className="h-4 w-4" /> Pengampu: {facilitatorName}
                              </DialogDescription>
                           </DialogHeader>
                           
@@ -342,7 +339,7 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
 
                         </DialogContent>
                       </Dialog>
-                  ))}
+                  )})}
                 </div>
               </CardContent>
             </Card>

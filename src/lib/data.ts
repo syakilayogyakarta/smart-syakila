@@ -2,11 +2,13 @@
 import { Atom, FunctionSquare, Laptop, Palette, BookText, Languages, Drama, BookOpen, BookHeart, BrainCircuit, BookOpenCheck, HeartPulse } from 'lucide-react';
 
 export const facilitators = [
-    { fullName: "Evan Setiawan Parusa", nickname: "Evan", email: "evansparusa@gmail.com", class: "Ta'lim 2" },
-    { fullName: "Naashiih Aamiinul Basyiir", nickname: "Ibas", email: "ibnufahrurozi02@gmail.com", class: "Ta'lim 1" },
-    { fullName: "Lisa Purwandari", nickname: "Lisa", email: "lisasyakila@gmail.com", class: "Tarbiyah" },
-    { fullName: "Amirotun Nafisah", nickname: "Sasa", email: "namirotun@gmail.com", class: "Ta'dib" },
-    { fullName: "Rahmanisa Widhia Anggraini", nickname: "Nisa", email: "rahmanisaanggraini11@gmail.com", class: "Ta'lim 2" },
+    { fullName: "Evan Setiawan Parusa", nickname: "Evan", email: "evansparusa@gmail.com" },
+    { fullName: "Naashiih Aamiinul Basyiir", nickname: "Ibas", email: "ibnufahrurozi02@gmail.com" },
+    { fullName: "Lisa Purwandari", nickname: "Lisa", email: "lisasyakila@gmail.com" },
+    { fullName: "Amirotun Nafisah", nickname: "Sasa", email: "namirotun@gmail.com" },
+    { fullName: "Rahmanisa Widhia Anggraini", nickname: "Nisa", email: "rahmanisaanggraini11@gmail.com" },
+    { fullName: "Faddliyah", nickname: "Faddliyah", email: "faddliyah@example.com" },
+    { fullName: "Michael", nickname: "Michael", email: "michael@example.com" },
 ];
 
 // Set the currently logged-in facilitator.
@@ -58,47 +60,78 @@ export const subjects = [
     "Quran Tematik"
 ];
 
-// New data structure for facilitator teaching assignments
-export const facilitatorSubjects: { [facilitatorName: string]: { [subject: string]: string[] | 'all' } } = {
+// New, more detailed data structure for facilitator assignments
+export const facilitatorAssignments: { [facilitatorName: string]: { [subject: string]: string[] | 'all' } } = {
   "Evan Setiawan Parusa": {
     "IoT": "all",
     "IPA": ["Ta'lim 1", "Ta'lim 2"],
-    "MFM": "all",
     "Minhaj": "all",
     "Al-Qur'an & Tajwid": "all",
-    "Quran Tematik": "all"
+    "Quran Tematik": "all",
+    "MFM": ["Assafa Octaviola Putri Ismawan", "Rifa'a Windy Nur Pujiutami", "Ibrahim Viday Hafuza", "Muhammad Hajid Al-Miqdad", "Avicenna Akthar Dhiyaulhaq"]
   },
   "Naashiih Aamiinul Basyiir": {
     "B. Indonesia": ["Tarbiyah", "Ta'dib"],
     "IPSKn": ["Ta'lim 1", "Ta'lim 2"],
-    "MFM": "all",
     "Minhaj": "all",
     "Al-Qur'an & Tajwid": "all",
-    "Quran Tematik": "all"
+    "Quran Tematik": "all",
+    "MFM": ["Yahya Ayyasyh Satriawan Hidayat", "Athaniya Ghina Rafifa"]
   },
   "Lisa Purwandari": {
     "B. Jawa": "all",
-    "MFM": "all",
     "Minhaj": "all",
     "Al-Qur'an & Tajwid": "all",
-    "Quran Tematik": "all"
+    "Quran Tematik": "all",
+    "MFM": ["Muhammad Nabil", "Bima Andi Satria", "Mayyada Zuhro"]
   },
   "Amirotun Nafisah": {
     "IPSKn": ["Tarbiyah", "Ta'dib"],
     "B. Indonesia": ["Ta'lim 1", "Ta'lim 2"],
-    "MFM": "all",
     "Minhaj": "all",
     "Al-Qur'an & Tajwid": "all",
-    "Quran Tematik": "all"
+    "Quran Tematik": "all",
+    "MFM": ["Ulin Najwa Nafi'a Ashari", "Nailah Amirah Khoirunnisa'"]
   },
   "Rahmanisa Widhia Anggraini": {
     "B. Inggris": "all",
     "IPA": ["Tarbiyah", "Ta'dib"],
-    "MFM": "all",
     "Minhaj": "all",
     "Al-Qur'an & Tajwid": "all",
-    "Quran Tematik": "all"
+    "Quran Tematik": "all",
+    "MFM": ["Muhammad Aqifan al-Fatih", "Muhammad Irhab Mirza", "Rofi'i Sindy Nur Pujiutami"]
+  },
+  "Faddliyah": {
+    "MFM": ["Muhammad Abdan Khioiri Tsabit", "Muhammad Ismail Al-Fatih"]
+  },
+  "Michael": {
+    "MFM": ["Muhammad Nuhaa Naufali Ar-Rasis", "Muhammad Ziyad Dhiyaurrahman"]
   }
+};
+
+
+// Function to get the facilitator for a specific subject and student
+export const getFacilitatorForSubject = (subjectName: string, studentName: string, studentClass: string | undefined): string => {
+  for (const facilitatorName in facilitatorAssignments) {
+    const assignments = facilitatorAssignments[facilitatorName];
+    if (assignments[subjectName]) {
+      const assignedTo = assignments[subjectName];
+      if (assignedTo === 'all') {
+        return facilitatorName;
+      }
+      if (Array.isArray(assignedTo)) {
+        // Check if it's a class-based assignment
+        if (studentClass && assignedTo.includes(studentClass)) {
+          return facilitatorName;
+        }
+        // Check if it's a student-based assignment (for MFM)
+        if (assignedTo.includes(studentName)) {
+          return facilitatorName;
+        }
+      }
+    }
+  }
+  return "N/A"; // Default if no facilitator is found
 };
 
 
