@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -10,9 +11,17 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { studentsByClass, classes } from "@/lib/data";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
 type AttendanceStatus = "Hadir" | "Terlambat" | "Sakit" | "Izin";
@@ -23,6 +32,7 @@ export default function AttendancePage() {
   const [buttonState, setButtonState] = useState<"idle" | "loading" | "saved">("idle");
   const router = useRouter();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     // Initialize all students with 'Hadir' status
@@ -66,6 +76,17 @@ export default function AttendancePage() {
     { id: 'Izin', label: 'Izin', style: 'border-red-500 text-red-600 hover:bg-red-500/10 data-[active=true]:bg-red-500 data-[active=true]:text-white' },
   ];
 
+  const getStatusStyle = (status: AttendanceStatus) => {
+    switch (status) {
+      case 'Hadir': return 'text-green-600 border-green-500';
+      case 'Terlambat': return 'text-yellow-600 border-yellow-500';
+      case 'Sakit': return 'text-blue-600 border-blue-500';
+      case 'Izin': return 'text-red-600 border-red-500';
+      default: return 'text-foreground border-border';
+    }
+  };
+
+
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
       <div className="max-w-4xl mx-auto">
@@ -91,7 +112,9 @@ export default function AttendancePage() {
                       {(studentsByClass[className] || []).map((student, index) => (
                         <div key={student} className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-lg bg-card ${index % 2 === 0 ? 'bg-secondary/50' : ''}`}>
                           <p className="font-medium text-foreground mb-4 sm:mb-0">{student}</p>
-                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                          
+                          {/* Desktop: Buttons */}
+                           <div className="hidden sm:grid sm:grid-cols-4 gap-2">
                             {attendanceOptions.map(option => (
                               <Button
                                 key={option.id}
@@ -107,6 +130,23 @@ export default function AttendancePage() {
                               </Button>
                             ))}
                           </div>
+                          
+                          {/* Mobile: Dropdown */}
+                          <div className="w-full sm:hidden">
+                             <Select value={attendance[student]} onValueChange={(value: AttendanceStatus) => handleStatusChange(student, value)}>
+                                <SelectTrigger className={cn("h-12 text-base font-semibold border-2", getStatusStyle(attendance[student]))}>
+                                  <SelectValue placeholder="Pilih status..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {attendanceOptions.map(option => (
+                                      <SelectItem key={option.id} value={option.id} className="text-base">
+                                          {option.label}
+                                      </SelectItem>
+                                    ))}
+                                </SelectContent>
+                             </Select>
+                          </div>
+
                         </div>
                       ))}
                     </div>
