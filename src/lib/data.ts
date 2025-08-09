@@ -1,5 +1,4 @@
 
-
 import { Atom, FunctionSquare, Laptop, Palette, BookText, Languages, Drama, BookOpen, BookHeart, BrainCircuit, BookOpenCheck, HeartPulse } from 'lucide-react';
 
 export const facilitators = [
@@ -99,18 +98,18 @@ export const facilitatorAssignments: {
   [facilitatorName: string]: { 
     classes: { [className: string]: string[] };
     groups: string[];
-    mfm: string[];
+    mfm: string[]; // This can be deprecated or repurposed if MFM is fully a group subject
   } 
 } = {
   "Evan Setiawan Parusa": {
     classes: {
-      "Ta'lim 1": ["IPA"],
-      "Ta'lim 2": ["IPA"],
-      "Tarbiyah": ["IoT"],
-      "Ta'dib": ["IoT"],
+      "Tarbiyah": ["IoT", "IPA"],
+      "Ta'dib": ["IoT", "IPA"],
+      "Ta'lim 1": ["IoT", "IPA"],
+      "Ta'lim 2": ["IoT", "IPA"],
     },
-    groups: ["IoT", "Minhaj", "Al-Qur'an & Tajwid", "Quran Tematik"],
-    mfm: ["Assafa Octaviola Putri Ismawan", "Rifa'a Windy Nur Pujiutami", "Ibrahim Viday Hafuza", "Muhammad Hajid Al-Miqdad", "Avicenna Akthar Dhiyaulhaq"]
+    groups: ["MFM", "Minhaj", "Al-Qur'an & Tajwid", "Quran Tematik"],
+    mfm: []
   },
   "Naashiih Aamiinul Basyiir": {
     classes: {
@@ -119,8 +118,8 @@ export const facilitatorAssignments: {
       "Ta'lim 1": ["IPSKn"],
       "Ta'lim 2": ["IPSKn"],
     },
-    groups: ["Minhaj", "Al-Qur'an & Tajwid", "Quran Tematik"],
-    mfm: ["Yahya Ayyasyh Satriawan Hidayat", "Athaniya Ghina Rafifa"]
+    groups: ["MFM", "Minhaj", "Al-Qur'an & Tajwid", "Quran Tematik"],
+    mfm: []
   },
   "Lisa Purwandari": {
     classes: {
@@ -129,8 +128,8 @@ export const facilitatorAssignments: {
       "Ta'lim 1": ["B. Jawa"],
       "Ta'lim 2": ["B. Jawa"],
     },
-    groups: ["Minhaj", "Al-Qur'an & Tajwid", "Quran Tematik"],
-    mfm: ["Muhammad Nabil", "Bima Andi Satria", "Mayyada Zuhro"]
+    groups: ["MFM", "Minhaj", "Al-Qur'an & Tajwid", "Quran Tematik"],
+    mfm: []
   },
   "Amirotun Nafisah": {
     classes: {
@@ -139,8 +138,8 @@ export const facilitatorAssignments: {
       "Ta'lim 1": ["B. Indonesia"],
       "Ta'lim 2": ["B. Indonesia"],
     },
-    groups: ["Minhaj", "Al-Qur'an & Tajwid", "Quran Tematik"],
-    mfm: ["Ulin Najwa Nafi'a Ashari", "Nailah Amirah Khoirunnisa'"]
+    groups: ["MFM", "Minhaj", "Al-Qur'an & Tajwid", "Quran Tematik"],
+    mfm: []
   },
   "Rahmanisa Widhia Anggraini": {
     classes: {
@@ -149,18 +148,18 @@ export const facilitatorAssignments: {
       "Ta'lim 1": ["B. Inggris"],
       "Ta'lim 2": ["B. Inggris"],
     },
-    groups: ["Minhaj", "Al-Qur'an & Tajwid", "Quran Tematik"],
-    mfm: ["Muhammad Aqifan al-Fatih", "Muhammad Irhab Mirza", "Rofi'i Sindy Nur Pujiutami"]
+    groups: ["MFM", "Minhaj", "Al-Qur'an & Tajwid", "Quran Tematik"],
+    mfm: []
   },
   "Faddliyah": {
     classes: {},
-    groups: [],
-    mfm: ["MFM", "Muhammad Abdan Khioiri Tsabit", "Muhammad Ismail Al-Fatih"]
+    groups: ["MFM"],
+    mfm: []
   },
   "Michael": {
     classes: {},
-    groups: [],
-    mfm: ["MFM", "Muhammad Nuhaa Naufali Ar-Rasis", "Muhammad Ziyad Dhiyaurrahman"]
+    groups: ["MFM"],
+    mfm: []
   }
 };
 
@@ -500,5 +499,3 @@ export const stimulationJournalLog = [
     ]
   }
 ];
-
-    

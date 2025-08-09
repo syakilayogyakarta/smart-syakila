@@ -103,12 +103,9 @@ export default function JournalPage() {
     if (selectedSubject === "Al-Qur'an & Tajwid") {
       students = students.filter(student => student.gender === facilitator.gender);
     }
-     // Special filter for MFM
-    if (selectedSubject === "MFM" && facilitatorData) {
-        students = students.filter(student => facilitatorData.mfm.includes(student.fullName));
-    }
+    
     return students.map(s => s.fullName);
-  }, [mode, selectedSubject, facilitator, facilitatorData]);
+  }, [mode, selectedSubject, facilitator]);
 
   const resetFormFields = (clearMode = false) => {
     if (clearMode) setMode(null);
