@@ -69,15 +69,20 @@ export default function FacilitatorDashboard() {
                 <p className="text-muted-foreground">Dasbor Pengelolaan Kelas Anda</p>
               </div>
             </div>
-            <div className="text-right mt-4 sm:mt-0">
-               <div className="flex items-center justify-end gap-2 text-foreground">
-                  <Calendar className="h-5 w-5 text-primary"/>
-                  <span className="font-semibold text-lg">{currentDate}</span>
-               </div>
-               <div className="flex items-center justify-end gap-2 text-muted-foreground">
-                  <Clock className="h-5 w-5"/>
-                  <span className="font-semibold text-lg">{currentTime}</span>
-               </div>
+            <div className="flex items-center gap-8">
+                <div className="text-right mt-4 sm:mt-0">
+                   <div className="flex items-center justify-end gap-2 text-foreground">
+                      <Calendar className="h-5 w-5 text-primary"/>
+                      <span className="font-semibold text-lg">{currentDate}</span>
+                   </div>
+                   <div className="flex items-center justify-end gap-2 text-muted-foreground">
+                      <Clock className="h-5 w-5"/>
+                      <span className="font-semibold text-lg">{currentTime}</span>
+                   </div>
+                </div>
+                 <Button variant="outline" className="mt-4 sm:mt-0" onClick={() => window.location.href = '/login'}>
+                    <LogOut className="mr-2 h-4 w-4" /> Keluar
+                 </Button>
             </div>
           </Card>
         </header>
