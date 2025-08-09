@@ -34,9 +34,9 @@ type StudentProfile = {
 export default function StudentDetailPage({ params }: { params: { studentId: string } }) {
   const router = useRouter();
   const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null);
-  const studentName = decodeURIComponent(params.studentId);
-
+  
   useEffect(() => {
+    const studentName = decodeURIComponent(params.studentId);
     const details = studentDetails[studentName];
     
     if (details) {
@@ -57,7 +57,7 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
             }
         });
     }
-  }, [studentName]);
+  }, [params.studentId]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount);
@@ -348,3 +348,6 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
     </div>
   );
 }
+
+
+    
