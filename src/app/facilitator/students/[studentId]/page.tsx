@@ -87,10 +87,9 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
                 <ArrowLeft className="h-4 w-4" />
              </Button>
             <div className="text-center">
-              
-              <h1 className="text-4xl font-extrabold text-foreground tracking-tight font-headline">SMART SYAKILA</h1>
-              <p className="text-muted-foreground text-lg mt-1">Sistem Monitoring Aktivitas & Rapor Terpadu</p>
-              <p className="text-muted-foreground text-lg">Sekolah Syakila Yogyakarta</p>
+              <h1 className="text-3xl md:text-4xl font-extrabold text-foreground tracking-tight font-headline">SMART SYAKILA</h1>
+              <p className="text-muted-foreground text-base md:text-lg mt-1">Sistem Monitoring Aktivitas & Rapor Terpadu</p>
+              <p className="text-muted-foreground text-base md:text-lg">Sekolah Syakila Yogyakarta</p>
             </div>
         </header>
 

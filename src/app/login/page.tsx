@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useRouter } from "next/navigation"
@@ -27,10 +28,9 @@ export default function LoginPage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
        <div className="text-center mb-8">
-          
-          <h1 className="text-4xl font-extrabold text-foreground tracking-tight font-headline">SMART SYAKILA</h1>
-          <p className="text-muted-foreground text-lg mt-1">Sistem Monitoring Aktivitas & Rapor Terpadu</p>
-          <p className="text-muted-foreground text-lg">Sekolah Syakila Yogyakarta</p>
+          <h1 className="text-3xl md:text-4xl font-extrabold text-foreground tracking-tight font-headline">SMART SYAKILA</h1>
+          <p className="text-muted-foreground text-base md:text-lg mt-1">Sistem Monitoring Aktivitas & Rapor Terpadu</p>
+          <p className="text-muted-foreground text-base md:text-lg">Sekolah Syakila Yogyakarta</p>
         </div>
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="text-center">
