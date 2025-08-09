@@ -62,7 +62,7 @@ export const studentDetails: { [fullName: string]: any } = {
   "Muhammad Ismail Al-Fatih": { nisn: "0123456012", nickname: "Alfath", dob: "20 Agustus 2010", email: "alfath.muhammad2010@gmail.com", gender: "Laki-laki" },
   "Muhammad Ziyad Dhiyaurrahman": { nisn: "0123456013", nickname: "Ziyad", dob: "26 April 2009", email: "ziyad.muhammad2009@gmail.com", gender: "Laki-laki" },
   "Rifa'a Windy Nur Pujiutami": { nisn: "0123456014", nickname: "Indy", dob: "31 Agustus 2009", email: "indy.rifa'a2009@gmail.com", gender: "Perempuan" },
-  "Rofi'i Sindy Nur Pujiutami": { nisn: "0123456015", nickname: "Fii", dob: "31 Agustus 2009", email: "fii.rofi'i2009@gmail.com", gender: "Laki-laki" },
+  "Rofi'i Sindy Nur Pujiutami": { nisn: "0123456015", nickname: "Fii", dob: "31 Agustus 2009", email: "fii.rofi'i2009@gmail.com", gender: "Perempuan" },
   "Assafa Octaviola Putri Ismawan": { nisn: "0123456016", nickname: "Assa", dob: "11 Oktober 2010", email: "assa.assafa2010@gmail.com", gender: "Perempuan" },
   "Mayyada Zuhro": { nisn: "0123456017", nickname: "May", dob: "1 Desember 2007", email: "may.mayyada2007@gmail.com", gender: "Perempuan" },
   "Muhammad Hajid Al-Miqdad": { nisn: "0123456018", nickname: "Hajid", dob: "11 Juni 2008", email: "hajid.muhammad2008@gmail.com", gender: "Laki-laki" },
