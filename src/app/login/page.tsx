@@ -13,7 +13,6 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { facilitators } from "@/lib/data"
-import Image from "next/image"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -49,7 +48,7 @@ export default function LoginPage() {
                 onClick={() => handleLogin(facilitator.fullName)}
               >
                 <User className="mr-4 h-5 w-5 text-primary" />
-                {facilitator.nickname}
+                {facilitator.gender === 'Laki-laki' ? 'Mas' : 'Mba'} {facilitator.nickname}
              </Button>
           ))}
         </CardContent>
