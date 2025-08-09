@@ -34,7 +34,7 @@ type Facilitator = {
   gender: string;
 }
 
-const groupSubjects = ["Al-Qur'an & Tajwid", "Minhaj", "Quran Tematik"];
+const groupSubjects = ["Al-Qur'an & Tajwid", "Minhaj", "Quran Tematik", "MFM"];
 
 export default function JournalPage() {
   const [facilitator, setFacilitator] = useState<Facilitator | null>(null);
@@ -103,8 +103,12 @@ export default function JournalPage() {
     if (selectedSubject === "Al-Qur'an & Tajwid") {
       students = students.filter(student => student.gender === facilitator.gender);
     }
+     // Special filter for MFM
+    if (selectedSubject === "MFM" && facilitatorData) {
+        students = students.filter(student => facilitatorData.mfm.includes(student.fullName));
+    }
     return students.map(s => s.fullName);
-  }, [mode, selectedSubject, facilitator]);
+  }, [mode, selectedSubject, facilitator, facilitatorData]);
 
   const resetFormFields = (clearMode = false) => {
     if (clearMode) setMode(null);
@@ -450,5 +454,3 @@ export default function JournalPage() {
     </div>
   );
 }
-
-    
