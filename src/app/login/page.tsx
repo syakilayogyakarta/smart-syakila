@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { KeyRound, Mail, Briefcase, GraduationCap, Shield } from "lucide-react"
+import { KeyRound, Mail, Briefcase } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -20,14 +20,8 @@ import Image from "next/image"
 export default function LoginPage() {
   const router = useRouter()
 
-  const handleLogin = (role: 'facilitator' | 'student' | 'parent') => {
-    if (role === 'facilitator') {
-      router.push('/facilitator/dashboard');
-    } else if (role === 'student') {
-      router.push('/student/dashboard');
-    } else {
-      router.push('/parent/dashboard');
-    }
+  const handleLogin = () => {
+    router.push('/facilitator/dashboard');
   }
 
   return (
@@ -40,7 +34,7 @@ export default function LoginPage() {
         </div>
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-foreground">Login</CardTitle>
+          <CardTitle className="text-2xl font-bold text-foreground">Login Fasilitator</CardTitle>
           <CardDescription>Masuk ke akun Anda untuk melanjutkan</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -60,17 +54,9 @@ export default function LoginPage() {
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
-          <div className="flex w-full flex-col gap-3">
-             <Button className="w-full" variant="outline" size="lg" onClick={() => handleLogin('facilitator')}>
-              <Briefcase className="mr-2 h-5 w-5" /> Masuk sebagai Fasilitator
-            </Button>
-            <Button className="w-full" variant="outline" size="lg" onClick={() => handleLogin('student')}>
-              <GraduationCap className="mr-2 h-5 w-5" /> Masuk sebagai Siswa
-            </Button>
-            <Button className="w-full" variant="outline" size="lg" onClick={() => handleLogin('parent')}>
-              <Shield className="mr-2 h-5 w-5" /> Masuk sebagai Orang Tua
-            </Button>
-          </div>
+          <Button className="w-full" size="lg" onClick={handleLogin}>
+            <Briefcase className="mr-2 h-5 w-5" /> Masuk
+          </Button>
           <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
             Lupa password?
           </Link>
