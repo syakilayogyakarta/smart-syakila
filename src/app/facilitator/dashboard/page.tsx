@@ -70,14 +70,14 @@ export default function FacilitatorDashboard() {
         </div>
 
         <header className="mb-8">
-          <Card className="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between">
-            <div className="flex items-center gap-4 w-full">
-              <Avatar className="h-16 w-16">
+          <Card className="p-6">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 w-full">
+              <Avatar className="h-20 w-20 sm:h-16 sm:w-16">
                 <AvatarFallback className="bg-primary/20 text-primary">
-                  <User className="h-8 w-8" />
+                  <User className="h-10 w-10 sm:h-8 sm:w-8" />
                 </AvatarFallback>
               </Avatar>
-              <div className="w-full">
+              <div className="w-full text-center sm:text-left">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between">
                     <div>
                         <h2 className="text-2xl font-bold text-foreground">Selamat Datang, {facilitator.nickname}</h2>
@@ -86,11 +86,11 @@ export default function FacilitatorDashboard() {
                     <div className="hidden sm:flex items-center gap-4">
                         <div className="text-right">
                            <div className="flex items-center justify-end gap-2 text-foreground">
-                              <Calendar className="h-5 w-5"/>
+                              <Calendar className="h-5 w-5 text-foreground"/>
                               <span className="font-semibold text-lg">{currentDate}</span>
                            </div>
                            <div className="flex items-center justify-end gap-2 text-muted-foreground">
-                              <Clock className="h-5 w-5"/>
+                              <Clock className="h-5 w-5 text-muted-foreground"/>
                               <span className="font-semibold text-lg">{currentTime}</span>
                            </div>
                         </div>
@@ -102,12 +102,12 @@ export default function FacilitatorDashboard() {
 
                  <div className="sm:hidden mt-4 space-y-2">
                     <Separator />
-                     <div className="flex items-center gap-2 text-foreground pt-2">
-                          <Calendar className="h-4 w-4"/>
+                     <div className="flex items-center justify-center gap-2 text-foreground pt-2">
+                          <Calendar className="h-4 w-4 text-foreground"/>
                           <span className="font-semibold">{currentDate}</span>
                        </div>
-                       <div className="flex items-center gap-2 text-muted-foreground">
-                          <Clock className="h-4 w-4"/>
+                       <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                          <Clock className="h-4 w-4 text-muted-foreground"/>
                           <span className="font-semibold">{currentTime}</span>
                        </div>
                     <Separator className="mt-4"/>
@@ -240,5 +240,3 @@ export default function FacilitatorDashboard() {
     </div>
   );
 }
-
-    
