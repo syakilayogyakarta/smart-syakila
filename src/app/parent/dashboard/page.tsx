@@ -35,7 +35,7 @@ export default function ParentDashboard() {
       <div className="max-w-7xl mx-auto space-y-8">
         <div className="text-center mb-10">
           <Image src="/logo.png" alt="Syakila Logo" width={80} height={80} className="mx-auto mb-4" />
-          <h1 className="text-4xl font-bold text-foreground tracking-tight">SMART SYAKILA</h1>
+          <h1 className="text-4xl font-extrabold text-foreground tracking-tight font-headline">SMART SYAKILA</h1>
           <p className="text-muted-foreground text-lg mt-1">Sistem Monitoring Aktivitas & Rapor Terpadu</p>
           <p className="text-muted-foreground text-lg">Sekolah Syakila Yogyakarta</p>
         </div>
