@@ -102,41 +102,45 @@ export default function FacilitatorDashboard() {
 
         <main>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <Link href="/facilitator/attendance" passHref>
-              <Card className="group relative overflow-hidden text-center transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 h-full flex flex-col justify-between">
-                <CardHeader>
-                  <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-accent/10 transition-transform duration-300 group-hover:scale-110">
-                    <ClipboardCheck className="h-12 w-12 text-accent" />
-                  </div>
-                  <CardTitle>Presensi</CardTitle>
-                  <CardDescription>Kelola kehadiran siswa.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="font-semibold text-accent flex items-center justify-center">
-                    Buka Presensi
-                    <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
+            {!['Faddliyah', 'Michael'].includes(facilitator.fullName) && (
+              <>
+                <Link href="/facilitator/attendance" passHref>
+                  <Card className="group relative overflow-hidden text-center transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 h-full flex flex-col justify-between">
+                    <CardHeader>
+                      <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-accent/10 transition-transform duration-300 group-hover:scale-110">
+                        <ClipboardCheck className="h-12 w-12 text-accent" />
+                      </div>
+                      <CardTitle>Presensi</CardTitle>
+                      <CardDescription>Kelola kehadiran siswa.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="font-semibold text-accent flex items-center justify-center">
+                        Buka Presensi
+                        <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
 
-            <Link href="/facilitator/savings" passHref>
-              <Card className="group relative overflow-hidden text-center transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 h-full flex flex-col justify-between">
-                <CardHeader>
-                  <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-primary/10 transition-transform duration-300 group-hover:scale-110">
-                    <PiggyBank className="h-12 w-12 text-primary" />
-                  </div>
-                  <CardTitle>Tabungan</CardTitle>
-                  <CardDescription>Catat tabungan siswa.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="font-semibold text-primary flex items-center justify-center">
-                    Buka Tabungan
-                    <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
+                <Link href="/facilitator/savings" passHref>
+                  <Card className="group relative overflow-hidden text-center transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 h-full flex flex-col justify-between">
+                    <CardHeader>
+                      <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-primary/10 transition-transform duration-300 group-hover:scale-110">
+                        <PiggyBank className="h-12 w-12 text-primary" />
+                      </div>
+                      <CardTitle>Tabungan</CardTitle>
+                      <CardDescription>Catat tabungan siswa.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="font-semibold text-primary flex items-center justify-center">
+                        Buka Tabungan
+                        <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              </>
+            )}
             
             <Link href="/facilitator/journal" passHref>
               <Card className="group relative overflow-hidden text-center transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 h-full flex flex-col justify-between">
