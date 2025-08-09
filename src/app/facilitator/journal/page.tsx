@@ -5,7 +5,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { 
   ArrowLeft, Calendar as CalendarIcon, Clock, Check, Loader2, Book, 
-  BookOpenCheck, User, Star, PlusCircle, X, Trash2, StickyNote, CalendarPlus
+  User, Star, PlusCircle, X, Trash2, StickyNote, Layers
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { studentsByClass, classes, facilitator, facilitatorAssignments } from "@/lib/data";
+import { allStudents, classes, facilitator, facilitatorAssignments } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -28,9 +28,12 @@ type PersonalNote = {
 
 export default function JournalPage() {
   const [timestamp, setTimestamp] = useState("");
-  const [selectedClass, setSelectedClass] = useState<string>("");
-  const [studentOptions, setStudentOptions] = useState<string[]>([]);
   const [selectedSubject, setSelectedSubject] = useState<string>("");
+  const [selectedClass, setSelectedClass] = useState<string>("");
+
+  const [studentOptions, setStudentOptions] = useState<string[]>([]);
+  const [classOptions, setClassOptions] = useState<string[]>([]);
+  
   const [topic, setTopic] = useState("");
   const [studentActivity, setStudentActivity] = useState<{ [studentName: string]: number }>({});
   const [assignment, setAssignment] = useState("");
@@ -55,50 +58,69 @@ export default function JournalPage() {
   }, []);
 
   const availableSubjects = useMemo(() => {
-    if (selectedClass === "Kelompok MFM") {
-      return ["MFM"];
-    }
-    if (!selectedClass || !facilitator) {
-      return [];
-    }
+    if (!facilitator) return [];
     const assignments = facilitatorAssignments[facilitator.fullName];
-    if (!assignments) {
-      return [];
-    }
-    return Object.keys(assignments).filter(subject => {
-      const taughtIn = assignments[subject];
-      if (taughtIn === 'all') {
-        return true;
-      }
-      if(Array.isArray(taughtIn) && classes.includes(taughtIn[0])) {
-         return taughtIn.includes(selectedClass);
-      }
-      if(Array.isArray(taughtIn) && !classes.includes(taughtIn[0])) {
-        return true;
-      }
-      return false;
-    });
-  }, [selectedClass]);
+    return assignments ? Object.keys(assignments) : [];
+  }, []);
 
-  const handleClassChange = (value: string) => {
-    setSelectedClass(value);
-    setSelectedSubject("");
+  const resetFormFields = (clearSubject = false) => {
+    if (clearSubject) setSelectedSubject("");
+    setSelectedClass("");
     setStudentOptions([]);
     setStudentActivity({});
+    setTopic("");
+    setAssignment("");
+    setDeadline(undefined);
+    setImportantNotes("");
+    setPersonalNotes([]);
+    setShowPersonalNotes(false);
+  };
+  
+  const handleSubjectChange = (subject: string) => {
+    resetFormFields();
+    setSelectedSubject(subject);
+
+    if (subject === "Al-Qur'an & Tajwid") {
+        if (facilitator) {
+            const studentsWithSameGender = allStudents
+                .filter(student => student.gender === facilitator.gender)
+                .map(student => student.fullName);
+            setStudentOptions(studentsWithSameGender);
+            setStudentActivity(Object.fromEntries(studentsWithSameGender.map(s => [s, 0])));
+        }
+        setClassOptions([]); // No class selection needed
+    } else {
+        if (facilitator) {
+            const assignments = facilitatorAssignments[facilitator.fullName];
+            const taughtIn = assignments[subject];
+            if (taughtIn === 'all') {
+                setClassOptions(classes.filter(c => c !== "Kelompok MFM"));
+            } else if (Array.isArray(taughtIn) && classes.includes(taughtIn[0])) {
+                setClassOptions(taughtIn);
+            } else {
+                 // For MFM, student list is directly provided
+                 if (Array.isArray(taughtIn)) {
+                     setClassOptions(["Kelompok MFM"]);
+                     setStudentOptions(taughtIn);
+                     setStudentActivity(Object.fromEntries(taughtIn.map(s => [s, 0])));
+                 }
+            }
+        }
+    }
+  };
+
+  const handleClassChange = (className: string) => {
+    setSelectedClass(className);
     
     let students: string[] = [];
-
-    if (value === "Kelompok MFM") {
-      if (facilitator) {
+    if (className === "Kelompok MFM") {
         const assignments = facilitatorAssignments[facilitator.fullName];
         const mfmStudents = assignments['MFM'];
         if (Array.isArray(mfmStudents)) {
           students = mfmStudents;
         }
-      }
-      setSelectedSubject("MFM"); // Auto-select MFM
     } else {
-      students = studentsByClass[value] || [];
+        students = allStudents.filter(s => s.className === className).map(s => s.fullName);
     }
     
     setStudentOptions(students);
@@ -109,21 +131,6 @@ export default function JournalPage() {
     setStudentActivity(initialActivity);
   };
 
-  const handleSubjectChange = (subject: string) => {
-    setSelectedSubject(subject);
-    if (subject === 'MFM' && facilitator && selectedClass && selectedClass !== "Kelompok MFM") {
-        const assignments = facilitatorAssignments[facilitator.fullName];
-        const mfmStudents = assignments['MFM'];
-        const studentsInClass = studentsByClass[selectedClass] || [];
-        if (Array.isArray(mfmStudents)) {
-            const relevantStudents = studentsInClass.filter(s => mfmStudents.includes(s));
-            setStudentOptions(relevantStudents);
-        }
-    } else if (selectedClass && selectedClass !== "Kelompok MFM") {
-        setStudentOptions(studentsByClass[selectedClass] || []);
-    }
-  };
-  
   const handleActivityChange = (studentName: string, rating: number) => {
     setStudentActivity(prev => ({ ...prev, [studentName]: rating }));
   };
@@ -141,11 +148,11 @@ export default function JournalPage() {
   }
 
   const handleSave = () => {
-    if (!selectedClass || !selectedSubject || !topic) {
+    if (!selectedSubject || !topic) {
       setIsShaking(true);
       toast({
         title: "Data Wajib Belum Lengkap",
-        description: "Mohon pilih kelas, mata pelajaran, dan isi topik hari ini.",
+        description: "Mohon pilih mata pelajaran dan isi topik hari ini.",
         variant: "destructive",
       });
       setTimeout(() => setIsShaking(false), 500);
@@ -168,9 +175,9 @@ export default function JournalPage() {
       setButtonState("saved");
       toast({
         title: "Jurnal Tersimpan!",
-        description: `Jurnal akademik untuk ${selectedClass} mata pelajaran ${selectedSubject} berhasil disimpan.`,
+        description: `Jurnal akademik untuk mata pelajaran ${selectedSubject} berhasil disimpan.`,
       });
-      // Reset form could go here
+      resetFormFields(true);
       
       setTimeout(() => setButtonState("idle"), 2000);
     }, 1500);
@@ -194,29 +201,17 @@ export default function JournalPage() {
         <Card className={cn("shadow-lg", isShaking && 'animate-shake')}>
           <CardHeader>
             <CardTitle>Formulir Jurnal Pembelajaran</CardTitle>
-            <CardDescription>Isi detail sesi pembelajaran hari ini.</CardDescription>
+            <CardDescription>Isi detail sesi pembelajaran hari ini. Mulai dengan memilih mata pelajaran.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             
             {/* --- Basic Info --- */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="class-select" className="font-semibold">Kelas <span className="text-destructive">*</span></Label>
-                <Select onValueChange={handleClassChange} value={selectedClass}>
-                  <SelectTrigger id="class-select" className="w-full">
-                    <SelectValue placeholder="Pilih Kelas..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {classes.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
                 <Label htmlFor="subject-select" className="font-semibold">Mata Pelajaran <span className="text-destructive">*</span></Label>
                 <Select 
                   onValueChange={handleSubjectChange} 
                   value={selectedSubject} 
-                  disabled={!selectedClass || selectedClass === "Kelompok MFM"}
                 >
                   <SelectTrigger id="subject-select" className="w-full">
                     <SelectValue placeholder="Pilih Mata Pelajaran..." />
@@ -226,22 +221,33 @@ export default function JournalPage() {
                   </SelectContent>
                 </Select>
               </div>
+               <div className="space-y-2">
+                <Label htmlFor="class-select" className="font-semibold">Kelas</Label>
+                <Select onValueChange={handleClassChange} value={selectedClass} disabled={!selectedSubject || selectedSubject === "Al-Qur'an & Tajwid"}>
+                  <SelectTrigger id="class-select" className="w-full">
+                    <SelectValue placeholder="Pilih Kelas..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {classOptions.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             
             <div className="space-y-2">
               <Label htmlFor="topic" className="font-semibold">Topik Hari Ini <span className="text-destructive">*</span></Label>
               <div className="relative">
                 <Book className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Textarea id="topic" placeholder="Contoh: Mempelajari tentang sistem tata surya" className="pl-10" value={topic} onChange={(e) => setTopic(e.target.value)} />
+                <Textarea id="topic" placeholder="Contoh: Mempelajari tentang sistem tata surya" className="pl-10" value={topic} onChange={(e) => setTopic(e.target.value)} disabled={!selectedSubject} />
               </div>
             </div>
 
             {/* --- Student Activity --- */}
-            {selectedClass && (
+            {selectedSubject && studentOptions.length > 0 && (
               <div className="space-y-4">
                 <Label className="font-semibold">Tingkat Keaktifan Siswa</Label>
                 <div className="space-y-3 rounded-md border p-4">
-                  {studentOptions.length > 0 ? studentOptions.map((student) => (
+                  {studentOptions.map((student) => (
                     <div key={student} className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
                       <p className="font-medium text-foreground mb-2 sm:mb-0">{student}</p>
                       <div className="flex items-center gap-1">
@@ -252,7 +258,7 @@ export default function JournalPage() {
                         ))}
                       </div>
                     </div>
-                  )) : <p className="text-sm text-muted-foreground text-center">Pilih kelas untuk menampilkan siswa.</p>}
+                  ))}
                 </div>
               </div>
             )}
@@ -262,7 +268,7 @@ export default function JournalPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="assignment" className="font-semibold">Tugas yang Diberikan (Opsional)</Label>
-                  <Textarea id="assignment" placeholder="Contoh: Meringkas bab 3" value={assignment} onChange={(e) => setAssignment(e.target.value)} />
+                  <Textarea id="assignment" placeholder="Contoh: Meringkas bab 3" value={assignment} onChange={(e) => setAssignment(e.target.value)} disabled={!selectedSubject} />
                 </div>
                  <div className="space-y-2">
                   <Label htmlFor="deadline" className="font-semibold">Deadline Tugas (Opsional)</Label>
@@ -274,6 +280,7 @@ export default function JournalPage() {
                             "w-full justify-start text-left font-normal",
                             !deadline && "text-muted-foreground"
                           )}
+                          disabled={!selectedSubject}
                         >
                           <CalendarIcon className="mr-2 h-4 w-4" />
                           {deadline ? format(deadline, "PPP") : <span>Pilih tanggal</span>}
@@ -292,14 +299,17 @@ export default function JournalPage() {
               </div>
                <div className="space-y-2">
                   <Label htmlFor="important-notes" className="font-semibold">Catatan Penting (Opsional)</Label>
-                  <Textarea id="important-notes" placeholder="Contoh: Pertemuan selanjutnya akan ada kuis" value={importantNotes} onChange={(e) => setImportantNotes(e.target.value)}/>
+                  <div className="relative">
+                    <StickyNote className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Textarea id="important-notes" placeholder="Contoh: Pertemuan selanjutnya akan ada kuis" className="pl-10" value={importantNotes} onChange={(e) => setImportantNotes(e.target.value)} disabled={!selectedSubject}/>
+                  </div>
               </div>
             </div>
             
             {/* --- Personal Notes --- */}
             <div>
               {!showPersonalNotes ? (
-                 <Button variant="outline" onClick={() => setShowPersonalNotes(true)}>
+                 <Button variant="outline" onClick={() => setShowPersonalNotes(true)} disabled={!selectedSubject || studentOptions.length === 0}>
                     <PlusCircle className="mr-2 h-4 w-4"/> Tambah Catatan Personal (Opsional)
                  </Button>
               ) : (
@@ -310,9 +320,9 @@ export default function JournalPage() {
                       <X className="h-4 w-4" />
                     </Button>
                   </div>
-                  {personalNotes.map((note, index) => (
+                  {personalNotes.map((note) => (
                      <div key={note.id} className="grid grid-cols-1 md:grid-cols-[1fr_2fr_auto] gap-4 items-center rounded-md bg-secondary/30 p-3">
-                        <Select onValueChange={(value) => updatePersonalNote(note.id, 'studentName', value)} value={note.studentName} disabled={!selectedClass}>
+                        <Select onValueChange={(value) => updatePersonalNote(note.id, 'studentName', value)} value={note.studentName}>
                           <SelectTrigger>
                             <SelectValue placeholder="Pilih Siswa..." />
                           </SelectTrigger>
