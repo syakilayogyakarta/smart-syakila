@@ -143,7 +143,10 @@ export default function SavingsPage() {
                 </Button>
                  <Button 
                   variant={transactionType === 'penarikan' ? 'destructive' : 'outline'}
-                  className={cn("py-6 text-lg", transactionType === 'penarikan' && "ring-2 ring-destructive/50")}
+                  className={cn(
+                    "py-6 text-lg",
+                    transactionType === 'penarikan' ? "ring-2 ring-destructive/50" : "text-destructive border-destructive/50 hover:bg-destructive/10 hover:text-destructive"
+                  )}
                   onClick={() => setTransactionType('penarikan')}
                 >
                   <Wallet className="mr-3 h-6 w-6" /> Penarikan
@@ -188,7 +191,7 @@ export default function SavingsPage() {
               )}
               onClick={handleSave}
               disabled={buttonState !== 'idle'}
-              variant={transactionType === 'setoran' ? 'default' : 'destructive'}
+              variant={transactionType === 'setoran' ? 'success' : 'destructive'}
             >
               {buttonState === 'loading' ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : buttonState === 'saved' ? <Check className="mr-2 h-5 w-5" /> : null}
               {buttonState === 'loading' ? 'Menyimpan...' : buttonState === 'saved' ? 'Tersimpan' : 'Simpan Transaksi'}
