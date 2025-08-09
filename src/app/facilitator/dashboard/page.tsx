@@ -3,7 +3,7 @@
 
 import Link from "next/link"
 import React, { useState, useEffect } from "react";
-import { ClipboardCheck, Banknote, ArrowRight, User, BookOpen, HeartPulse, BookCopy, Calendar, Clock, Users, LogOut } from "lucide-react"
+import { ClipboardCheck, Banknote, ArrowRight, User, BookOpen, Activity, BookCopy, Calendar, Clock, Users, LogOut } from "lucide-react"
 
 import {
   Card,
@@ -71,7 +71,7 @@ export default function FacilitatorDashboard() {
         <header className="mb-8">
           <Card className="p-6">
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 w-full">
-              <Avatar className="h-20 w-20 sm:h-16 sm:w-16">
+              <Avatar className="h-20 w-20 sm:h-16 sm:w-16 self-center sm:self-auto">
                 <AvatarFallback className="bg-primary/20 text-primary">
                   <User className="h-10 w-10 sm:h-8 sm:w-8" />
                 </AvatarFallback>
@@ -201,7 +201,7 @@ export default function FacilitatorDashboard() {
               <Card className="group relative overflow-hidden text-center transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 h-full flex flex-col justify-between">
                 <CardHeader>
                   <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-blue-500/10 transition-transform duration-300 group-hover:scale-110">
-                    <HeartPulse className="h-12 w-12 text-blue-500" />
+                    <Activity className="h-12 w-12 text-blue-500" />
                   </div>
                   <CardTitle>Kegiatan/Stimulasi</CardTitle>
                   <CardDescription>Catat kegiatan & stimulasi.</CardDescription>
