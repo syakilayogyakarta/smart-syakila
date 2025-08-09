@@ -18,16 +18,20 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { facilitator } from "@/lib/data";
 
 export default function FacilitatorDashboard() {
-  const [currentDateTime, setCurrentDateTime] = useState("");
+  const [currentDate, setCurrentDate] = useState("");
+  const [currentTime, setCurrentTime] = useState("");
 
   useEffect(() => {
     const timer = setInterval(() => {
       const now = new Date();
-      const options: Intl.DateTimeFormatOptions = {
-        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-        hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'Asia/Jakarta'
+      const dateOptions: Intl.DateTimeFormatOptions = {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Jakarta'
       };
-      setCurrentDateTime(new Intl.DateTimeFormat('id-ID', options).format(now).replace(/\./g, ':'));
+      const timeOptions: Intl.DateTimeFormatOptions = {
+        hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'Asia/Jakarta', hour12: false
+      };
+      setCurrentDate(new Intl.DateTimeFormat('id-ID', dateOptions).format(now));
+      setCurrentTime(new Intl.DateTimeFormat('id-ID', timeOptions).format(now).replace(/\./g, ':'));
     }, 1000);
     return () => clearInterval(timer);
   }, []);
@@ -65,22 +69,18 @@ export default function FacilitatorDashboard() {
                 <p className="text-muted-foreground">Dasbor Pengelolaan Kelas Anda</p>
               </div>
             </div>
-            <Button variant="outline" className="mt-4 sm:mt-0" onClick={() => window.location.href = '/login'}>
-              <LogOut className="mr-2 h-4 w-4" /> Keluar
-            </Button>
+            <div className="text-right mt-4 sm:mt-0">
+               <div className="flex items-center justify-end gap-2 text-foreground">
+                  <Calendar className="h-5 w-5 text-primary"/>
+                  <span className="font-semibold text-lg">{currentDate}</span>
+               </div>
+               <div className="flex items-center justify-end gap-2 text-muted-foreground">
+                  <Clock className="h-5 w-5"/>
+                  <span className="font-semibold text-lg">{currentTime}</span>
+               </div>
+            </div>
           </Card>
         </header>
-
-        <div className="mb-8 p-4 bg-card border rounded-lg shadow-sm flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 text-center">
-            <div className="flex items-center gap-3">
-                <Calendar className="h-6 w-6 text-primary" />
-                <span className="text-lg font-semibold text-foreground">{currentDateTime.split('pukul')[0]}</span>
-            </div>
-            <div className="flex items-center gap-3">
-                <Clock className="h-6 w-6 text-primary" />
-                <span className="text-lg font-semibold text-foreground">Pukul {currentDateTime.split('pukul')[1]}</span>
-            </div>
-        </div>
 
         <main>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -195,5 +195,5 @@ export default function FacilitatorDashboard() {
         </main>
       </div>
     </div>
-  )
+  );
 }
