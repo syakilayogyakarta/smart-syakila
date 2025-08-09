@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { allStudents, classes, facilitator, facilitatorAssignments } from "@/lib/data";
+import { allStudents, classes, facilitatorAssignments, getLoggedInFacilitator } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -26,7 +26,15 @@ type PersonalNote = {
   note: string;
 }
 
+type Facilitator = {
+  fullName: string;
+  nickname: string;
+  email: string;
+  gender: string;
+}
+
 export default function JournalPage() {
+  const [facilitator, setFacilitator] = useState<Facilitator | null>(null);
   const [timestamp, setTimestamp] = useState("");
   const [selectedSubject, setSelectedSubject] = useState<string>("");
   const [selectedClass, setSelectedClass] = useState<string>("");
@@ -49,19 +57,26 @@ export default function JournalPage() {
   const { toast } = useToast();
 
   useEffect(() => {
+    const loggedInFacilitator = getLoggedInFacilitator();
+    if (!loggedInFacilitator) {
+      router.push('/login');
+    } else {
+      setFacilitator(loggedInFacilitator);
+    }
+
     const now = new Date();
     const options: Intl.DateTimeFormatOptions = {
       year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit',
       timeZone: 'Asia/Jakarta'
     };
     setTimestamp(new Intl.DateTimeFormat('id-ID', options).format(now).replace('.', ':'));
-  }, []);
+  }, [router]);
 
   const availableSubjects = useMemo(() => {
     if (!facilitator) return [];
     const assignments = facilitatorAssignments[facilitator.fullName];
     return assignments ? Object.keys(assignments) : [];
-  }, []);
+  }, [facilitator]);
 
   const resetFormFields = (clearSubject = false) => {
     if (clearSubject) setSelectedSubject("");
@@ -114,10 +129,12 @@ export default function JournalPage() {
     
     let students: string[] = [];
     if (className === "Kelompok MFM") {
-        const assignments = facilitatorAssignments[facilitator.fullName];
-        const mfmStudents = assignments['MFM'];
-        if (Array.isArray(mfmStudents)) {
-          students = mfmStudents;
+        if (facilitator) {
+            const assignments = facilitatorAssignments[facilitator.fullName];
+            const mfmStudents = assignments['MFM'];
+            if (Array.isArray(mfmStudents)) {
+              students = mfmStudents;
+            }
         }
     } else {
         students = allStudents.filter(s => s.className === className).map(s => s.fullName);
@@ -184,6 +201,14 @@ export default function JournalPage() {
   };
   
   const isSaveDisabled = buttonState !== 'idle';
+  
+  if (!facilitator) {
+    return (
+        <div className="min-h-screen bg-background p-8 flex items-center justify-center">
+            <p>Memuat data fasilitator...</p>
+        </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">

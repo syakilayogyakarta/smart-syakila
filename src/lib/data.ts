@@ -11,8 +11,19 @@ export const facilitators = [
     { fullName: "Michael", nickname: "Michael", email: "michael@example.com", gender: "Laki-laki" },
 ];
 
-// Set the currently logged-in facilitator.
-export const facilitator = facilitators.find(f => f.fullName === "Evan Setiawan Parusa")!;
+// This function should be called from client components only, as it uses localStorage.
+export const getLoggedInFacilitator = () => {
+    if (typeof window === 'undefined') {
+        // Return a default or placeholder facilitator if on the server
+        return facilitators[0]; 
+    }
+    const facilitatorName = localStorage.getItem("loggedInFacilitator");
+    if (!facilitatorName) {
+        return null;
+    }
+    return facilitators.find(f => f.fullName === facilitatorName) || null;
+};
+
 
 export const classes = ["Tarbiyah", "Ta'dib", "Ta'lim 1", "Ta'lim 2", "Kelompok MFM"];
 

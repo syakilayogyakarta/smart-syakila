@@ -15,13 +15,23 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { facilitator } from "@/lib/data";
+import { getLoggedInFacilitator } from "@/lib/data";
+import { useRouter } from "next/navigation";
 
 export default function FacilitatorDashboard() {
+  const router = useRouter();
+  const [facilitator, setFacilitator] = useState<any>(null);
   const [currentDate, setCurrentDate] = useState("");
   const [currentTime, setCurrentTime] = useState("");
 
   useEffect(() => {
+    const loggedInFacilitator = getLoggedInFacilitator();
+    if (!loggedInFacilitator) {
+      router.push('/login');
+    } else {
+      setFacilitator(loggedInFacilitator);
+    }
+
     const timer = setInterval(() => {
       const now = new Date();
       const dateOptions: Intl.DateTimeFormatOptions = {
@@ -34,14 +44,17 @@ export default function FacilitatorDashboard() {
       setCurrentTime(new Intl.DateTimeFormat('id-ID', timeOptions).format(now).replace(/\./g, ':'));
     }, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [router]);
 
+  const handleLogout = () => {
+    localStorage.removeItem("loggedInFacilitator");
+    router.push('/login');
+  };
+  
   if (!facilitator) {
     return (
-        <div className="min-h-screen bg-background p-8">
-            <div className="max-w-7xl mx-auto">
-                <p>Memuat data fasilitator...</p>
-            </div>
+        <div className="min-h-screen bg-background p-8 flex items-center justify-center">
+            <p>Memuat data fasilitator...</p>
         </div>
     )
   }
@@ -57,7 +70,7 @@ export default function FacilitatorDashboard() {
         </div>
 
         <header className="mb-8">
-          <Card className="p-6 flex flex-col sm:flex-row items-center justify-between">
+          <Card className="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between">
             <div className="flex items-center gap-4">
               <Avatar className="h-16 w-16">
                 <AvatarFallback className="bg-primary/20 text-primary">
@@ -69,8 +82,8 @@ export default function FacilitatorDashboard() {
                 <p className="text-muted-foreground">Dasbor Pengelolaan Kelas Anda</p>
               </div>
             </div>
-            <div className="flex items-center gap-8">
-                <div className="text-right mt-4 sm:mt-0">
+            <div className="flex items-center gap-4 mt-4 sm:mt-0">
+                <div className="text-right">
                    <div className="flex items-center justify-end gap-2 text-foreground">
                       <Calendar className="h-5 w-5 text-primary"/>
                       <span className="font-semibold text-lg">{currentDate}</span>
@@ -80,7 +93,7 @@ export default function FacilitatorDashboard() {
                       <span className="font-semibold text-lg">{currentTime}</span>
                    </div>
                 </div>
-                 <Button variant="outline" className="mt-4 sm:mt-0" onClick={() => window.location.href = '/login'}>
+                 <Button variant="outline" onClick={handleLogout}>
                     <LogOut className="mr-2 h-4 w-4" /> Keluar
                  </Button>
             </div>

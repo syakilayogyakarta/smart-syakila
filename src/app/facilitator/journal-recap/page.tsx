@@ -25,7 +25,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { academicJournalLog, facilitator, studentsByClass, stimulationJournalLog } from "@/lib/data";
+import { academicJournalLog, getLoggedInFacilitator, studentsByClass, stimulationJournalLog } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -37,6 +37,12 @@ type AcademicPersonalNote = AcademicJournalEntry['personalNotes'][0];
 type StimulationJournalEntry = typeof stimulationJournalLog[0];
 type StimulationPersonalNote = StimulationJournalEntry['personalNotes'][0];
 
+type Facilitator = {
+  fullName: string;
+  nickname: string;
+  email: string;
+  gender: string;
+}
 
 const ClientFormattedDate = ({ timestamp }: { timestamp: string }) => {
   const [formattedDate, setFormattedDate] = useState("");
@@ -60,13 +66,30 @@ export default function JournalRecapPage() {
   
   const [academicJournals, setAcademicJournals] = useState(academicJournalLog);
   const [stimulationJournals, setStimulationJournals] = useState(stimulationJournalLog);
+  
+  const [facilitator, setFacilitator] = useState<Facilitator | null>(null);
 
   const [newAcademicNotes, setNewAcademicNotes] = useState<{ [journalId: number]: { studentName: string; note: string } }>({});
   const [newStimulationNotes, setNewStimulationNotes] = useState<{ [journalId: number]: { studentName: string; note: string } }>({});
   
   const [isRefreshing, setIsRefreshing] = useState(false);
   
-  const loggedInFacilitator = facilitator;
+  useEffect(() => {
+    const loggedInFacilitator = getLoggedInFacilitator();
+    if (!loggedInFacilitator) {
+      router.push('/login');
+    } else {
+      setFacilitator(loggedInFacilitator);
+    }
+  }, [router]);
+  
+  if (!facilitator) {
+    return (
+        <div className="min-h-screen bg-background p-8 flex items-center justify-center">
+            <p>Memuat data fasilitator...</p>
+        </div>
+    )
+  }
 
   const handleRefresh = () => {
     setIsRefreshing(true);
@@ -96,7 +119,7 @@ export default function JournalRecapPage() {
             id: Date.now(),
             studentName: noteData.studentName,
             note: noteData.note,
-            facilitatorName: loggedInFacilitator.fullName
+            facilitatorName: facilitator.fullName
           };
           return { ...journal, personalNotes: [...journal.personalNotes, newNote] };
         }
@@ -111,7 +134,7 @@ export default function JournalRecapPage() {
             id: Date.now(),
             studentName: noteData.studentName,
             note: noteData.note,
-            facilitatorName: loggedInFacilitator.fullName
+            facilitatorName: facilitator.fullName
           };
           return { ...journal, personalNotes: [...journal.personalNotes, newNote] };
         }
@@ -224,7 +247,7 @@ export default function JournalRecapPage() {
                                 </Button>
                             </div>
 
-                            {loggedInFacilitator.fullName === journal.facilitatorName && (
+                            {facilitator.fullName === journal.facilitatorName && (
                                 <div className="flex justify-end pt-4 border-t">
                                 <AlertDialog>
                                     <AlertDialogTrigger asChild>
@@ -315,7 +338,7 @@ export default function JournalRecapPage() {
                                 </Button>
                             </div>
 
-                            {loggedInFacilitator.fullName === journal.facilitatorName && (
+                            {facilitator.fullName === journal.facilitatorName && (
                                 <div className="flex justify-end pt-4 border-t">
                                 <AlertDialog>
                                     <AlertDialogTrigger asChild>

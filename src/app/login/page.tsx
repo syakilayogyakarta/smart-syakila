@@ -1,26 +1,26 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { KeyRound, Mail, Briefcase } from "lucide-react"
+import { User, Users } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import Link from "next/link"
+import { facilitators } from "@/lib/data"
 import Image from "next/image"
 
 export default function LoginPage() {
   const router = useRouter()
 
-  const handleLogin = () => {
+  const handleLogin = (facilitatorFullName: string) => {
+    // In a real app, you'd use a proper auth system.
+    // For this prototype, we'll use localStorage to remember the user.
+    localStorage.setItem("loggedInFacilitator", facilitatorFullName)
     router.push('/facilitator/dashboard');
   }
 
@@ -34,33 +34,25 @@ export default function LoginPage() {
         </div>
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-foreground">Login Fasilitator</CardTitle>
-          <CardDescription>Masuk ke akun Anda untuk melanjutkan</CardDescription>
+          <div className="mx-auto bg-primary/10 p-3 rounded-full mb-2">
+            <Users className="h-8 w-8 text-primary" />
+          </div>
+          <CardTitle className="text-2xl font-bold text-foreground">Pilih Profil Fasilitator</CardTitle>
+          <CardDescription>Klik pada nama Anda untuk masuk ke dasbor.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input id="email" type="email" placeholder="email@contoh.com" className="pl-10" />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <div className="relative">
-              <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input id="password" type="password" placeholder="********" className="pl-10" />
-            </div>
-          </div>
+        <CardContent className="space-y-3">
+          {facilitators.map((facilitator) => (
+             <Button 
+                key={facilitator.fullName} 
+                className="w-full justify-start h-14 text-lg" 
+                variant="outline"
+                onClick={() => handleLogin(facilitator.fullName)}
+              >
+                <User className="mr-4 h-5 w-5 text-primary" />
+                {facilitator.nickname}
+             </Button>
+          ))}
         </CardContent>
-        <CardFooter className="flex flex-col gap-4">
-          <Button className="w-full" size="lg" onClick={handleLogin}>
-            <Briefcase className="mr-2 h-5 w-5" /> Masuk
-          </Button>
-          <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-            Lupa password?
-          </Link>
-        </CardFooter>
       </Card>
     </main>
   )
