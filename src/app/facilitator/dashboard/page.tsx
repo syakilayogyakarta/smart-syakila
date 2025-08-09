@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { getLoggedInFacilitator } from "@/lib/data";
 import { useRouter } from "next/navigation";
+import { Separator } from "@/components/ui/separator";
 
 export default function FacilitatorDashboard() {
   const router = useRouter();
@@ -70,31 +71,51 @@ export default function FacilitatorDashboard() {
 
         <header className="mb-8">
           <Card className="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 w-full">
               <Avatar className="h-16 w-16">
                 <AvatarFallback className="bg-primary/20 text-primary">
                   <User className="h-8 w-8" />
                 </AvatarFallback>
               </Avatar>
-              <div>
-                <h2 className="text-2xl font-bold text-foreground">Selamat Datang, {facilitator.nickname}</h2>
-                <p className="text-muted-foreground">Dasbor Pengelolaan Kelas Anda</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4 mt-4 sm:mt-0">
-                <div className="text-right">
-                   <div className="flex items-center justify-end gap-2 text-foreground">
-                      <Calendar className="h-5 w-5 text-primary"/>
-                      <span className="font-semibold text-lg">{currentDate}</span>
-                   </div>
-                   <div className="flex items-center justify-end gap-2 text-muted-foreground">
-                      <Clock className="h-5 w-5"/>
-                      <span className="font-semibold text-lg">{currentTime}</span>
-                   </div>
+              <div className="w-full">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between">
+                    <div>
+                        <h2 className="text-2xl font-bold text-foreground">Selamat Datang, {facilitator.nickname}</h2>
+                        <p className="text-muted-foreground">Dasbor Pengelolaan Kelas Anda</p>
+                    </div>
+                    <div className="hidden sm:flex items-center gap-4">
+                        <div className="text-right">
+                           <div className="flex items-center justify-end gap-2 text-foreground">
+                              <Calendar className="h-5 w-5"/>
+                              <span className="font-semibold text-lg">{currentDate}</span>
+                           </div>
+                           <div className="flex items-center justify-end gap-2 text-muted-foreground">
+                              <Clock className="h-5 w-5"/>
+                              <span className="font-semibold text-lg">{currentTime}</span>
+                           </div>
+                        </div>
+                         <Button variant="outline" onClick={handleLogout}>
+                            <LogOut className="mr-2 h-4 w-4" /> Keluar
+                         </Button>
+                    </div>
                 </div>
-                 <Button variant="outline" onClick={handleLogout}>
-                    <LogOut className="mr-2 h-4 w-4" /> Keluar
-                 </Button>
+
+                 <div className="sm:hidden mt-4 space-y-2">
+                    <Separator />
+                     <div className="flex items-center gap-2 text-foreground pt-2">
+                          <Calendar className="h-4 w-4"/>
+                          <span className="font-semibold">{currentDate}</span>
+                       </div>
+                       <div className="flex items-center gap-2 text-muted-foreground">
+                          <Clock className="h-4 w-4"/>
+                          <span className="font-semibold">{currentTime}</span>
+                       </div>
+                    <Separator className="mt-4"/>
+                    <Button variant="outline" onClick={handleLogout} className="w-full mt-4">
+                        <LogOut className="mr-2 h-4 w-4" /> Keluar
+                    </Button>
+                 </div>
+              </div>
             </div>
           </Card>
         </header>
@@ -165,7 +186,7 @@ export default function FacilitatorDashboard() {
                   <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-green-500/10 transition-transform duration-300 group-hover:scale-110">
                     <BookOpen className="h-12 w-12 text-green-500" />
                   </div>
-                  <CardTitle>Jurnal Akademik</CardTitle>
+                  <CardTitle>Jurnal Pembelajaran</CardTitle>
                   <CardDescription>Isi jurnal pembelajaran.</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -219,3 +240,5 @@ export default function FacilitatorDashboard() {
     </div>
   );
 }
+
+    
