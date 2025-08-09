@@ -14,7 +14,7 @@ export const facilitators = [
 // Set the currently logged-in facilitator.
 export const facilitator = facilitators.find(f => f.fullName === "Evan Setiawan Parusa")!;
 
-export const classes = ["Tarbiyah", "Ta'dib", "Ta'lim 1", "Ta'lim 2"];
+export const classes = ["Tarbiyah", "Ta'dib", "Ta'lim 1", "Ta'lim 2", "Kelompok MFM"];
 
 export const studentsByClass: { [key: string]: string[] } = {
   "Tarbiyah": [

@@ -55,6 +55,9 @@ export default function JournalPage() {
   }, []);
 
   const availableSubjects = useMemo(() => {
+    if (selectedClass === "Kelompok MFM") {
+      return ["MFM"];
+    }
     if (!selectedClass || !facilitator) {
       return [];
     }
@@ -67,11 +70,9 @@ export default function JournalPage() {
       if (taughtIn === 'all') {
         return true;
       }
-      // Check if taughtIn is an array of classes, not students
       if(Array.isArray(taughtIn) && classes.includes(taughtIn[0])) {
          return taughtIn.includes(selectedClass);
       }
-      // For student-specific subjects like MFM, allow if facilitator teaches it at all
       if(Array.isArray(taughtIn) && !classes.includes(taughtIn[0])) {
         return true;
       }
@@ -81,30 +82,36 @@ export default function JournalPage() {
 
   const handleClassChange = (value: string) => {
     setSelectedClass(value);
-    const studentsInClass = studentsByClass[value] || [];
-    setStudentOptions(studentsInClass);
-    setSelectedSubject(""); // Reset subject when class changes
+    setSelectedSubject("");
+    setStudentOptions([]);
+    setStudentActivity({});
     
-    const initialActivity: { [studentName: string]: number } = {};
-    studentsInClass.forEach(student => {
-      initialActivity[student] = 0;
-    });
-    setStudentActivity(initialActivity);
+    let students: string[] = [];
 
-    // Filter students for MFM if MFM is selected
-    if (selectedSubject === 'MFM' && facilitator) {
+    if (value === "Kelompok MFM") {
+      if (facilitator) {
         const assignments = facilitatorAssignments[facilitator.fullName];
         const mfmStudents = assignments['MFM'];
         if (Array.isArray(mfmStudents)) {
-            const relevantStudents = studentsInClass.filter(s => mfmStudents.includes(s));
-            setStudentOptions(relevantStudents);
+          students = mfmStudents;
         }
+      }
+      setSelectedSubject("MFM"); // Auto-select MFM
+    } else {
+      students = studentsByClass[value] || [];
     }
+    
+    setStudentOptions(students);
+    const initialActivity: { [studentName: string]: number } = {};
+    students.forEach(student => {
+      initialActivity[student] = 0;
+    });
+    setStudentActivity(initialActivity);
   };
 
   const handleSubjectChange = (subject: string) => {
     setSelectedSubject(subject);
-    if (subject === 'MFM' && facilitator && selectedClass) {
+    if (subject === 'MFM' && facilitator && selectedClass && selectedClass !== "Kelompok MFM") {
         const assignments = facilitatorAssignments[facilitator.fullName];
         const mfmStudents = assignments['MFM'];
         const studentsInClass = studentsByClass[selectedClass] || [];
@@ -112,7 +119,7 @@ export default function JournalPage() {
             const relevantStudents = studentsInClass.filter(s => mfmStudents.includes(s));
             setStudentOptions(relevantStudents);
         }
-    } else if (selectedClass) {
+    } else if (selectedClass && selectedClass !== "Kelompok MFM") {
         setStudentOptions(studentsByClass[selectedClass] || []);
     }
   };
@@ -161,7 +168,7 @@ export default function JournalPage() {
       setButtonState("saved");
       toast({
         title: "Jurnal Tersimpan!",
-        description: `Jurnal akademik untuk kelas ${selectedClass} mata pelajaran ${selectedSubject} berhasil disimpan.`,
+        description: `Jurnal akademik untuk ${selectedClass} mata pelajaran ${selectedSubject} berhasil disimpan.`,
       });
       // Reset form could go here
       
@@ -206,7 +213,11 @@ export default function JournalPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="subject-select" className="font-semibold">Mata Pelajaran <span className="text-destructive">*</span></Label>
-                <Select onValueChange={handleSubjectChange} value={selectedSubject} disabled={!selectedClass}>
+                <Select 
+                  onValueChange={handleSubjectChange} 
+                  value={selectedSubject} 
+                  disabled={!selectedClass || selectedClass === "Kelompok MFM"}
+                >
                   <SelectTrigger id="subject-select" className="w-full">
                     <SelectValue placeholder="Pilih Mata Pelajaran..." />
                   </SelectTrigger>
@@ -230,7 +241,7 @@ export default function JournalPage() {
               <div className="space-y-4">
                 <Label className="font-semibold">Tingkat Keaktifan Siswa</Label>
                 <div className="space-y-3 rounded-md border p-4">
-                  {studentOptions.map((student) => (
+                  {studentOptions.length > 0 ? studentOptions.map((student) => (
                     <div key={student} className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
                       <p className="font-medium text-foreground mb-2 sm:mb-0">{student}</p>
                       <div className="flex items-center gap-1">
@@ -241,7 +252,7 @@ export default function JournalPage() {
                         ))}
                       </div>
                     </div>
-                  ))}
+                  )) : <p className="text-sm text-muted-foreground text-center">Pilih kelas untuk menampilkan siswa.</p>}
                 </div>
               </div>
             )}
