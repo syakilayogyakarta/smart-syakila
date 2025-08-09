@@ -3,8 +3,7 @@
 
 import Link from "next/link"
 import React, { useState, useEffect } from "react";
-import Image from "next/image";
-import { ClipboardCheck, PiggyBank, ArrowRight, User, BookOpen, HeartPulse, BookCopy, Calendar, Clock, Users, LogOut } from "lucide-react"
+import { ClipboardCheck, Banknote, ArrowRight, User, BookOpen, HeartPulse, BookCopy, Calendar, Clock, Users, LogOut } from "lucide-react"
 
 import {
   Card,
@@ -145,14 +144,14 @@ export default function FacilitatorDashboard() {
                 <Link href="/facilitator/savings" passHref>
                   <Card className="group relative overflow-hidden text-center transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 h-full flex flex-col justify-between">
                     <CardHeader>
-                      <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-primary/10 transition-transform duration-300 group-hover:scale-110">
-                        <PiggyBank className="h-12 w-12 text-primary" />
+                      <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-destructive/10 transition-transform duration-300 group-hover:scale-110">
+                        <Banknote className="h-12 w-12 text-destructive" />
                       </div>
                       <CardTitle>Tabungan</CardTitle>
                       <CardDescription>Catat tabungan siswa.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="font-semibold text-primary flex items-center justify-center">
+                      <div className="font-semibold text-destructive flex items-center justify-center">
                         Buka Tabungan
                         <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                       </div>
