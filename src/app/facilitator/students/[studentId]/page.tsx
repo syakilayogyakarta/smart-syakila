@@ -34,9 +34,11 @@ type StudentProfile = {
 export default function StudentDetailPage({ params }: { params: { studentId: string } }) {
   const router = useRouter();
   const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null);
+  
+  const studentId = React.use(Promise.resolve(params.studentId));
 
   useEffect(() => {
-    const studentName = decodeURIComponent(params.studentId);
+    const studentName = decodeURIComponent(studentId);
     const details = studentDetails[studentName];
     
     if (details) {
@@ -57,7 +59,7 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
             }
         });
     }
-  }, [params.studentId]);
+  }, [studentId]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount);
@@ -88,7 +90,7 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
              </Button>
             <div className="text-center">
               <Image src="/logo.png" alt="Syakila Logo" width={80} height={80} className="mx-auto mb-4" />
-              <h1 className="text-4xl font-bold text-foreground tracking-tight">SMART SYAKILA</h1>
+              <h1 className="text-4xl font-extrabold text-foreground tracking-tight font-headline">SMART SYAKILA</h1>
               <p className="text-muted-foreground text-lg mt-1">Sistem Monitoring Aktivitas & Rapor Terpadu</p>
               <p className="text-muted-foreground text-lg">Sekolah Syakila Yogyakarta</p>
             </div>
