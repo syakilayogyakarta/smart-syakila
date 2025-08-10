@@ -2,19 +2,23 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { studentDetails, studentsByClass, academicData, getKegiatanForStudent, getFacilitatorForSubject } from "@/lib/data";
+import { studentDetails, studentsByClass, academicData, getKegiatanForStudent, getFacilitatorForSubject, classes as allClassNames } from "@/lib/data";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
-import { CheckCircle2, AlertCircle, Briefcase, Activity, User, ArrowLeft, BadgePercent, Wallet, BookCopy, Star, StickyNote, Calendar as CalendarIcon, UserCircle, MapPin, HeartPulse } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { CheckCircle2, AlertCircle, Briefcase, Activity, User, ArrowLeft, BadgePercent, Wallet, BookCopy, Star, StickyNote, Calendar as CalendarIcon, UserCircle, MapPin, HeartPulse, Edit, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useRouter } from 'next/navigation';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
 
 type StudentProfile = {
     fullName: string;
@@ -33,8 +37,11 @@ type StudentProfile = {
 
 export default function StudentDetailPage({ params }: { params: { studentId: string } }) {
   const router = useRouter();
+  const { toast } = useToast();
   const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null);
-  
+  const [editedProfile, setEditedProfile] = useState<Partial<StudentProfile>>({});
+  const [isSaving, setIsSaving] = useState(false);
+
   useEffect(() => {
     const studentName = decodeURIComponent(params.studentId);
     const details = studentDetails[studentName];
@@ -42,7 +49,7 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
     if (details) {
         const className = Object.keys(studentsByClass).find(key => studentsByClass[key].includes(studentName));
         
-        setStudentProfile({
+        const profileData = {
             fullName: studentName,
             nickname: details.nickname,
             nisn: details.nisn,
@@ -55,9 +62,32 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
                 deposits: [ { date: "15 Jul 2024", description: "Setoran rutin", amount: 50000 }, { date: "08 Jul 2024", description: "Setoran rutin", amount: 50000 } ],
                 withdrawals: [ { date: "10 Jul 2024", description: "Beli buku", amount: 25000 } ]
             }
-        });
+        };
+        setStudentProfile(profileData);
+        setEditedProfile(profileData);
     }
   }, [params.studentId]);
+
+  const handleInputChange = (field: keyof StudentProfile, value: string) => {
+    setEditedProfile(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSave = () => {
+    setIsSaving(true);
+    console.log("Saving changes:", editedProfile);
+    // Simulate API call
+    setTimeout(() => {
+      // In a real app, you would update the state with the saved data
+      // For this prototype, we just show a success message
+      toast({
+        title: "Profil Diperbarui",
+        description: `Data untuk ${editedProfile.fullName} telah berhasil disimpan.`,
+      });
+      setIsSaving(false);
+      // Here you would typically close the dialog, which can be done by managing an 'open' state for the Dialog
+      // For simplicity, we'll rely on the user closing it or using DialogClose
+    }, 1500);
+  };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount);
@@ -105,6 +135,55 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
                 <p className="text-muted-foreground text-lg">NISN: {studentProfile.nisn} | Kelas: {studentProfile.class}</p>
               </div>
             </div>
+            <Dialog>
+                <DialogTrigger asChild>
+                    <Button variant="outline">
+                        <Edit className="mr-2 h-4 w-4" /> Edit Profil
+                    </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                    <DialogTitle>Edit Profil Siswa</DialogTitle>
+                    <DialogDescription>
+                        Lakukan perubahan pada data siswa di bawah ini. Klik simpan jika sudah selesai.
+                    </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="fullName" className="text-right">Nama Lengkap</Label>
+                            <Input id="fullName" value={editedProfile.fullName || ''} onChange={(e) => handleInputChange('fullName', e.target.value)} className="col-span-3" />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="nickname" className="text-right">Panggilan</Label>
+                            <Input id="nickname" value={editedProfile.nickname || ''} onChange={(e) => handleInputChange('nickname', e.target.value)} className="col-span-3" />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="nisn" className="text-right">NISN</Label>
+                            <Input id="nisn" value={editedProfile.nisn || ''} onChange={(e) => handleInputChange('nisn', e.target.value)} className="col-span-3" />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="class" className="text-right">Kelas</Label>
+                            <Select onValueChange={(value) => handleInputChange('class', value)} value={editedProfile.class}>
+                                <SelectTrigger className="col-span-3">
+                                    <SelectValue placeholder="Pilih kelas" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {allClassNames.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <DialogClose asChild>
+                            <Button type="button" variant="secondary">Batal</Button>
+                        </DialogClose>
+                        <Button type="submit" onClick={handleSave} disabled={isSaving}>
+                            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            {isSaving ? 'Menyimpan...' : 'Simpan Perubahan'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </Card>
 
         <main className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -313,6 +392,7 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
                                     {subject.personalNotes.map((pnote, index) => (
                                       <div key={index} className="text-sm p-3 rounded-md bg-accent/10 border border-accent/20">
                                         <p className="font-semibold text-muted-foreground">{pnote.date}</p>
+
                                         <p className="text-accent-foreground/80">"{pnote.note}"</p>
                                       </div>
                                     ))}
