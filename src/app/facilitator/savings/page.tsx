@@ -82,7 +82,7 @@ export default function SavingsPage() {
     }, 1500);
   };
   
-  const isSaveDisabled = buttonState !== 'idle' || !selectedStudent || !amount;
+  const isSaveDisabled = buttonState !== 'idle';
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
@@ -93,7 +93,7 @@ export default function SavingsPage() {
           </Button>
           <h1 className="text-3xl font-bold text-foreground">Tabungan Siswa</h1>
           <p className="text-muted-foreground mt-2 flex items-center justify-center gap-2">
-            <Calendar className="h-4 w-4" /> <span>{timestamp}</span> <Clock className="h-4 w-4" />
+            <Calendar className="h-4 w-4" /> <span>{timestamp}</span>
           </p>
         </header>
 
@@ -190,7 +190,7 @@ export default function SavingsPage() {
                 isShaking && 'animate-shake'
               )}
               onClick={handleSave}
-              disabled={buttonState !== 'idle'}
+              disabled={isSaveDisabled}
               variant={transactionType === 'setoran' ? 'success' : 'destructive'}
             >
               {buttonState === 'loading' ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : buttonState === 'saved' ? <Check className="mr-2 h-5 w-5" /> : null}

@@ -67,7 +67,7 @@ export default function JournalRecapPage() {
   const [academicJournals, setAcademicJournals] = useState(academicJournalLog);
   const [stimulationJournals, setStimulationJournals] = useState(stimulationJournalLog);
   
-  const [facilitator, setFacilitator] = useState<Facilitator | null>(null);
+  const [facilitator] = useState<Facilitator | null>(getLoggedInFacilitator());
 
   const [newAcademicNotes, setNewAcademicNotes] = useState<{ [journalId: number]: { studentName: string; note: string } }>({});
   const [newStimulationNotes, setNewStimulationNotes] = useState<{ [journalId: number]: { studentName: string; note: string } }>({});
@@ -75,13 +75,10 @@ export default function JournalRecapPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   
   useEffect(() => {
-    const loggedInFacilitator = getLoggedInFacilitator();
-    if (!loggedInFacilitator) {
+    if (!facilitator) {
       router.push('/login');
-    } else {
-      setFacilitator(loggedInFacilitator);
     }
-  }, [router]);
+  }, [facilitator, router]);
   
   if (!facilitator) {
     return (

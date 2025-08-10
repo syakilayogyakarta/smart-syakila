@@ -15,7 +15,7 @@ export const facilitators = [
 export const getLoggedInFacilitator = () => {
     if (typeof window === 'undefined') {
         // Return a default or placeholder facilitator if on the server
-        return facilitators[0]; 
+        return null; 
     }
     const facilitatorName = localStorage.getItem("loggedInFacilitator");
     if (!facilitatorName) {
@@ -58,7 +58,7 @@ export const studentsByClass: { [key: string]: string[] } = {
   ]
 };
 
-export const studentDetails: { [fullName: string]: any } = {
+export const studentDetails: { [key: string]: any } = {
   "Muhammad Abdan Khioiri Tsabit": { nisn: "0123456001", nickname: "Abdan", dob: "14 November 2012", email: "abdan.muhammad2012@gmail.com", gender: "Laki-laki" },
   "Muhammad Aqifan al-Fatih": { nisn: "0123456002", nickname: "Aqif", dob: "12 April 2012", email: "aqif.muhammad2012@gmail.com", gender: "Laki-laki" },
   "Muhammad Irhab Mirza": { nisn: "0123456003", nickname: "Irhab", dob: "25 Mei 2013", email: "irhab.muhammad2013@gmail.com", gender: "Laki-laki" },
@@ -98,7 +98,6 @@ export const facilitatorAssignments: {
   [facilitatorName: string]: { 
     classes: { [className: string]: string[] };
     groups: string[];
-    mfm: string[]; // This can be deprecated or repurposed if MFM is fully a group subject
   } 
 } = {
   "Evan Setiawan Parusa": {
@@ -109,7 +108,6 @@ export const facilitatorAssignments: {
       "Ta'lim 2": ["IoT", "IPA"],
     },
     groups: ["MFM", "Minhaj", "Al-Qur'an & Tajwid", "Quran Tematik"],
-    mfm: []
   },
   "Naashiih Aamiinul Basyiir": {
     classes: {
@@ -119,7 +117,6 @@ export const facilitatorAssignments: {
       "Ta'lim 2": ["IPSKn"],
     },
     groups: ["MFM", "Minhaj", "Al-Qur'an & Tajwid", "Quran Tematik"],
-    mfm: []
   },
   "Lisa Purwandari": {
     classes: {
@@ -129,7 +126,6 @@ export const facilitatorAssignments: {
       "Ta'lim 2": ["B. Jawa"],
     },
     groups: ["MFM", "Minhaj", "Al-Qur'an & Tajwid", "Quran Tematik"],
-    mfm: []
   },
   "Amirotun Nafisah": {
     classes: {
@@ -139,7 +135,6 @@ export const facilitatorAssignments: {
       "Ta'lim 2": ["B. Indonesia"],
     },
     groups: ["MFM", "Minhaj", "Al-Qur'an & Tajwid", "Quran Tematik"],
-    mfm: []
   },
   "Rahmanisa Widhia Anggraini": {
     classes: {
@@ -149,17 +144,14 @@ export const facilitatorAssignments: {
       "Ta'lim 2": ["B. Inggris"],
     },
     groups: ["MFM", "Minhaj", "Al-Qur'an & Tajwid", "Quran Tematik"],
-    mfm: []
   },
   "Faddliyah": {
     classes: {},
-    groups: ["MFM"],
-    mfm: []
+    groups: ["MFM", "Minhaj", "Al-Qur'an & Tajwid", "Quran Tematik"],
   },
   "Michael": {
     classes: {},
-    groups: ["MFM"],
-    mfm: []
+    groups: ["MFM", "Minhaj", "Al-Qur'an & Tajwid", "Quran Tematik"],
   }
 };
 
@@ -179,66 +171,10 @@ export const getFacilitatorForSubject = (subjectName: string, studentName: strin
       // A more robust system would be needed for a real app.
       return facilitatorName;
     }
-    // Check MFM assignments
-    if (subjectName === 'MFM' && assignments.mfm.includes(studentName)) {
-      return facilitatorName;
-    }
   }
   return "N/A"; // Default if no facilitator is found
 };
 
-
-export const studentDetailsList: { [fullName: string]: any } = {
-  "Muhammad Abdan Khioiri Tsabit": { nisn: "0123456001", nickname: "abdan", dob: "14 November 2012", email: "abdan.muhammad2012@gmail.com" },
-  "Muhammad Aqifan al-Fatih": { nisn: "0123456002", nickname: "aqif", dob: "12 April 2012", email: "aqif.muhammad2012@gmail.com" },
-  "Muhammad Irhab Mirza": { nisn: "0123456003", nickname: "irhab", dob: "25 Mei 2013", email: "irhab.muhammad2013@gmail.com" },
-  "Yahya Ayyasyh Satriawan Hidayat": { nisn: "0123456004", nickname: "ayyash", dob: "31 Maret 2011", email: "ayyash.yahya2011@gmail.com" },
-  "Athaniya Ghina Rafifa": { nisn: "0123456005", nickname: "ghina", dob: "27 Februari 2012", email: "ghina.athaniya2012@gmail.com" },
-  "Avicenna Akthar Dhiyaulhaq": { nisn: "0123456006", nickname: "akhtar", dob: "10 Agustus 2011", email: "akhtar.avicenna2011@gmail.com" },
-  "Azzam Muhammad Matitaputi": { nisn: "0123456007", nickname: "azzam", dob: "1 Maret 2011", email: "azzam.azzam2011@gmail.com" },
-  "Nailah Amirah Khoirunnisa'": { nisn: "0123456008", nickname: "amirah", dob: "11 Desember 2010", email: "amirah.nailah2010@gmail.com" },
-  "Ulin Najwa Nafi'a Ashari": { nisn: "0123456009", nickname: "najwa", dob: "4 Januari 2011", email: "najwa.ulin2011@gmail.com" },
-  "Bima Andi Satria": { nisn: "0123456010", nickname: "andi", dob: "18 Juni 2009", email: "andi.bima2009@gmail.com" },
-  "Ibrahim Viday Hafuza": { nisn: "0123456011", nickname: "fuza", dob: "6 Desember 2008", email: "fuza.ibrahim2008@gmail.com" },
-  "Muhammad Ismail Al-Fatih": { nisn: "0123456012", nickname: "alfath", dob: "20 Agustus 2010", email: "alfath.muhammad2010@gmail.com" },
-  "Muhammad Ziyad Dhiyaurrahman": { nisn: "0123456013", nickname: "ziyad", dob: "26 April 2009", email: "ziyad.muhammad2009@gmail.com" },
-  "Rifa'a Windy Nur Pujiutami": { nisn: "0123456014", nickname: "indy", dob: "31 Agustus 2009", email: "indy.rifa'a2009@gmail.com" },
-  "Rofi'i Sindy Nur Pujiutami": { nisn: "0123456015", nickname: "fii", dob: "31 Agustus 2009", email: "fii.rofi'i2009@gmail.com" },
-  "Assafa Octaviola Putri Ismawan": { nisn: "0123456016", nickname: "assa", dob: "11 Oktober 2010", email: "assa.assafa2010@gmail.com" },
-  "Mayyada Zuhro": { nisn: "0123456017", nickname: "may", dob: "1 Desember 2007", email: "may.mayyada2007@gmail.com" },
-  "Muhammad Hajid Al-Miqdad": { nisn: "0123456018", nickname: "hajid", dob: "11 Juni 2008", email: "hajid.muhammad2008@gmail.com" },
-  "Muhammad Nabil": { nisn: "0123456019", nickname: "nabil", dob: "4 Maret 2008", email: "nabil.muhammad2008@gmail.com" },
-  "Muhammad Nuhaa Naufali Ar-Rasis": { nisn: "0123456020", nickname: "nuha", dob: "16 Juni 2006", email: "nuha.muhammad2006@gmail.com" },
-};
-
-// This is dummy data and will be replaced with real data later.
-export const studentProfile = {
-  fullName: "Athaniya Ghina Rafifa",
-  nickname: "Ghina",
-  nisn: "0123456789",
-  photoUrl: "https://placehold.co/100x100.png",
-  photoHint: "student portrait",
-  class: "Ta'dib",
-  attendance: {
-    present: 110,
-    late: 2,
-    sick: 1,
-    excused: 0
-  },
-  savings: {
-    balance: 250000,
-    deposits: [
-      { date: "15 Jul 2024", description: "Setoran rutin", amount: 50000 },
-      { date: "08 Jul 2024", description: "Setoran rutin", amount: 50000 },
-      { date: "01 Jul 2024", description: "Setoran rutin", amount: 50000 },
-      { date: "24 Jun 2024", description: "Setoran rutin", amount: 50000 },
-      { date: "17 Jun 2024", description: "Setoran rutin", amount: 50000 },
-    ],
-    withdrawals: [
-        { date: "10 Jul 2024", description: "Beli buku", amount: 25000 },
-    ]
-  }
-};
 
 // Dummy data for academic overview
 // The facilitator name will be dynamically assigned based on the student's class.
