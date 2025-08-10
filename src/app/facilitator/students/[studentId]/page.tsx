@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { studentDetails, studentsByClass, academicData, kegiatanData, getFacilitatorForSubject } from "@/lib/data";
+import { studentDetails, studentsByClass, academicData, getKegiatanForStudent, getFacilitatorForSubject } from "@/lib/data";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -70,14 +70,13 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
     { label: "Izin", value: studentProfile.attendance.excused, icon: Activity, color: "text-orange-500" },
   ] : [];
 
-  const relevantKegiatanNotes = studentProfile ? kegiatanData.personalNotes.filter(note => note.studentName === studentProfile.fullName) : [];
-  
+  const studentKegiatanData = studentProfile ? getKegiatanForStudent(studentProfile.fullName) : { history: [], personalNotes: [] };
+
   if (!studentProfile) {
     return <div className="flex min-h-screen items-center justify-center">Memuat data siswa...</div>;
   }
 
-  const studentAcademicData = academicData; 
-  const studentKegiatanData = kegiatanData;
+  const studentAcademicData = academicData;
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
@@ -188,77 +187,63 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
           </div>
 
           {/* Right Column */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 space-y-8">
+             {/* Kegiatan & Stimulasi Card */}
+            <Card className="shadow-lg">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><Activity className="text-rose-500" /> Riwayat Kegiatan & Stimulasi</CardTitle>
+                    <CardDescription>Semua aktivitas non-akademik yang diikuti oleh siswa.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-4">
+                        <div>
+                            <h3 className="font-semibold text-base mb-2">Riwayat Kegiatan</h3>
+                            {studentKegiatanData.history.length > 0 ? (
+                                <ScrollArea className="h-40">
+                                    <div className="space-y-3 pr-4">
+                                    {studentKegiatanData.history.map((keg, index) => (
+                                        <div key={index} className="text-sm p-3 rounded-md bg-card border">
+                                            <p className="font-semibold text-muted-foreground">{new Date(keg.timestamp).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+                                            <p className="text-foreground font-medium">{keg.kegiatan}</p>
+                                            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1"><MapPin className="h-3 w-3" /> {keg.lokasi}</p>
+                                        </div>
+                                    ))}
+                                    </div>
+                                </ScrollArea>
+                            ) : (
+                                <p className="text-sm text-muted-foreground">Belum ada riwayat kegiatan yang tercatat.</p>
+                            )}
+                        </div>
+
+                        {studentKegiatanData.personalNotes.length > 0 && (
+                            <div className="pt-4 border-t">
+                                <h3 className="font-semibold text-base mb-2 flex items-center gap-2"><StickyNote className="h-4 w-4 text-accent" /> Catatan Personal dari Fasilitator</h3>
+                                <ScrollArea className="h-40">
+                                <div className="space-y-3 pr-4">
+                                    {studentKegiatanData.personalNotes.map((pnote, index) => (
+                                    <div key={index} className="text-sm p-3 rounded-md bg-accent/10 border border-accent/20">
+                                        <div className="flex justify-between items-center">
+                                            <p className="font-semibold text-muted-foreground">{new Date(pnote.timestamp).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+                                            <p className="text-xs text-muted-foreground">oleh {pnote.facilitatorName}</p>
+                                        </div>
+                                        <p className="text-accent-foreground/80 mt-1">"{pnote.note}"</p>
+                                    </div>
+                                    ))}
+                                </div>
+                                </ScrollArea>
+                            </div>
+                        )}
+                    </div>
+                </CardContent>
+            </Card>
+
             <Card className="shadow-lg h-full">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2"><BookCopy className="text-blue-500" /> Ringkasan Akademik & Kegiatan</CardTitle>
-                <CardDescription>Pantau progres, keaktifan, dan kegiatan siswa.</CardDescription>
+                <CardTitle className="flex items-center gap-2"><BookCopy className="text-blue-500" /> Ringkasan Akademik</CardTitle>
+                <CardDescription>Pantau progres dan keaktifan siswa per mata pelajaran.</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  
-                  {/* Kegiatan & Stimulasi Card */}
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Card className="hover:shadow-md transition-all cursor-pointer bg-primary/5 border-primary/20">
-                          <CardContent className="p-4 flex items-center justify-between">
-                              <div className="flex items-center gap-4">
-                                  <div className={cn('flex h-12 w-12 items-center justify-center rounded-lg', `${studentKegiatanData.color}/10`)}>
-                                    <studentKegiatanData.icon className={cn('h-6 w-6', studentKegiatanData.color)}/>
-                                  </div>
-                                  <div>
-                                    <p className="font-bold text-base">Kegiatan & Stimulasi</p>
-                                    <p className="text-sm text-muted-foreground">Lihat riwayat aktivitas</p>
-                                  </div>
-                              </div>
-                          </CardContent>
-                      </Card>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[625px]">
-                      <DialogHeader>
-                          <DialogTitle className="flex items-center gap-3 text-2xl">
-                              <div className={cn('flex h-12 w-12 items-center justify-center rounded-lg', `${studentKegiatanData.color}/10`)}>
-                                <studentKegiatanData.icon className={cn('h-6 w-6', studentKegiatanData.color)}/>
-                              </div>
-                              Kegiatan & Stimulasi
-                          </DialogTitle>
-                          <DialogDescription className="pt-2">Riwayat semua kegiatan dan stimulasi yang diikuti oleh siswa.</DialogDescription>
-                      </DialogHeader>
-
-                      <div className="mt-4">
-                        <h3 className="font-bold text-lg mb-2">Riwayat Kegiatan</h3>
-                        <ScrollArea className="h-60">
-                          <div className="space-y-3 pr-4">
-                            {studentKegiatanData.history.map((keg, index) => (
-                              <div key={index} className="text-sm p-3 rounded-md bg-card border">
-                                <p className="font-semibold text-muted-foreground">{keg.date}</p>
-                                <p className="text-foreground">{keg.activity}</p>
-                                <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1"><MapPin className="h-3 w-3" /> {keg.location}</p>
-                              </div>
-                            ))}
-                          </div>
-                        </ScrollArea>
-                      </div>
-
-                      {relevantKegiatanNotes.length > 0 && (
-                          <div className="mt-4">
-                            <h3 className="font-bold text-lg mb-2 flex items-center gap-2"><StickyNote className="h-5 w-5 text-accent" /> Catatan Personal Fasilitator</h3>
-                            <ScrollArea className="h-40">
-                              <div className="space-y-3 pr-4">
-                                {relevantKegiatanNotes.map((pnote, index) => (
-                                  <div key={index} className="text-sm p-3 rounded-md bg-accent/10 border border-accent/20">
-                                    <p className="font-semibold text-muted-foreground">{pnote.date}</p>
-                                    <p className="text-accent-foreground/80">{pnote.note}</p>
-                                  </div>
-                                ))}
-                              </div>
-                            </ScrollArea>
-                          </div>
-                      )}
-                    </DialogContent>
-                  </Dialog>
-
-
                   {/* Subject Cards */}
                   {studentAcademicData.subjects.map(subject => {
                     const facilitatorName = getFacilitatorForSubject(subject.name, studentProfile.fullName, studentProfile.class);
@@ -328,7 +313,7 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
                                     {subject.personalNotes.map((pnote, index) => (
                                       <div key={index} className="text-sm p-3 rounded-md bg-accent/10 border border-accent/20">
                                         <p className="font-semibold text-muted-foreground">{pnote.date}</p>
-                                        <p className="text-accent-foreground/80">{pnote.note}</p>
+                                        <p className="text-accent-foreground/80">"{pnote.note}"</p>
                                       </div>
                                     ))}
                                   </div>
@@ -348,6 +333,3 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
     </div>
   );
 }
-
-
-    

@@ -396,40 +396,6 @@ export const academicData = {
   ]
 };
 
-export const kegiatanData = {
-  icon: HeartPulse,
-  color: "text-rose-500",
-  history: [
-    {
-      date: "22 Juli 2024",
-      activity: "Bermain peran profesi (Dokter, Polisi, Guru)",
-      location: "Ruang Kelas Tarbiyah",
-    },
-    {
-      date: "15 Juli 2024",
-      activity: "Membaca buku cerita bersama di taman",
-      location: "Taman Sekolah",
-    },
-    {
-      date: "08 Juli 2024",
-      activity: "Senam pagi dan permainan tradisional",
-      location: "Halaman Sekolah",
-    }
-  ],
-  personalNotes: [
-    {
-      studentName: "Athaniya Ghina Rafifa",
-      date: "22 Juli 2024",
-      note: "Sangat antusias saat berperan sebagai dokter. Menunjukkan jiwa kepemimpinan saat bermain dengan teman-temannya."
-    },
-    {
-      studentName: "Muhammad Irhab Mirza",
-      date: "15 Juli 2024",
-      note: "Membutuhkan dorongan untuk mau bercerita di depan teman-temannya, namun pendengar yang baik."
-    }
-  ]
-};
-
 // Dummy data for the academic journal log
 export const academicJournalLog = [
   {
@@ -475,27 +441,60 @@ export const stimulationJournalLog = [
     id: 1,
     timestamp: "2024-07-25T09:30:00.000Z",
     facilitatorName: "Lisa Purwandari",
+    mode: "klasikal",
+    class: "",
+    students: allStudents.map(s => s.fullName),
     kegiatan: "Senam Pagi Ceria",
     namaPemateri: "",
     jenisStimulasi: "Stimulasi Kesehatan Mental",
     lokasi: "Halaman Sekolah",
     catatanPenting: "Semua siswa mengikuti dengan gembira. Musik yang digunakan sangat disukai anak-anak.",
     personalNotes: [
-      { id: 301, studentName: "Muhammad Aqifan al-Fatih", note: "Aqifan terlihat paling bersemangat dan mengikuti semua gerakan dengan baik.", facilitatorName: "Lisa Purwandari" }
+      { id: 301, studentName: "Muhammad Aqifan al-Fatih", note: "Aqifan terlihat paling bersemangat dan mengikuti semua gerakan dengan baik.", facilitatorName: "Lisa Purwandari", timestamp: "2024-07-25T09:30:00.000Z" }
     ]
   },
   {
     id: 2,
     timestamp: "2024-07-24T14:00:00.000Z",
     facilitatorName: "Evan Setiawan Parusa",
+    mode: "kelompok",
+    class: "",
+    students: ["Avicenna Akthar Dhiyaulhaq", "Ibrahim Viday Hafuza", "Muhammad Nabil"],
     kegiatan: "Workshop Robotik Dasar",
     namaPemateri: "Komunitas Robotika UGM",
     jenisStimulasi: "Stimulasi Bakat",
     lokasi: "Aula",
     catatanPenting: "Kerjasama dengan komunitas eksternal berjalan sukses. Perlu dijadwalkan lagi untuk sesi lanjutan.",
     personalNotes: [
-      { id: 401, studentName: "Avicenna Akthar Dhiyaulhaq", note: "Akhtar sangat tertarik pada bagian perakitan, menunjukkan ketelitian yang baik.", facilitatorName: "Evan Setiawan Parusa" },
-      { id: 402, studentName: "Ibrahim Viday Hafuza", note: "Menunjukkan minat pada logika pemrograman robot.", facilitatorName: "Evan Setiawan Parusa" }
+      { id: 401, studentName: "Avicenna Akthar Dhiyaulhaq", note: "Akhtar sangat tertarik pada bagian perakitan, menunjukkan ketelitian yang baik.", facilitatorName: "Evan Setiawan Parusa", timestamp: "2024-07-24T14:00:00.000Z" },
+      { id: 402, studentName: "Ibrahim Viday Hafuza", note: "Menunjukkan minat pada logika pemrograman robot.", facilitatorName: "Evan Setiawan Parusa", timestamp: "2024-07-24T14:00:00.000Z" }
     ]
+  },
+  {
+      id: 3,
+      timestamp: "2024-07-22T11:00:00.000Z",
+      facilitatorName: "Amirotun Nafisah",
+      mode: "kelas",
+      class: "Ta'dib",
+      students: studentsByClass["Ta'dib"],
+      kegiatan: "Membaca Buku Cerita Bersama",
+      namaPemateri: "",
+      jenisStimulasi: "Stimulasi Fitrah",
+      lokasi: "Taman Sekolah",
+      catatanPenting: "Anak-anak kelas Ta'dib sangat menikmati sesi di luar ruangan.",
+      personalNotes: [
+        { id: 501, studentName: "Athaniya Ghina Rafifa", note: "Aktif menceritakan kembali isi buku yang dibaca.", facilitatorName: "Amirotun Nafisah", timestamp: "2024-07-22T11:00:00.000Z" }
+      ]
   }
 ];
+
+// New function to filter kegiatan data for a specific student
+export const getKegiatanForStudent = (studentName: string) => {
+    const history = stimulationJournalLog.filter(journal => journal.students.includes(studentName));
+    
+    const personalNotes = stimulationJournalLog.flatMap(journal => 
+        journal.personalNotes.filter(note => note.studentName === studentName)
+    );
+
+    return { history, personalNotes };
+};
