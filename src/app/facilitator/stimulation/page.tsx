@@ -20,6 +20,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
+import { id } from "date-fns/locale/id";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { 
   AlertDialog,
@@ -125,7 +126,7 @@ export default function StimulationPage() {
   };
   
   const handleModeChange = (newMode: "klasikal" | "kelas" | "kelompok") => {
-    resetFormFields(); // Always reset form on mode change
+    resetFormFields();
     setMode(newMode);
     if (newMode === 'klasikal') {
         setSelectedStudents(allStudentNames);
@@ -336,10 +337,10 @@ export default function StimulationPage() {
                         <PopoverTrigger asChild>
                         <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !activityDate && "text-muted-foreground")}>
                             <CalendarIcon className="mr-2 h-4 w-4" />
-                            {activityDate ? format(activityDate, "PPP") : <span>Pilih tanggal</span>}
+                            {activityDate ? format(activityDate, "PPP", { locale: id }) : <span>Pilih tanggal</span>}
                         </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={activityDate} onSelect={setActivityDate} initialFocus /></PopoverContent>
+                        <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={activityDate} onSelect={setActivityDate} initialFocus locale={id} /></PopoverContent>
                     </Popover>
                 </div>
                 <div className="space-y-2">

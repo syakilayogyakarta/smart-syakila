@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { 
-  ArrowLeft, Calendar as CalendarIcon, Check, Loader2, Book, BookOpen,
+  ArrowLeft, Calendar as CalendarIcon, Check, Loader2, BookOpen,
   User, Star, PlusCircle, X, Trash2, StickyNote, Layers, Users, School, MessageSquare, Send
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ import { allStudents, facilitatorAssignments, getLoggedInFacilitator, academicJo
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { id } from "date-fns/locale/id";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { 
@@ -390,18 +391,18 @@ export default function JournalPage() {
                             className={cn("w-full justify-start text-left font-normal", !journalDate && "text-muted-foreground")}
                         >
                             <CalendarIcon className="mr-2 h-4 w-4" />
-                            {journalDate ? format(journalDate, "PPP") : <span>Pilih tanggal</span>}
+                            {journalDate ? format(journalDate, "PPP", { locale: id }) : <span>Pilih tanggal</span>}
                         </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0">
-                        <Calendar mode="single" selected={journalDate} onSelect={setJournalDate} initialFocus />
+                        <Calendar mode="single" selected={journalDate} onSelect={setJournalDate} initialFocus locale={id} />
                         </PopoverContent>
                     </Popover>
                  </div>
                 <div className="space-y-2">
                   <Label htmlFor="topic" className="font-semibold">Topik Hari Ini <span className="text-destructive">*</span></Label>
                   <div className="relative">
-                    <Book className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <BookOpen className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Textarea id="topic" placeholder="Contoh: Mempelajari tentang sistem tata surya" className="pl-10" value={topic} onChange={(e) => setTopic(e.target.value)} />
                   </div>
                 </div>
@@ -438,10 +439,10 @@ export default function JournalPage() {
                           <PopoverTrigger asChild>
                             <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !deadline && "text-muted-foreground")}>
                               <CalendarIcon className="mr-2 h-4 w-4" />
-                              {deadline ? format(deadline, "PPP") : <span>Pilih tanggal</span>}
+                              {deadline ? format(deadline, "PPP", { locale: id }) : <span>Pilih tanggal</span>}
                             </Button>
                           </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={deadline} onSelect={setDeadline} initialFocus /></PopoverContent>
+                          <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={deadline} onSelect={setDeadline} initialFocus locale={id} /></PopoverContent>
                         </Popover>
                     </div>
                   </div>
@@ -502,7 +503,7 @@ export default function JournalPage() {
                         <AccordionItem value={`academic-journal-${journal.id}`} key={journal.id}>
                         <AccordionTrigger className="px-6 py-4 hover:bg-primary/5">
                             <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4 text-left w-full">
-                                <div className="font-semibold text-base">{journal.subject} - Kelas {journal.class}</div>
+                                <div className="font-semibold text-base">{journal.subject} - {journal.class ? `Kelas ${journal.class}`: 'Kelompok'}</div>
                                 <div className="text-sm text-muted-foreground">
                                     <span>{journal.facilitatorName}</span> | <ClientFormattedDate timestamp={journal.timestamp} />
                                 </div>
