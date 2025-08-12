@@ -3,32 +3,62 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Database, Book, School, PlusCircle, Pencil, Trash2, BookUser } from 'lucide-react';
+import { ArrowLeft, Database, Book, School, PlusCircle, Pencil, Trash2, BookUser, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { allSubjects, classes, getLoggedInFacilitator, facilitators, facilitatorAssignments } from '@/lib/data';
+import { allSubjects as initialSubjects, classes as initialClasses, getLoggedInFacilitator, facilitators as allFacilitators, facilitatorAssignments as initialAssignments } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Input } from '@/components/ui/input';
+
+
+type Subject = string;
+type ClassName = string;
 
 export default function DatabasePage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // State for assignment management
+  // State for managing data locally on this page
+  const [subjects, setSubjects] = useState<Subject[]>(initialSubjects);
+  const [classes, setClasses] = useState<ClassName[]>(initialClasses);
+  const [facilitatorAssignments, setFacilitatorAssignments] = useState(initialAssignments);
+  
+  // State for assignment management UI
   const [selectedFacilitator, setSelectedFacilitator] = useState('');
   const [selectedClass, setSelectedClass] = useState('');
-  const [assignedSubjects, setAssignedSubjects] = useState<string[]>([]);
-  
+  const [assignedSubjects, setAssignedSubjects] = useState<Subject[]>([]);
+
+  // State for dialogs
+  const [isSubjectDialogOpen, setIsSubjectDialogOpen] = useState(false);
+  const [isClassDialogOpen, setIsClassDialogOpen] = useState(false);
+  const [currentSubject, setCurrentSubject] = useState<Subject | null>(null);
+  const [currentClass, setCurrentClass] = useState<ClassName | null>(null);
+  const [inputValue, setInputValue] = useState('');
+
   useEffect(() => {
     const facilitator = getLoggedInFacilitator();
     if (facilitator && !['Faddliyah', 'Michael'].includes(facilitator.fullName)) {
       setIsAuthorized(true);
-    } else {
+    } else if (facilitator) {
       toast({
         title: "Akses Ditolak",
         description: "Anda tidak memiliki izin untuk mengakses halaman ini.",
@@ -36,15 +66,73 @@ export default function DatabasePage() {
       });
       router.push('/facilitator/dashboard');
     }
+    setIsLoading(false);
   }, [router, toast]);
-
-  const handleActionClick = (feature: string) => {
-    toast({
-      title: "Fitur Dalam Pengembangan",
-      description: `Fungsionalitas untuk ${feature} akan segera tersedia.`,
-    });
+  
+  // --- Subject Management ---
+  const handleOpenSubjectDialog = (subject: Subject | null) => {
+    setCurrentSubject(subject);
+    setInputValue(subject || '');
+    setIsSubjectDialogOpen(true);
+  };
+  
+  const handleSaveSubject = () => {
+    if (!inputValue.trim()) {
+      toast({ title: "Nama tidak boleh kosong", variant: "destructive" });
+      return;
+    }
+    if (currentSubject) { // Editing
+      setSubjects(subjects.map(s => s === currentSubject ? inputValue.trim() : s));
+      toast({ title: "Mata Pelajaran Diperbarui" });
+    } else { // Adding
+      if (subjects.find(s => s.toLowerCase() === inputValue.trim().toLowerCase())) {
+        toast({ title: "Mata pelajaran sudah ada", variant: "destructive" });
+        return;
+      }
+      setSubjects([...subjects, inputValue.trim()]);
+      toast({ title: "Mata Pelajaran Ditambahkan" });
+    }
+    setIsSubjectDialogOpen(false);
   };
 
+  const handleDeleteSubject = (subject: Subject) => {
+    setSubjects(subjects.filter(s => s !== subject));
+    toast({ title: "Mata Pelajaran Dihapus", variant: "destructive" });
+  };
+  
+  // --- Class Management ---
+  const handleOpenClassDialog = (className: ClassName | null) => {
+    setCurrentClass(className);
+    setInputValue(className || '');
+    setIsClassDialogOpen(true);
+  };
+
+  const handleSaveClass = () => {
+    if (!inputValue.trim()) {
+      toast({ title: "Nama tidak boleh kosong", variant: "destructive" });
+      return;
+    }
+    if (currentClass) { // Editing
+      setClasses(classes.map(c => c === currentClass ? inputValue.trim() : c));
+      toast({ title: "Kelas Diperbarui" });
+    } else { // Adding
+       if (classes.find(c => c.toLowerCase() === inputValue.trim().toLowerCase())) {
+        toast({ title: "Kelas sudah ada", variant: "destructive" });
+        return;
+      }
+      setClasses([...classes, inputValue.trim()]);
+      toast({ title: "Kelas Ditambahkan" });
+    }
+    setIsClassDialogOpen(false);
+  };
+  
+  const handleDeleteClass = (className: ClassName) => {
+    setClasses(classes.filter(c => c !== className));
+    toast({ title: "Kelas Dihapus", variant: "destructive" });
+  };
+
+
+  // --- Assignment Management ---
   const handleFacilitatorChange = (facilitatorName: string) => {
     setSelectedFacilitator(facilitatorName);
     setSelectedClass('');
@@ -61,7 +149,7 @@ export default function DatabasePage() {
     }
   };
 
-  const handleSubjectAssignmentChange = (subjectName: string, isChecked: boolean) => {
+  const handleSubjectAssignmentChange = (subjectName: Subject, isChecked: boolean) => {
     setAssignedSubjects(prev => 
       isChecked ? [...prev, subjectName] : prev.filter(s => s !== subjectName)
     );
@@ -77,17 +165,25 @@ export default function DatabasePage() {
         return;
     }
 
-    console.log(`Simulasi penyimpanan: ${selectedFacilitator} di kelas ${selectedClass} mengajar: ${assignedSubjects.join(', ')}`);
+    setFacilitatorAssignments(prevAssignments => {
+      const newAssignments = { ...prevAssignments };
+      if (!newAssignments[selectedFacilitator]) {
+        newAssignments[selectedFacilitator] = { classes: {}, groups: [] };
+      }
+      newAssignments[selectedFacilitator].classes[selectedClass] = assignedSubjects;
+      return newAssignments;
+    });
+
     toast({
         title: "Penugasan Disimpan!",
-        description: `Penugasan untuk ${selectedFacilitator} di kelas ${selectedClass} telah diperbarui (simulasi).`
+        description: `Penugasan untuk ${selectedFacilitator} di kelas ${selectedClass} telah diperbarui.`
     });
   };
 
-  if (!isAuthorized) {
+  if (isLoading || !isAuthorized) {
     return (
       <div className="min-h-screen bg-background p-8 flex items-center justify-center">
-          <p>Memeriksa izin akses...</p>
+          <Loader2 className="h-8 w-8 animate-spin"/>
       </div>
     );
   }
@@ -107,6 +203,7 @@ export default function DatabasePage() {
         </header>
 
         <main className="space-y-8">
+          {/* Assignment Management Card */}
           <Card className="shadow-lg">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -122,7 +219,7 @@ export default function DatabasePage() {
                         <Select onValueChange={handleFacilitatorChange} value={selectedFacilitator}>
                             <SelectTrigger id="facilitator-select"><SelectValue placeholder="Pilih Fasilitator..." /></SelectTrigger>
                             <SelectContent>
-                                {facilitators.map(f => <SelectItem key={f.fullName} value={f.fullName}>{f.fullName}</SelectItem>)}
+                                {allFacilitators.map(f => <SelectItem key={f.fullName} value={f.fullName}>{f.fullName}</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </div>
@@ -141,14 +238,14 @@ export default function DatabasePage() {
                     <div className="space-y-4 pt-4 border-t">
                         <Label className="font-semibold">3. Pilih Mata Pelajaran yang Diampu</Label>
                         <div className="p-4 border rounded-md grid grid-cols-2 md:grid-cols-3 gap-4">
-                            {allSubjects.map(subject => (
+                            {subjects.map(subject => (
                                 <div key={subject} className="flex items-center space-x-2">
                                     <Checkbox 
-                                        id={`assign-${subject}`}
+                                        id={`assign-${subject.replace(/\s+/g, '-')}`}
                                         checked={assignedSubjects.includes(subject)}
                                         onCheckedChange={(checked) => handleSubjectAssignmentChange(subject, !!checked)}
                                     />
-                                    <label htmlFor={`assign-${subject}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                    <label htmlFor={`assign-${subject.replace(/\s+/g, '-')}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                                         {subject}
                                     </label>
                                 </div>
@@ -162,6 +259,7 @@ export default function DatabasePage() {
 
           <Separator />
         
+          {/* Subject Management Card */}
           <Card className="shadow-lg">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
@@ -171,7 +269,7 @@ export default function DatabasePage() {
                 </CardTitle>
                 <CardDescription>Kelola daftar mata pelajaran yang tersedia di sekolah.</CardDescription>
               </div>
-              <Button onClick={() => handleActionClick('menambah mata pelajaran')}>
+              <Button onClick={() => handleOpenSubjectDialog(null)}>
                 <PlusCircle className="mr-2 h-4 w-4" /> Tambah Baru
               </Button>
             </CardHeader>
@@ -185,16 +283,28 @@ export default function DatabasePage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {allSubjects.map((subject) => (
+                    {subjects.map((subject) => (
                       <TableRow key={subject}>
                         <TableCell className="font-medium">{subject}</TableCell>
                         <TableCell className="text-right space-x-2">
-                          <Button variant="outline" size="icon" onClick={() => handleActionClick(`mengubah ${subject}`)}>
+                          <Button variant="outline" size="icon" onClick={() => handleOpenSubjectDialog(subject)}>
                             <Pencil className="h-4 w-4" />
                           </Button>
-                          <Button variant="destructive" size="icon" onClick={() => handleActionClick(`menghapus ${subject}`)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                           <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="destructive" size="icon"><Trash2 className="h-4 w-4" /></Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Anda yakin ingin menghapus "{subject}"?</AlertDialogTitle>
+                                        <AlertDialogDescription>Tindakan ini tidak dapat diurungkan.</AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Batal</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => handleDeleteSubject(subject)}>Ya, Hapus</AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -204,6 +314,7 @@ export default function DatabasePage() {
             </CardContent>
           </Card>
 
+          {/* Class Management Card */}
           <Card className="shadow-lg">
             <CardHeader className="flex flex-row items-center justify-between">
                <div>
@@ -213,7 +324,7 @@ export default function DatabasePage() {
                 </CardTitle>
                 <CardDescription>Kelola daftar kelas yang ada di sekolah.</CardDescription>
               </div>
-              <Button onClick={() => handleActionClick('menambah kelas')}>
+              <Button onClick={() => handleOpenClassDialog(null)}>
                 <PlusCircle className="mr-2 h-4 w-4" /> Tambah Baru
               </Button>
             </CardHeader>
@@ -231,12 +342,24 @@ export default function DatabasePage() {
                       <TableRow key={className}>
                         <TableCell className="font-medium">{className}</TableCell>
                         <TableCell className="text-right space-x-2">
-                          <Button variant="outline" size="icon" onClick={() => handleActionClick(`mengubah ${className}`)}>
+                          <Button variant="outline" size="icon" onClick={() => handleOpenClassDialog(className)}>
                             <Pencil className="h-4 w-4" />
                           </Button>
-                          <Button variant="destructive" size="icon" onClick={() => handleActionClick(`menghapus ${className}`)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="destructive" size="icon"><Trash2 className="h-4 w-4" /></Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                      <AlertDialogTitle>Anda yakin ingin menghapus "{className}"?</AlertDialogTitle>
+                                      <AlertDialogDescription>Tindakan ini tidak dapat diurungkan.</AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                      <AlertDialogCancel>Batal</AlertDialogCancel>
+                                      <AlertDialogAction onClick={() => handleDeleteClass(className)}>Ya, Hapus</AlertDialogAction>
+                                  </AlertDialogFooter>
+                              </AlertDialogContent>
+                          </AlertDialog>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -247,7 +370,44 @@ export default function DatabasePage() {
           </Card>
         </main>
       </div>
+      
+      {/* Subject Dialog */}
+      <Dialog open={isSubjectDialogOpen} onOpenChange={setIsSubjectDialogOpen}>
+          <DialogContent>
+              <DialogHeader>
+                  <DialogTitle>{currentSubject ? 'Ubah Mata Pelajaran' : 'Tambah Mata Pelajaran Baru'}</DialogTitle>
+                  <DialogDescription>{currentSubject ? `Ubah nama untuk "${currentSubject}".` : 'Masukkan nama untuk mata pelajaran baru.'}</DialogDescription>
+              </DialogHeader>
+              <div className="py-4">
+                  <Label htmlFor="subject-name">Nama Mata Pelajaran</Label>
+                  <Input id="subject-name" value={inputValue} onChange={(e) => setInputValue(e.target.value)} placeholder="Contoh: Matematika" />
+              </div>
+              <DialogFooter>
+                  <DialogClose asChild><Button variant="outline">Batal</Button></DialogClose>
+                  <Button onClick={handleSaveSubject}>Simpan</Button>
+              </DialogFooter>
+          </DialogContent>
+      </Dialog>
+      
+      {/* Class Dialog */}
+      <Dialog open={isClassDialogOpen} onOpenChange={setIsClassDialogOpen}>
+          <DialogContent>
+              <DialogHeader>
+                  <DialogTitle>{currentClass ? 'Ubah Kelas' : 'Tambah Kelas Baru'}</DialogTitle>
+                  <DialogDescription>{currentClass ? `Ubah nama untuk kelas "${currentClass}".` : 'Masukkan nama untuk kelas baru.'}</DialogDescription>
+              </DialogHeader>
+              <div className="py-4">
+                  <Label htmlFor="class-name">Nama Kelas</Label>
+                  <Input id="class-name" value={inputValue} onChange={(e) => setInputValue(e.target.value)} placeholder="Contoh: Ta'lim 3" />
+              </div>
+              <DialogFooter>
+                  <DialogClose asChild><Button variant="outline">Batal</Button></DialogClose>
+                  <Button onClick={handleSaveClass}>Simpan</Button>
+              </DialogFooter>
+          </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
+    
