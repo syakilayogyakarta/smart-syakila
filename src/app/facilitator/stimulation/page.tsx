@@ -1,11 +1,11 @@
 
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { 
   ArrowLeft, Calendar as CalendarIcon, Check, Loader2, PlusCircle, X, Trash2, 
-  Activity, MapPin, StickyNote, User, Layers, School, Users, UserCheck
+  Activity, MapPin, StickyNote, User, Layers, School, Users, UserCheck, MessageSquare, Send, HeartPulse, Layers3
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,19 +13,41 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { allStudents, studentsByClass, classes } from "@/lib/data";
+import { allStudents, studentsByClass, classes, getLoggedInFacilitator, stimulationJournalLog } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 type PersonalNote = {
   id: number;
   studentName: string;
   note: string;
 }
+
+type Facilitator = {
+  fullName: string;
+  nickname: string;
+  email: string;
+  gender: string;
+}
+
+type StimulationJournalEntry = typeof stimulationJournalLog[0];
+type StimulationPersonalNote = StimulationJournalEntry['personalNotes'][0];
 
 const stimulationTypes = [
   "Stimulasi Fitrah",
@@ -36,7 +58,25 @@ const stimulationTypes = [
   "Stimulasi Berkelanjutan & Green Campus"
 ];
 
+
+const ClientFormattedDate = ({ timestamp }: { timestamp: string }) => {
+  const [formattedDate, setFormattedDate] = useState("");
+
+  useEffect(() => {
+    setFormattedDate(
+      new Date(timestamp).toLocaleString('id-ID', {
+        dateStyle: 'long',
+        timeStyle: 'short',
+      })
+    );
+  }, [timestamp]);
+
+  return <span>{formattedDate}</span>;
+};
+
+
 export default function StimulationPage() {
+  const [facilitator, setFacilitator] = useState<Facilitator | null>(null);
   const [activityDate, setActivityDate] = useState<Date | undefined>(new Date());
   const [mode, setMode] = useState<"klasikal" | "kelas" | "kelompok" | null>(null);
   const [selectedClass, setSelectedClass] = useState("");
@@ -55,6 +95,18 @@ export default function StimulationPage() {
   
   const router = useRouter();
   const { toast } = useToast();
+
+  const [journals, setJournals] = useState(stimulationJournalLog);
+  const [newNotes, setNewNotes] = useState<{ [journalId: number]: { studentName: string; note: string } }>({});
+
+  useEffect(() => {
+    const loggedInFacilitator = getLoggedInFacilitator();
+    if (!loggedInFacilitator) {
+      router.push('/login');
+    } else {
+      setFacilitator(loggedInFacilitator);
+    }
+  }, [router]);
 
   const allStudentNames = useMemo(() => allStudents.map(s => s.fullName), []);
 
@@ -105,7 +157,7 @@ export default function StimulationPage() {
   }
 
   const handleSave = () => {
-    if (!mode || !kegiatan || !lokasi || selectedStudents.length === 0) {
+    if (!mode || !kegiatan || !lokasi || selectedStudents.length === 0 || !facilitator) {
       setIsShaking(true);
       toast({
         title: "Data Wajib Belum Lengkap",
@@ -117,20 +169,26 @@ export default function StimulationPage() {
     }
 
     setButtonState("loading");
-    console.log("Saving stimulation data:", {
-      date: activityDate,
+
+    const newJournalEntry: StimulationJournalEntry = {
+      id: Date.now(),
+      timestamp: (activityDate || new Date()).toISOString(),
+      facilitatorName: facilitator.fullName,
       mode,
-      selectedClass: mode === 'kelas' ? selectedClass : '',
+      class: mode === 'kelas' ? selectedClass : '',
       students: selectedStudents,
       kegiatan,
       namaPemateri,
       jenisStimulasi,
       lokasi,
       catatanPenting,
-      personalNotes
-    });
+      personalNotes: personalNotes.map(pn => ({ ...pn, facilitatorName: facilitator.fullName, timestamp: (activityDate || new Date()).toISOString() }))
+    };
+
+    console.log("Saving stimulation data:", newJournalEntry);
     
     setTimeout(() => {
+      setJournals(prev => [newJournalEntry, ...prev]);
       setButtonState("saved");
       toast({
         title: "Data Tersimpan!",
@@ -141,8 +199,50 @@ export default function StimulationPage() {
     }, 1500);
   };
   
+  const handleAddPersonalNoteToLog = (journalId: number) => {
+    const noteData = newNotes[journalId];
+    if (!noteData || !noteData.studentName || !noteData.note || !facilitator) {
+      toast({ title: "Gagal Menambah Catatan", description: "Mohon pilih siswa dan isi catatan.", variant: "destructive" });
+      return;
+    }
+    const updatedJournals = journals.map(journal => {
+      if (journal.id === journalId) {
+        const newNote: StimulationPersonalNote = {
+          id: Date.now(),
+          studentName: noteData.studentName,
+          note: noteData.note,
+          facilitatorName: facilitator.fullName,
+          timestamp: new Date().toISOString()
+        };
+        return { ...journal, personalNotes: [...journal.personalNotes, newNote] };
+      }
+      return journal;
+    });
+    setJournals(updatedJournals);
+    setNewNotes(prev => ({ ...prev, [journalId]: { studentName: "", note: "" } }));
+    toast({ title: "Catatan Ditambahkan!", description: `Catatan personal untuk ${noteData.studentName} berhasil ditambahkan.` });
+  };
+
+  const handleNewNoteChange = (journalId: number, field: 'studentName' | 'note', value: string) => {
+    setNewNotes(prev => ({ ...prev, [journalId]: { ...(prev[journalId] || {}), [field]: value } }));
+  };
+
+  const handleDeleteJournal = (journalId: number) => {
+    setJournals(prev => prev.filter(j => j.id !== journalId));
+    toast({ title: "Catatan Dihapus", description: "Catatan kegiatan berhasil dihapus." });
+  };
+
+  const getAllStudentOptions = () => Object.values(studentsByClass).flat();
   const isSaveDisabled = buttonState !== 'idle';
   const studentOptionsForNotes = selectedStudents;
+
+  if (!facilitator) {
+    return (
+        <div className="min-h-screen bg-background p-8 flex items-center justify-center">
+            <p>Memuat data fasilitator...</p>
+        </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
@@ -164,7 +264,6 @@ export default function StimulationPage() {
           </CardHeader>
           <CardContent className="space-y-6">
 
-            {/* --- Mode Selection --- */}
             <div className="space-y-3">
               <Label className="font-semibold text-base">1. Pilih Mode Pencatatan</Label>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -236,25 +335,12 @@ export default function StimulationPage() {
                     <Label>Tanggal Kegiatan</Label>
                     <Popover>
                         <PopoverTrigger asChild>
-                        <Button
-                            variant={"outline"}
-                            className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !activityDate && "text-muted-foreground"
-                            )}
-                        >
+                        <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !activityDate && "text-muted-foreground")}>
                             <CalendarIcon className="mr-2 h-4 w-4" />
                             {activityDate ? format(activityDate, "PPP") : <span>Pilih tanggal</span>}
                         </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                        <Calendar
-                            mode="single"
-                            selected={activityDate}
-                            onSelect={setActivityDate}
-                            initialFocus
-                        />
-                        </PopoverContent>
+                        <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={activityDate} onSelect={setActivityDate} initialFocus /></PopoverContent>
                     </Popover>
                 </div>
                 <div className="space-y-2">
@@ -291,9 +377,7 @@ export default function StimulationPage() {
                           <SelectValue placeholder="Pilih Jenis Stimulasi..." />
                         </div>
                       </SelectTrigger>
-                      <SelectContent>
-                        {stimulationTypes.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                      </SelectContent>
+                      <SelectContent>{stimulationTypes.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
                     </Select>
                 </div>
 
@@ -305,7 +389,6 @@ export default function StimulationPage() {
                   </div>
                 </div>
                 
-                {/* --- Personal Notes --- */}
                 <div>
                   {!showPersonalNotes ? (
                     <Button variant="outline" onClick={() => { setShowPersonalNotes(true); if (personalNotes.length === 0) addPersonalNote(); }} disabled={selectedStudents.length === 0}>
@@ -315,31 +398,21 @@ export default function StimulationPage() {
                     <div className="space-y-4 rounded-md border border-dashed p-4">
                       <div className="flex items-center justify-between">
                         <h3 className="font-semibold text-lg">Catatan Personal</h3>
-                        <Button variant="ghost" size="icon" onClick={() => setShowPersonalNotes(false)}>
-                          <X className="h-4 w-4" />
-                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => setShowPersonalNotes(false)}><X className="h-4 w-4" /></Button>
                       </div>
                       
                       {personalNotes.map((note) => (
                         <div key={note.id} className="grid grid-cols-1 md:grid-cols-[1fr_2fr_auto] gap-4 items-center rounded-md bg-secondary/30 p-3">
                             <Select onValueChange={(value) => updatePersonalNote(note.id, 'studentName', value)} value={note.studentName}>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Pilih Siswa..." />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {studentOptionsForNotes.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                              </SelectContent>
+                              <SelectTrigger><SelectValue placeholder="Pilih Siswa..." /></SelectTrigger>
+                              <SelectContent>{studentOptionsForNotes.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
                             </Select>
                             <Input placeholder="Tulis catatan personal untuk siswa ini..." value={note.note} onChange={(e) => updatePersonalNote(note.id, 'note', e.target.value)} />
-                            <Button variant="destructive" size="icon" onClick={() => removePersonalNote(note.id)}>
-                                <Trash2 className="h-4 w-4"/>
-                            </Button>
+                            <Button variant="destructive" size="icon" onClick={() => removePersonalNote(note.id)}><Trash2 className="h-4 w-4"/></Button>
                         </div>
                       ))}
                       
-                      <Button variant="secondary" onClick={addPersonalNote}>
-                          <PlusCircle className="mr-2 h-4 w-4" /> Tambah Catatan Lagi
-                      </Button>
+                      <Button variant="secondary" onClick={addPersonalNote}><PlusCircle className="mr-2 h-4 w-4" /> Tambah Catatan Lagi</Button>
                     </div>
                   )}
                 </div>
@@ -348,18 +421,103 @@ export default function StimulationPage() {
           </CardContent>
           {mode && (
             <CardFooter>
-                <Button
-                className="w-full transition-all duration-300"
-                onClick={handleSave}
-                disabled={isSaveDisabled}
-                size="lg"
-                >
-                {buttonState === 'loading' ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : buttonState === 'saved' ? <Check className="mr-2 h-5 w-5" /> : null}
-                {buttonState === 'loading' ? 'Menyimpan...' : buttonState === 'saved' ? 'Tersimpan' : 'Simpan Catatan'}
+                <Button className="w-full transition-all duration-300" onClick={handleSave} disabled={isSaveDisabled} size="lg">
+                    {buttonState === 'loading' ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : buttonState === 'saved' ? <Check className="mr-2 h-5 w-5" /> : null}
+                    {buttonState === 'loading' ? 'Menyimpan...' : buttonState === 'saved' ? 'Tersimpan' : 'Simpan Catatan'}
                 </Button>
             </CardFooter>
           )}
         </Card>
+
+        <div className="mt-12">
+            <h2 className="text-2xl font-semibold mb-4 flex items-center gap-3"><HeartPulse className="text-rose-500"/> Riwayat Kegiatan & Stimulasi</h2>
+             <Card className="shadow-lg">
+                <CardContent className="p-0">
+                    {journals.length > 0 ? (
+                    <Accordion type="multiple" className="w-full">
+                    {journals.map((journal) => (
+                        <AccordionItem value={`stimulation-journal-${journal.id}`} key={journal.id}>
+                        <AccordionTrigger className="px-6 py-4 hover:bg-rose-500/5">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4 text-left w-full">
+                                <div className="font-semibold text-base">{journal.kegiatan}</div>
+                                <div className="text-sm text-muted-foreground">
+                                    <span>{journal.facilitatorName}</span> | <ClientFormattedDate timestamp={journal.timestamp} />
+                                </div>
+                            </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="px-6 pt-0 pb-4 space-y-6">
+                            <div className="pt-4 border-t space-y-3">
+                                <h4 className="font-semibold text-lg mb-2">Detail Kegiatan</h4>
+                                <p className="flex items-center gap-2"><MapPin className="h-4 w-4 text-muted-foreground"/> <span className="font-semibold">Lokasi:</span> {journal.lokasi}</p>
+                                {journal.namaPemateri && <p className="flex items-center gap-2"><User className="h-4 w-4 text-muted-foreground"/> <span className="font-semibold">Pemateri:</span> {journal.namaPemateri}</p>}
+                                {journal.jenisStimulasi && <p className="flex items-center gap-2"><Layers3 className="h-4 w-4 text-muted-foreground"/> <span className="font-semibold">Jenis:</span> {journal.jenisStimulasi}</p>}
+                                
+                                {journal.catatanPenting && (
+                                    <div className="mt-4 p-3 rounded-md bg-secondary/50 border border-secondary">
+                                    <h5 className="font-semibold flex items-center gap-2 mb-1"><StickyNote className="h-4 w-4" />Catatan Penting</h5>
+                                    <p className="text-sm">{journal.catatanPenting}</p>
+                                    </div>
+                                )}
+                            </div>
+                            
+                            <div className="space-y-4">
+                                <h5 className="font-semibold flex items-center gap-2 text-lg"><MessageSquare className="h-5 w-5" />Catatan Personal Siswa</h5>
+                                {journal.personalNotes.map(note => (
+                                    <div key={note.id} className="p-3 rounded-md border bg-card">
+                                        <p className="font-bold">{note.studentName}</p>
+                                        <p className="text-sm text-foreground/80 my-1">"{note.note}"</p>
+                                        <p className="text-xs text-muted-foreground text-right">- {note.facilitatorName}</p>
+                                    </div>
+                                ))}
+                                {journal.personalNotes.length === 0 && <p className="text-sm text-muted-foreground">Belum ada catatan personal.</p>}
+                            </div>
+                            
+                            <div className="p-4 rounded-lg border border-dashed space-y-3">
+                                <h5 className="font-semibold">Tambah Catatan Personal Baru</h5>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <Select 
+                                        onValueChange={(value) => handleNewNoteChange(journal.id, 'studentName', value)} 
+                                        value={newNotes[journal.id]?.studentName || ""}
+                                    >
+                                        <SelectTrigger><SelectValue placeholder="Pilih Siswa..." /></SelectTrigger>
+                                        <SelectContent>
+                                            {journal.students.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                    <Input 
+                                        placeholder="Tulis catatan..." 
+                                        value={newNotes[journal.id]?.note || ""}
+                                        onChange={(e) => handleNewNoteChange(journal.id, 'note', e.target.value)}
+                                    />
+                                </div>
+                                <Button onClick={() => handleAddPersonalNoteToLog(journal.id)} size="sm">
+                                    <Send className="mr-2 h-4 w-4" /> Kirim Catatan
+                                </Button>
+                            </div>
+
+                            {facilitator.fullName === journal.facilitatorName && (
+                                <div className="flex justify-end pt-4 border-t">
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4"/> Hapus Catatan Ini</Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                    <AlertDialogHeader><AlertDialogTitle>Anda yakin ingin menghapus catatan ini?</AlertDialogTitle><AlertDialogDescription>Tindakan ini tidak dapat diurungkan.</AlertDialogDescription></AlertDialogHeader>
+                                    <AlertDialogFooter><AlertDialogCancel>Batal</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteJournal(journal.id)}>Ya, Hapus</AlertDialogAction></AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                                </div>
+                            )}
+                        </AccordionContent>
+                        </AccordionItem>
+                    ))}
+                    </Accordion>
+                    ) : (
+                        <div className="p-8 text-center text-muted-foreground"><p>Belum ada riwayat kegiatan atau stimulasi.</p></div>
+                    )}
+                </CardContent>
+            </Card>
+        </div>
       </div>
     </div>
   );

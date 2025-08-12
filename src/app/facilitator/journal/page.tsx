@@ -5,7 +5,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { 
   ArrowLeft, Calendar as CalendarIcon, Check, Loader2, Book, 
-  User, Star, PlusCircle, X, Trash2, StickyNote, Layers, Users, School
+  User, Star, PlusCircle, X, Trash2, StickyNote, Layers, Users, School, MessageSquare, Send
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,11 +15,23 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { allStudents, facilitatorAssignments, getLoggedInFacilitator, classes as allClassNames } from "@/lib/data";
+import { allStudents, facilitatorAssignments, getLoggedInFacilitator, academicJournalLog, studentsByClass } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 type PersonalNote = {
   id: number;
@@ -34,7 +46,23 @@ type Facilitator = {
   gender: string;
 }
 
-const groupSubjects = ["Al-Qur'an & Tajwid", "Minhaj", "Quran Tematik", "MFM"];
+type AcademicJournalEntry = typeof academicJournalLog[0];
+type AcademicPersonalNote = AcademicJournalEntry['personalNotes'][0];
+
+const ClientFormattedDate = ({ timestamp }: { timestamp: string }) => {
+  const [formattedDate, setFormattedDate] = useState("");
+
+  useEffect(() => {
+    setFormattedDate(
+      new Date(timestamp).toLocaleString('id-ID', {
+        dateStyle: 'long',
+        timeStyle: 'short',
+      })
+    );
+  }, [timestamp]);
+
+  return <span>{formattedDate}</span>;
+};
 
 export default function JournalPage() {
   const [facilitator, setFacilitator] = useState<Facilitator | null>(null);
@@ -58,6 +86,9 @@ export default function JournalPage() {
   
   const router = useRouter();
   const { toast } = useToast();
+
+  const [journals, setJournals] = useState(academicJournalLog);
+  const [newNotes, setNewNotes] = useState<{ [journalId: number]: { studentName: string; note: string } }>({});
 
   useEffect(() => {
     const loggedInFacilitator = getLoggedInFacilitator();
@@ -92,7 +123,6 @@ export default function JournalPage() {
     if (mode !== 'kelompok' || !selectedSubject || !facilitator) return [];
 
     let students = allStudents;
-    // Special filter for Al-Qur'an
     if (selectedSubject === "Al-Qur'an & Tajwid") {
       students = students.filter(student => student.gender === facilitator.gender);
     }
@@ -132,7 +162,6 @@ export default function JournalPage() {
   
   const handleSubjectChange = (subject: string) => {
       setSelectedSubject(subject);
-      // For group mode, student list is already determined by subject, so we reset activities
       if(mode === 'kelompok'){
           setSelectedStudents([]);
           setStudentActivity({});
@@ -170,7 +199,7 @@ export default function JournalPage() {
   }
 
   const handleSave = () => {
-    if (!mode || !selectedSubject || !topic || selectedStudents.length === 0) {
+    if (!mode || !selectedSubject || !topic || selectedStudents.length === 0 || !facilitator) {
       setIsShaking(true);
       toast({
         title: "Data Wajib Belum Lengkap",
@@ -182,21 +211,22 @@ export default function JournalPage() {
     }
 
     setButtonState("loading");
-    console.log("Saving journal:", {
-      date: journalDate,
-      mode,
+    
+    const newJournalEntry: AcademicJournalEntry = {
+      id: Date.now(),
+      timestamp: (journalDate || new Date()).toISOString(),
+      facilitatorName: facilitator.fullName,
       class: selectedClass,
       subject: selectedSubject,
-      students: selectedStudents,
       topic,
-      studentActivity,
-      assignment,
-      deadline,
       importantNotes,
-      personalNotes
-    });
+      personalNotes: personalNotes.map(pn => ({ ...pn, facilitatorName: facilitator.fullName }))
+    };
+
+    console.log("Saving journal:", newJournalEntry);
     
     setTimeout(() => {
+      setJournals(prev => [newJournalEntry, ...prev]);
       setButtonState("saved");
       toast({
         title: "Jurnal Tersimpan!",
@@ -207,6 +237,40 @@ export default function JournalPage() {
       setTimeout(() => setButtonState("idle"), 2000);
     }, 1500);
   };
+
+  const handleAddPersonalNoteToLog = (journalId: number) => {
+    const noteData = newNotes[journalId];
+    if (!noteData || !noteData.studentName || !noteData.note || !facilitator) {
+      toast({ title: "Gagal Menambah Catatan", description: "Mohon pilih siswa dan isi catatan.", variant: "destructive" });
+      return;
+    }
+    const updatedJournals = journals.map(journal => {
+      if (journal.id === journalId) {
+        const newNote: AcademicPersonalNote = {
+          id: Date.now(),
+          studentName: noteData.studentName,
+          note: noteData.note,
+          facilitatorName: facilitator.fullName
+        };
+        return { ...journal, personalNotes: [...journal.personalNotes, newNote] };
+      }
+      return journal;
+    });
+    setJournals(updatedJournals);
+    setNewNotes(prev => ({ ...prev, [journalId]: { studentName: "", note: "" } }));
+    toast({ title: "Catatan Ditambahkan!", description: `Catatan personal untuk ${noteData.studentName} berhasil ditambahkan.` });
+  };
+
+  const handleNewNoteChange = (journalId: number, field: 'studentName' | 'note', value: string) => {
+    setNewNotes(prev => ({ ...prev, [journalId]: { ...(prev[journalId] || {}), [field]: value } }));
+  };
+
+  const handleDeleteJournal = (journalId: number) => {
+    setJournals(prev => prev.filter(j => j.id !== journalId));
+    toast({ title: "Jurnal Dihapus", description: "Jurnal berhasil dihapus." });
+  };
+
+  const getStudentOptionsForClass = (className: string) => studentsByClass[className] || [];
   
   const isSaveDisabled = buttonState !== 'idle';
   
@@ -237,8 +301,6 @@ export default function JournalPage() {
             <CardDescription>Pilih mode pengisian, lalu lengkapi detail sesi pembelajaran hari ini.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-
-            {/* --- Mode Selection --- */}
             <div className="space-y-3">
               <Label className="font-semibold text-base">1. Pilih Mode Pengisian Jurnal</Label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -317,7 +379,6 @@ export default function JournalPage() {
               </div>
             )}
 
-            {/* Common Fields, enabled when primary selections are made */}
             {mode && selectedSubject && (
               <div className="space-y-6 pt-6 border-t border-dashed">
                  <div className="space-y-2">
@@ -326,22 +387,14 @@ export default function JournalPage() {
                         <PopoverTrigger asChild>
                         <Button
                             variant={"outline"}
-                            className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !journalDate && "text-muted-foreground"
-                            )}
+                            className={cn("w-full justify-start text-left font-normal", !journalDate && "text-muted-foreground")}
                         >
                             <CalendarIcon className="mr-2 h-4 w-4" />
                             {journalDate ? format(journalDate, "PPP") : <span>Pilih tanggal</span>}
                         </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0">
-                        <Calendar
-                            mode="single"
-                            selected={journalDate}
-                            onSelect={setJournalDate}
-                            initialFocus
-                        />
+                        <Calendar mode="single" selected={journalDate} onSelect={setJournalDate} initialFocus />
                         </PopoverContent>
                     </Popover>
                  </div>
@@ -373,7 +426,6 @@ export default function JournalPage() {
                   </div>
                 )}
                 
-                {/* --- Optional Fields --- */}
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
@@ -384,25 +436,12 @@ export default function JournalPage() {
                       <Label htmlFor="deadline" className="font-semibold">Deadline Tugas (Opsional)</Label>
                         <Popover>
                           <PopoverTrigger asChild>
-                            <Button
-                              variant={"outline"}
-                              className={cn(
-                                "w-full justify-start text-left font-normal",
-                                !deadline && "text-muted-foreground"
-                              )}
-                            >
+                            <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !deadline && "text-muted-foreground")}>
                               <CalendarIcon className="mr-2 h-4 w-4" />
                               {deadline ? format(deadline, "PPP") : <span>Pilih tanggal</span>}
                             </Button>
                           </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0">
-                            <Calendar
-                              mode="single"
-                              selected={deadline}
-                              onSelect={setDeadline}
-                              initialFocus
-                            />
-                          </PopoverContent>
+                          <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={deadline} onSelect={setDeadline} initialFocus /></PopoverContent>
                         </Popover>
                     </div>
                   </div>
@@ -415,7 +454,6 @@ export default function JournalPage() {
                   </div>
                 </div>
             
-                {/* --- Personal Notes --- */}
                 <div>
                   {!showPersonalNotes ? (
                      <Button variant="outline" onClick={() => setShowPersonalNotes(true)} disabled={selectedStudents.length === 0}>
@@ -425,50 +463,121 @@ export default function JournalPage() {
                     <div className="space-y-4 rounded-md border border-dashed p-4">
                       <div className="flex items-center justify-between">
                         <h3 className="font-semibold text-lg">Catatan Personal</h3>
-                        <Button variant="ghost" size="icon" onClick={() => setShowPersonalNotes(false)}>
-                          <X className="h-4 w-4" />
-                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => setShowPersonalNotes(false)}><X className="h-4 w-4" /></Button>
                       </div>
                       {personalNotes.map((note) => (
                          <div key={note.id} className="grid grid-cols-1 md:grid-cols-[1fr_2fr_auto] gap-4 items-center rounded-md bg-secondary/30 p-3">
                             <Select onValueChange={(value) => updatePersonalNote(note.id, 'studentName', value)} value={note.studentName}>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Pilih Siswa..." />
-                              </SelectTrigger>
-                              <SelectContent>
-                                 {selectedStudents.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                              </SelectContent>
+                              <SelectTrigger><SelectValue placeholder="Pilih Siswa..." /></SelectTrigger>
+                              <SelectContent>{selectedStudents.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
                             </Select>
                             <Input placeholder="Tulis catatan personal untuk siswa ini..." value={note.note} onChange={(e) => updatePersonalNote(note.id, 'note', e.target.value)} />
-                            <Button variant="destructive" size="icon" onClick={() => removePersonalNote(note.id)}>
-                                <Trash2 className="h-4 w-4"/>
-                            </Button>
+                            <Button variant="destructive" size="icon" onClick={() => removePersonalNote(note.id)}><Trash2 className="h-4 w-4"/></Button>
                          </div>
                       ))}
-                       <Button variant="secondary" onClick={addPersonalNote}>
-                          <PlusCircle className="mr-2 h-4 w-4" /> Tambah Catatan Lagi
-                       </Button>
+                       <Button variant="secondary" onClick={addPersonalNote}><PlusCircle className="mr-2 h-4 w-4" /> Tambah Catatan Lagi</Button>
                     </div>
                   )}
                 </div>
               </div>
             )}
-
           </CardContent>
           {mode && (
             <CardFooter>
-              <Button
-                className="w-full transition-all duration-300"
-                onClick={handleSave}
-                disabled={isSaveDisabled}
-                size="lg"
-              >
+              <Button className="w-full transition-all duration-300" onClick={handleSave} disabled={isSaveDisabled} size="lg">
                 {buttonState === 'loading' ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : buttonState === 'saved' ? <Check className="mr-2 h-5 w-5" /> : null}
                 {buttonState === 'loading' ? 'Menyimpan...' : buttonState === 'saved' ? 'Tersimpan' : 'Simpan Jurnal'}
               </Button>
             </CardFooter>
           )}
         </Card>
+
+        <div className="mt-12">
+            <h2 className="text-2xl font-semibold mb-4 flex items-center gap-3"><BookOpen className="text-primary"/> Riwayat Jurnal Pembelajaran</h2>
+            <Card className="shadow-lg">
+                <CardContent className="p-0">
+                    {journals.length > 0 ? (
+                    <Accordion type="multiple" className="w-full">
+                    {journals.map((journal) => (
+                        <AccordionItem value={`academic-journal-${journal.id}`} key={journal.id}>
+                        <AccordionTrigger className="px-6 py-4 hover:bg-primary/5">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4 text-left w-full">
+                                <div className="font-semibold text-base">{journal.subject} - Kelas {journal.class}</div>
+                                <div className="text-sm text-muted-foreground">
+                                    <span>{journal.facilitatorName}</span> | <ClientFormattedDate timestamp={journal.timestamp} />
+                                </div>
+                            </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="px-6 pt-0 pb-4 space-y-6">
+                            <div className="pt-4 border-t">
+                                <h4 className="font-semibold text-lg mb-2">Detail Jurnal</h4>
+                                <p><span className="font-semibold">Topik:</span> {journal.topic}</p>
+                                {journal.importantNotes && (
+                                    <div className="mt-4 p-3 rounded-md bg-secondary/50 border border-secondary">
+                                    <h5 className="font-semibold flex items-center gap-2 mb-1"><StickyNote className="h-4 w-4" />Catatan Penting</h5>
+                                    <p className="text-sm">{journal.importantNotes}</p>
+                                    </div>
+                                )}
+                            </div>
+                            
+                            <div className="space-y-4">
+                                <h5 className="font-semibold flex items-center gap-2 text-lg"><MessageSquare className="h-5 w-5" />Catatan Personal Siswa</h5>
+                                {journal.personalNotes.map(note => (
+                                    <div key={note.id} className="p-3 rounded-md border bg-card">
+                                        <p className="font-bold">{note.studentName}</p>
+                                        <p className="text-sm text-foreground/80 my-1">"{note.note}"</p>
+                                        <p className="text-xs text-muted-foreground text-right">- {note.facilitatorName}</p>
+                                    </div>
+                                ))}
+                                {journal.personalNotes.length === 0 && <p className="text-sm text-muted-foreground">Belum ada catatan personal.</p>}
+                            </div>
+                            
+                            <div className="p-4 rounded-lg border border-dashed space-y-3">
+                                <h5 className="font-semibold">Tambah Catatan Personal Baru</h5>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <Select 
+                                        onValueChange={(value) => handleNewNoteChange(journal.id, 'studentName', value)} 
+                                        value={newNotes[journal.id]?.studentName || ""}
+                                    >
+                                        <SelectTrigger><SelectValue placeholder="Pilih Siswa..." /></SelectTrigger>
+                                        <SelectContent>
+                                            {getStudentOptionsForClass(journal.class).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                    <Input 
+                                        placeholder="Tulis catatan..." 
+                                        value={newNotes[journal.id]?.note || ""}
+                                        onChange={(e) => handleNewNoteChange(journal.id, 'note', e.target.value)}
+                                    />
+                                </div>
+                                <Button onClick={() => handleAddPersonalNoteToLog(journal.id)} size="sm">
+                                    <Send className="mr-2 h-4 w-4" /> Kirim Catatan
+                                </Button>
+                            </div>
+
+                            {facilitator.fullName === journal.facilitatorName && (
+                                <div className="flex justify-end pt-4 border-t">
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4"/> Hapus Jurnal Ini</Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                    <AlertDialogHeader><AlertDialogTitle>Anda yakin ingin menghapus jurnal ini?</AlertDialogTitle><AlertDialogDescription>Tindakan ini tidak dapat diurungkan.</AlertDialogDescription></AlertDialogHeader>
+                                    <AlertDialogFooter><AlertDialogCancel>Batal</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteJournal(journal.id)}>Ya, Hapus Jurnal</AlertDialogAction></AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                                </div>
+                            )}
+                        </AccordionContent>
+                        </AccordionItem>
+                    ))}
+                    </Accordion>
+                    ) : (
+                        <div className="p-8 text-center text-muted-foreground"><p>Belum ada riwayat jurnal pembelajaran.</p></div>
+                    )}
+                </CardContent>
+            </Card>
+        </div>
       </div>
     </div>
   );
