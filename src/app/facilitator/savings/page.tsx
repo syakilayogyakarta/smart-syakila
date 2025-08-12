@@ -1,9 +1,9 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Calendar, Clock, Check, Loader2, Landmark, Wallet, Edit3 } from "lucide-react";
+import { ArrowLeft, Calendar as CalendarIcon, Check, Loader2, Landmark, Wallet, Edit3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -13,11 +13,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { studentsByClass, classes } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
 
 type TransactionType = 'setoran' | 'penarikan';
 
 export default function SavingsPage() {
-  const [timestamp, setTimestamp] = useState("");
+  const [transactionDate, setTransactionDate] = useState<Date | undefined>(new Date());
   const [selectedClass, setSelectedClass] = useState<string>("");
   const [studentOptions, setStudentOptions] = useState<string[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<string>("");
@@ -29,15 +32,6 @@ export default function SavingsPage() {
   
   const router = useRouter();
   const { toast } = useToast();
-
-  useEffect(() => {
-    const now = new Date();
-    const options: Intl.DateTimeFormatOptions = {
-      year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit',
-      timeZone: 'Asia/Jakarta'
-    };
-    setTimestamp(new Intl.DateTimeFormat('id-ID', options).format(now).replace('.', ':'));
-  }, []);
 
   const handleClassChange = (value: string) => {
     setSelectedClass(value);
@@ -59,6 +53,7 @@ export default function SavingsPage() {
 
     setButtonState("loading");
     console.log("Saving transaction:", {
+      date: transactionDate,
       student: selectedStudent,
       type: transactionType,
       amount: parseFloat(amount),
@@ -77,6 +72,7 @@ export default function SavingsPage() {
       setAmount("");
       setDescription("");
       setTransactionType("setoran");
+      setTransactionDate(new Date());
       
       setTimeout(() => setButtonState("idle"), 2000);
     }, 1500);
@@ -92,8 +88,8 @@ export default function SavingsPage() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <h1 className="text-3xl font-bold text-foreground">Tabungan Siswa</h1>
-          <p className="text-muted-foreground mt-2 flex items-center justify-center gap-2">
-            <Calendar className="h-4 w-4" /> <span>{timestamp}</span>
+          <p className="text-muted-foreground mt-2">
+            Catat transaksi setoran atau penarikan tabungan.
           </p>
         </header>
 
@@ -103,6 +99,32 @@ export default function SavingsPage() {
             <CardDescription>Pilih kelas dan siswa untuk mencatat transaksi tabungan.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            <div className="space-y-2">
+                <Label>Tanggal Transaksi</Label>
+                <Popover>
+                    <PopoverTrigger asChild>
+                    <Button
+                        variant={"outline"}
+                        className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !transactionDate && "text-muted-foreground"
+                        )}
+                    >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {transactionDate ? format(transactionDate, "PPP") : <span>Pilih tanggal</span>}
+                    </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                    <Calendar
+                        mode="single"
+                        selected={transactionDate}
+                        onSelect={setTransactionDate}
+                        initialFocus
+                    />
+                    </PopoverContent>
+                </Popover>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="class-select">Pilih Kelas</Label>

@@ -1,10 +1,10 @@
 
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { 
-  ArrowLeft, Calendar as CalendarIcon, Clock, Check, Loader2, PlusCircle, X, Trash2, 
+  ArrowLeft, Calendar as CalendarIcon, Check, Loader2, PlusCircle, X, Trash2, 
   Activity, MapPin, StickyNote, User, Layers, School, Users, UserCheck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,9 @@ import { allStudents, studentsByClass, classes } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
 
 type PersonalNote = {
   id: number;
@@ -34,7 +37,7 @@ const stimulationTypes = [
 ];
 
 export default function StimulationPage() {
-  const [timestamp, setTimestamp] = useState("");
+  const [activityDate, setActivityDate] = useState<Date | undefined>(new Date());
   const [mode, setMode] = useState<"klasikal" | "kelas" | "kelompok" | null>(null);
   const [selectedClass, setSelectedClass] = useState("");
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
@@ -55,15 +58,6 @@ export default function StimulationPage() {
 
   const allStudentNames = useMemo(() => allStudents.map(s => s.fullName), []);
 
-  useEffect(() => {
-    const now = new Date();
-    const options: Intl.DateTimeFormatOptions = {
-      year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit',
-      timeZone: 'Asia/Jakarta'
-    };
-    setTimestamp(new Intl.DateTimeFormat('id-ID', options).format(now).replace('.', ':'));
-  }, []);
-
   const resetFormFields = (clearMode = false) => {
     if (clearMode) setMode(null);
     setSelectedClass("");
@@ -75,6 +69,7 @@ export default function StimulationPage() {
     setCatatanPenting("");
     setPersonalNotes([]);
     setShowPersonalNotes(false);
+    setActivityDate(new Date());
   };
   
   const handleModeChange = (newMode: "klasikal" | "kelas" | "kelompok") => {
@@ -123,7 +118,7 @@ export default function StimulationPage() {
 
     setButtonState("loading");
     console.log("Saving stimulation data:", {
-      timestamp,
+      date: activityDate,
       mode,
       selectedClass: mode === 'kelas' ? selectedClass : '',
       students: selectedStudents,
@@ -157,8 +152,8 @@ export default function StimulationPage() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <h1 className="text-3xl font-bold text-foreground">Kegiatan & Stimulasi</h1>
-          <p className="text-muted-foreground mt-2 flex items-center justify-center gap-2">
-            <CalendarIcon className="h-4 w-4" /> <span>{timestamp.split('pukul')[0]}</span> <Clock className="h-4 w-4" /> <span>{timestamp.split('pukul')[1]}</span>
+          <p className="text-muted-foreground mt-2">
+            Catat detail kegiatan atau stimulasi yang dilakukan.
           </p>
         </header>
 
@@ -237,6 +232,31 @@ export default function StimulationPage() {
 
             {mode && (
               <div className="space-y-6 pt-6 border-t border-dashed">
+                 <div className="space-y-2">
+                    <Label>Tanggal Kegiatan</Label>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                        <Button
+                            variant={"outline"}
+                            className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !activityDate && "text-muted-foreground"
+                            )}
+                        >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {activityDate ? format(activityDate, "PPP") : <span>Pilih tanggal</span>}
+                        </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                        <Calendar
+                            mode="single"
+                            selected={activityDate}
+                            onSelect={setActivityDate}
+                            initialFocus
+                        />
+                        </PopoverContent>
+                    </Popover>
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="kegiatan" className="font-semibold">Kegiatan atau Stimulasi <span className="text-destructive">*</span></Label>
                   <div className="relative">

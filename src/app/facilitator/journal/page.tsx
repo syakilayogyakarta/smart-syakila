@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { 
-  ArrowLeft, Calendar as CalendarIcon, Clock, Check, Loader2, Book, 
+  ArrowLeft, Calendar as CalendarIcon, Check, Loader2, Book, 
   User, Star, PlusCircle, X, Trash2, StickyNote, Layers, Users, School
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -38,8 +38,7 @@ const groupSubjects = ["Al-Qur'an & Tajwid", "Minhaj", "Quran Tematik", "MFM"];
 
 export default function JournalPage() {
   const [facilitator, setFacilitator] = useState<Facilitator | null>(null);
-  const [date, setDate] = useState("");
-  const [time, setTime] = useState("");
+  const [journalDate, setJournalDate] = useState<Date | undefined>(new Date());
   
   const [mode, setMode] = useState<"kelas" | "kelompok" | null>(null);
   const [selectedSubject, setSelectedSubject] = useState<string>("");
@@ -68,19 +67,6 @@ export default function JournalPage() {
       setFacilitator(loggedInFacilitator);
     }
   }, [router]);
-
-  useEffect(() => {
-    // This effect runs only on the client, after hydration
-    const now = new Date();
-    const dateOptions: Intl.DateTimeFormatOptions = {
-      year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Jakarta'
-    };
-    const timeOptions: Intl.DateTimeFormatOptions = {
-      hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta'
-    };
-    setDate(new Intl.DateTimeFormat('id-ID', dateOptions).format(now));
-    setTime(new Intl.DateTimeFormat('id-ID', timeOptions).format(now).replace('.',':'));
-  }, []);
   
   const facilitatorData = useMemo(() => {
     if (!facilitator) return null;
@@ -126,6 +112,7 @@ export default function JournalPage() {
     setImportantNotes("");
     setPersonalNotes([]);
     setShowPersonalNotes(false);
+    setJournalDate(new Date());
   };
 
   const handleModeChange = (newMode: "kelas" | "kelompok") => {
@@ -194,6 +181,7 @@ export default function JournalPage() {
 
     setButtonState("loading");
     console.log("Saving journal:", {
+      date: journalDate,
       mode,
       class: selectedClass,
       subject: selectedSubject,
@@ -236,8 +224,8 @@ export default function JournalPage() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <h1 className="text-3xl font-bold text-foreground">Jurnal Pembelajaran</h1>
-          <p className="text-muted-foreground mt-2 flex items-center justify-center gap-2">
-            <CalendarIcon className="h-4 w-4" /> <span>{date || 'Memuat...'}</span> <Clock className="h-4 w-4" /> <span>{time || '...'}</span>
+          <p className="text-muted-foreground mt-2">
+            Catat detail sesi pembelajaran harian Anda.
           </p>
         </header>
 
@@ -330,6 +318,31 @@ export default function JournalPage() {
             {/* Common Fields, enabled when primary selections are made */}
             {mode && selectedSubject && (
               <div className="space-y-6 pt-6 border-t border-dashed">
+                 <div className="space-y-2">
+                    <Label className="font-semibold">Tanggal Pembelajaran</Label>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                        <Button
+                            variant={"outline"}
+                            className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !journalDate && "text-muted-foreground"
+                            )}
+                        >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {journalDate ? format(journalDate, "PPP") : <span>Pilih tanggal</span>}
+                        </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                        <Calendar
+                            mode="single"
+                            selected={journalDate}
+                            onSelect={setJournalDate}
+                            initialFocus
+                        />
+                        </PopoverContent>
+                    </Popover>
+                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="topic" className="font-semibold">Topik Hari Ini <span className="text-destructive">*</span></Label>
                   <div className="relative">
