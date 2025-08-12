@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { 
-  ArrowLeft, Calendar as CalendarIcon, Check, Loader2, Book, 
+  ArrowLeft, Calendar as CalendarIcon, Check, Loader2, Book, BookOpen,
   User, Star, PlusCircle, X, Trash2, StickyNote, Layers, Users, School, MessageSquare, Send
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -582,3 +582,5 @@ export default function JournalPage() {
     </div>
   );
 }
+
+    
