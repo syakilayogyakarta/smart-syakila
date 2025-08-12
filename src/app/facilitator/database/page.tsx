@@ -1,18 +1,34 @@
 
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Database, Book, School, PlusCircle, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { allSubjects, classes } from '@/lib/data';
+import { allSubjects, classes, getLoggedInFacilitator } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 
 export default function DatabasePage() {
   const router = useRouter();
   const { toast } = useToast();
+  const [isAuthorized, setIsAuthorized] = useState(false);
+
+  useEffect(() => {
+    const facilitator = getLoggedInFacilitator();
+    // Only allow access if facilitator is not Faddliyah or Michael
+    if (facilitator && !['Faddliyah', 'Michael'].includes(facilitator.fullName)) {
+      setIsAuthorized(true);
+    } else {
+      toast({
+        title: "Akses Ditolak",
+        description: "Anda tidak memiliki izin untuk mengakses halaman ini.",
+        variant: "destructive"
+      });
+      router.push('/facilitator/dashboard');
+    }
+  }, [router, toast]);
 
   const handleActionClick = (feature: string) => {
     toast({
@@ -20,6 +36,14 @@ export default function DatabasePage() {
       description: `Fungsionalitas untuk ${feature} akan segera tersedia.`,
     });
   };
+
+  if (!isAuthorized) {
+    return (
+      <div className="min-h-screen bg-background p-8 flex items-center justify-center">
+          <p>Memeriksa izin akses...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
@@ -29,7 +53,7 @@ export default function DatabasePage() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <h1 className="text-3xl font-bold text-foreground flex items-center justify-center gap-3">
-            <Database className="h-8 w-8 text-indigo-500" />
+            <Database className="h-8 w-8 text-accent" />
             Kelola Data Master
           </h1>
           <p className="text-muted-foreground mt-2">Tambah, ubah, atau hapus data mata pelajaran dan kelas.</p>

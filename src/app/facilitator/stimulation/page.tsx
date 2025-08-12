@@ -125,7 +125,7 @@ export default function StimulationPage() {
   };
   
   const handleModeChange = (newMode: "klasikal" | "kelas" | "kelompok") => {
-    resetFormFields();
+    resetFormFields(); // Always reset form on mode change
     setMode(newMode);
     if (newMode === 'klasikal') {
         setSelectedStudents(allStudentNames);
@@ -232,7 +232,6 @@ export default function StimulationPage() {
     toast({ title: "Catatan Dihapus", description: "Catatan kegiatan berhasil dihapus." });
   };
 
-  const getAllStudentOptions = () => Object.values(studentsByClass).flat();
   const isSaveDisabled = buttonState !== 'idle';
   const studentOptionsForNotes = selectedStudents;
 
@@ -495,7 +494,7 @@ export default function StimulationPage() {
                                 </Button>
                             </div>
 
-                            {facilitator.fullName === journal.facilitatorName && (
+                            {facilitator?.fullName === journal.facilitatorName && (
                                 <div className="flex justify-end pt-4 border-t">
                                 <AlertDialog>
                                     <AlertDialogTrigger asChild>

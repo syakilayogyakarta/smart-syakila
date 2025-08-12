@@ -113,14 +113,14 @@ export default function FacilitatorDashboard() {
                 <Link href="/facilitator/attendance" passHref>
                   <Card className="group relative overflow-hidden text-center transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 h-full flex flex-col justify-between">
                     <CardHeader>
-                      <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-accent/10 transition-transform duration-300 group-hover:scale-110">
-                        <ClipboardCheck className="h-12 w-12 text-accent" />
+                      <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-primary/10 transition-transform duration-300 group-hover:scale-110">
+                        <ClipboardCheck className="h-12 w-12 text-primary" />
                       </div>
                       <CardTitle>Presensi</CardTitle>
                       <CardDescription>Kelola kehadiran siswa.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="font-semibold text-accent flex items-center justify-center">
+                      <div className="font-semibold text-primary flex items-center justify-center">
                         Buka Presensi
                         <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                       </div>
@@ -131,14 +131,14 @@ export default function FacilitatorDashboard() {
                 <Link href="/facilitator/savings" passHref>
                   <Card className="group relative overflow-hidden text-center transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 h-full flex flex-col justify-between">
                     <CardHeader>
-                      <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-destructive/10 transition-transform duration-300 group-hover:scale-110">
-                        <Banknote className="h-12 w-12 text-destructive" />
+                      <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-primary/10 transition-transform duration-300 group-hover:scale-110">
+                        <Banknote className="h-12 w-12 text-primary" />
                       </div>
                       <CardTitle>Tabungan</CardTitle>
                       <CardDescription>Catat tabungan siswa.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="font-semibold text-destructive flex items-center justify-center">
+                      <div className="font-semibold text-primary flex items-center justify-center">
                         Buka Tabungan
                         <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                       </div>
@@ -149,14 +149,14 @@ export default function FacilitatorDashboard() {
                 <Link href="/facilitator/students" passHref>
                   <Card className="group relative overflow-hidden text-center transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 h-full flex flex-col justify-between">
                     <CardHeader>
-                      <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-orange-500/10 transition-transform duration-300 group-hover:scale-110">
-                        <Users className="h-12 w-12 text-orange-500" />
+                      <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-accent/10 transition-transform duration-300 group-hover:scale-110">
+                        <Users className="h-12 w-12 text-accent" />
                       </div>
                       <CardTitle>Data Siswa</CardTitle>
                       <CardDescription>Lihat profil lengkap siswa.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="font-semibold text-orange-500 flex items-center justify-center">
+                      <div className="font-semibold text-accent flex items-center justify-center">
                         Lihat Data
                         <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                       </div>
@@ -167,14 +167,14 @@ export default function FacilitatorDashboard() {
                 <Link href="/facilitator/database" passHref>
                   <Card className="group relative overflow-hidden text-center transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 h-full flex flex-col justify-between">
                     <CardHeader>
-                      <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-indigo-500/10 transition-transform duration-300 group-hover:scale-110">
-                        <Database className="h-12 w-12 text-indigo-500" />
+                      <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-accent/10 transition-transform duration-300 group-hover:scale-110">
+                        <Database className="h-12 w-12 text-accent" />
                       </div>
                       <CardTitle>Kelola Data Master</CardTitle>
                       <CardDescription>Ubah data mata pelajaran & kelas.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="font-semibold text-indigo-500 flex items-center justify-center">
+                      <div className="font-semibold text-accent flex items-center justify-center">
                         Buka Pengelola
                         <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                       </div>
@@ -187,14 +187,14 @@ export default function FacilitatorDashboard() {
             <Link href="/facilitator/journal" passHref>
               <Card className="group relative overflow-hidden text-center transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 h-full flex flex-col justify-between">
                 <CardHeader>
-                  <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-green-500/10 transition-transform duration-300 group-hover:scale-110">
-                    <BookOpen className="h-12 w-12 text-green-500" />
+                  <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-destructive/10 transition-transform duration-300 group-hover:scale-110">
+                    <BookOpen className="h-12 w-12 text-destructive" />
                   </div>
                   <CardTitle>Jurnal Pembelajaran</CardTitle>
                   <CardDescription>Isi dan lihat riwayat jurnal.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="font-semibold text-green-500 flex items-center justify-center">
+                  <div className="font-semibold text-destructive flex items-center justify-center">
                     Buka Jurnal
                     <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                   </div>
@@ -205,14 +205,14 @@ export default function FacilitatorDashboard() {
             <Link href="/facilitator/stimulation" passHref>
               <Card className="group relative overflow-hidden text-center transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 h-full flex flex-col justify-between">
                 <CardHeader>
-                  <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-blue-500/10 transition-transform duration-300 group-hover:scale-110">
-                    <Activity className="h-12 w-12 text-blue-500" />
+                  <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-destructive/10 transition-transform duration-300 group-hover:scale-110">
+                    <Activity className="h-12 w-12 text-destructive" />
                   </div>
                   <CardTitle>Kegiatan/Stimulasi</CardTitle>
                   <CardDescription>Catat dan lihat riwayat kegiatan.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="font-semibold text-blue-500 flex items-center justify-center">
+                  <div className="font-semibold text-destructive flex items-center justify-center">
                     Buka Form
                     <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                   </div>

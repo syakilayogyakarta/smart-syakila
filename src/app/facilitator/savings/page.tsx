@@ -35,7 +35,7 @@ export default function SavingsPage() {
 
   const handleClassChange = (value: string) => {
     setSelectedClass(value);
-    setSelectedStudent("");
+    setSelectedStudent(""); // Reset student selection when class changes
     setStudentOptions(studentsByClass[value] || []);
   };
 
@@ -73,6 +73,7 @@ export default function SavingsPage() {
       setDescription("");
       setTransactionType("setoran");
       setTransactionDate(new Date());
+      setStudentOptions([]);
       
       setTimeout(() => setButtonState("idle"), 2000);
     }, 1500);
