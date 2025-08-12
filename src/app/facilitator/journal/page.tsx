@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { 
-    getLoggedInFacilitator, 
+    getLoggedInUser, 
     getAcademicJournalLog,
     addAcademicJournalLog,
     deleteAcademicJournal,
@@ -107,12 +107,12 @@ export default function JournalPage() {
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     try {
-        const loggedInFacilitator = await getLoggedInFacilitator();
-        if (!loggedInFacilitator) {
+        const loggedInUser = await getLoggedInUser();
+        if (!loggedInUser || loggedInUser.isAdmin) {
             router.push('/login');
             return;
         }
-        setFacilitator(loggedInFacilitator);
+        setFacilitator(loggedInUser as Facilitator);
 
         const [studentsData, classesData, subjectsData, assignmentsData, journalsData] = await Promise.all([
             getStudents(),

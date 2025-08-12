@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { 
     getStudents, 
     getClasses, 
-    getLoggedInFacilitator, 
+    getLoggedInUser, 
     getStimulationJournalLog,
     addStimulationJournalLog,
     deleteStimulationJournal,
@@ -106,12 +106,12 @@ export default function StimulationPage() {
   const fetchData = useCallback(async () => {
       setIsLoading(true);
       try {
-          const loggedInFacilitator = await getLoggedInFacilitator();
-          if (!loggedInFacilitator) {
+          const loggedInUser = await getLoggedInUser();
+          if (!loggedInUser || loggedInUser.isAdmin) {
               router.push('/login');
               return;
           }
-          setFacilitator(loggedInFacilitator);
+          setFacilitator(loggedInUser as Facilitator);
 
           const [studentsData, classesData, journalsData] = await Promise.all([
               getStudents(),

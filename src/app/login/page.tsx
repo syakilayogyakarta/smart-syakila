@@ -2,7 +2,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { User, Users, Loader2 } from "lucide-react"
+import { User, Users, Loader2, KeyRound } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -12,34 +12,73 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { getFacilitators, Facilitator } from "@/lib/data"
 import { useEffect, useState } from "react"
+import { useToast } from "@/hooks/use-toast"
+import { Separator } from "@/components/ui/separator";
 
 export default function LoginPage() {
   const router = useRouter()
+  const { toast } = useToast();
   const [facilitators, setFacilitators] = useState<Facilitator[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [password, setPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
+    // Clear any previous session
+    localStorage.removeItem("loggedInFacilitatorId");
+    localStorage.removeItem("isAdmin");
+
     async function fetchFacilitators() {
       try {
         const data = await getFacilitators();
         setFacilitators(data);
       } catch (error) {
         console.error("Failed to fetch facilitators", error);
-        // Handle error, maybe show a toast
+        toast({ title: "Gagal memuat fasilitator", variant: "destructive"});
       } finally {
         setIsLoading(false);
       }
     }
     fetchFacilitators();
-  }, []);
+  }, [toast]);
 
-  const handleLogin = (facilitatorId: string) => {
-    // In a real app, you'd use a proper auth system.
-    // For this prototype, we'll use localStorage to remember the user.
-    localStorage.setItem("loggedInFacilitatorId", facilitatorId)
+  const handleFacilitatorLogin = (facilitatorId: string) => {
+    localStorage.setItem("loggedInFacilitatorId", facilitatorId);
+    localStorage.setItem("isAdmin", "false");
     router.push('/facilitator/dashboard');
+  }
+
+  const handleAdminLogin = () => {
+    setIsSubmitting(true);
+    if (password === "SYAKILA123") {
+      localStorage.setItem("isAdmin", "true");
+      toast({
+        title: "Login Berhasil!",
+        description: "Anda masuk sebagai Admin Utama.",
+      });
+      router.push('/facilitator/dashboard');
+    } else {
+      toast({
+        title: "Login Gagal",
+        description: "Password yang Anda masukkan salah.",
+        variant: "destructive",
+      });
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -68,16 +107,53 @@ export default function LoginPage() {
                   key={facilitator.id} 
                   className="w-full justify-start h-14 text-lg" 
                   variant="outline"
-                  onClick={() => handleLogin(facilitator.id)}
+                  onClick={() => handleFacilitatorLogin(facilitator.id)}
                 >
                   <User className="mr-4 h-5 w-5 text-primary" />
                   {facilitator.gender === 'Laki-laki' ? 'Mas' : 'Mba'} {facilitator.nickname}
               </Button>
             ))
           ) : (
-             <p className="text-center text-muted-foreground">Belum ada data fasilitator. Silakan tambahkan terlebih dahulu.</p>
+             <p className="text-center text-muted-foreground">Belum ada data fasilitator. Silakan hubungi admin.</p>
           )}
         </CardContent>
+        <div className="p-6 pt-0">
+          <Separator className="my-4" />
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="secondary" className="w-full">
+                <KeyRound className="mr-2 h-4 w-4" /> Login Sebagai Admin Utama
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Login Admin</DialogTitle>
+                <DialogDescription>
+                  Masukkan password admin untuk mengakses fitur manajemen data master.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="py-4">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAdminLogin()}
+                />
+              </div>
+              <DialogFooter>
+                 <DialogClose asChild>
+                    <Button variant="outline">Batal</Button>
+                 </DialogClose>
+                 <Button onClick={handleAdminLogin} disabled={isSubmitting}>
+                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Masuk
+                 </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </Card>
     </main>
   )

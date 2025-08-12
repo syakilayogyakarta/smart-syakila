@@ -120,12 +120,27 @@ export async function addFacilitator(facilitator: Omit<Facilitator, 'id'>) {
     await saveToBlob(DB_KEY_FACILITATORS, facilitators);
     return newFacilitator;
 }
-export async function getLoggedInFacilitator() {
+export async function getLoggedInUser() {
     if (typeof window === 'undefined') return null;
     const facilitatorId = localStorage.getItem("loggedInFacilitatorId");
+    const isAdmin = localStorage.getItem("isAdmin") === "true";
+
+    if (isAdmin) {
+        return {
+            id: 'admin',
+            fullName: 'Admin Utama',
+            nickname: 'Admin',
+            isAdmin: true,
+        }
+    }
+
     if (!facilitatorId) return null;
     const facilitators = await getFacilitators();
-    return facilitators.find(f => f.id === facilitatorId) || null;
+    const facilitator = facilitators.find(f => f.id === facilitatorId) || null;
+    if (facilitator) {
+        return { ...facilitator, isAdmin: false };
+    }
+    return null;
 }
 
 // --- Classes ---

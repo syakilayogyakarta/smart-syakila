@@ -3,12 +3,12 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Database, Book, School, PlusCircle, Pencil, Trash2, BookUser, Loader2 } from 'lucide-react';
+import { ArrowLeft, Database, Book, School, PlusCircle, Pencil, Trash2, BookUser, Loader2, UserCog } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { 
-    getLoggedInFacilitator, 
+    getLoggedInUser, 
     getSubjects, addSubject, updateSubject, deleteSubject, Subject,
     getClasses, addClass, updateClass, deleteClass, Class as AppClass,
     getFacilitators, Facilitator,
@@ -32,11 +32,14 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Input } from '@/components/ui/input';
+import Link from 'next/link';
+
+type User = (Facilitator & { isAdmin: false }) | { id: 'admin', fullName: string, nickname: string, isAdmin: true } | null;
 
 export default function DatabasePage() {
   const router = useRouter();
   const { toast } = useToast();
-  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [user, setUser] = useState<User>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Data state
@@ -79,18 +82,10 @@ export default function DatabasePage() {
 
   useEffect(() => {
     const checkAuthAndFetchData = async () => {
-        const facilitator = await getLoggedInFacilitator();
-        // NOTE: Authorization logic might need adjustment based on real roles/permissions
-        if (facilitator?.fullName === 'Faddliyah' || facilitator?.fullName === 'Michael') {
-             setIsAuthorized(true);
+        const loggedInUser = await getLoggedInUser();
+        if (loggedInUser) {
+             setUser(loggedInUser);
              await fetchData();
-        } else if (facilitator) {
-          toast({
-            title: "Akses Ditolak",
-            description: "Anda tidak memiliki izin untuk mengakses halaman ini.",
-            variant: "destructive"
-          });
-          router.push('/facilitator/dashboard');
         } else {
             router.push('/login');
         }
@@ -227,7 +222,7 @@ export default function DatabasePage() {
     }
   };
 
-  if (isLoading || !isAuthorized) {
+  if (isLoading || !user) {
     return (
       <div className="min-h-screen bg-background p-8 flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin"/>
@@ -239,7 +234,7 @@ export default function DatabasePage() {
     <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
       <div className="max-w-4xl mx-auto">
         <header className="relative mb-8 text-center">
-          <Button variant="outline" size="icon" className="absolute left-0 top-1/2 -translate-y-1/2" onClick={() => router.back()}>
+          <Button variant="outline" size="icon" className="absolute left-0 top-1/2 -translate-y-1/2" onClick={() => router.push('/facilitator/dashboard')}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <h1 className="text-3xl font-bold text-foreground flex items-center justify-center gap-3">
@@ -250,6 +245,26 @@ export default function DatabasePage() {
         </header>
 
         <main className="space-y-8">
+
+          {user.isAdmin && (
+            <Card className="shadow-lg border-accent">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <UserCog className="h-6 w-6 text-accent" />
+                        Manajemen Fasilitator
+                    </CardTitle>
+                    <CardDescription>Tambah atau kelola fasilitator yang terdaftar di sistem.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Link href="/facilitator/database/facilitators" passHref>
+                        <Button variant="accent">
+                            <PlusCircle className="mr-2 h-4 w-4" /> Buka Manajemen Fasilitator
+                        </Button>
+                    </Link>
+                </CardContent>
+            </Card>
+          )}
+
           {/* Assignment Management Card */}
           <Card className="shadow-lg">
             <CardHeader>
