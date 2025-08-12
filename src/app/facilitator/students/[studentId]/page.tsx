@@ -2,14 +2,14 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { studentDetails, studentsByClass, academicData, getKegiatanForStudent, allStudents as allStudentData, classes as allClassNames } from "@/lib/data";
+import { studentDetails, getKegiatanForStudent, allStudents as allStudentData, classes as allClassNames, academicJournalLog } from "@/lib/data";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
-import { CheckCircle2, AlertCircle, Briefcase, Activity, User, ArrowLeft, BadgePercent, Wallet, BookCopy, Star, StickyNote, Calendar as CalendarIcon, UserCircle, MapPin, HeartPulse, Edit, Loader2 } from "lucide-react";
+import { CheckCircle2, AlertCircle, Briefcase, Activity, User, ArrowLeft, BadgePercent, Wallet, BookCopy, Star, StickyNote, Calendar as CalendarIcon, UserCircle, MapPin, HeartPulse, Edit, Loader2, Atom, BookHeart, BookOpen, BookOpenCheck, BrainCircuit, Drama, FunctionSquare, Languages, BookText } from "lucide-react";
 import Image from "next/image";
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -35,12 +35,39 @@ type StudentProfile = {
     }
 }
 
+const subjectIcons: { [key: string]: React.ElementType } = {
+  "IPA": Atom,
+  "IPSKn": Drama,
+  "IoT": BrainCircuit,
+  "MFM": FunctionSquare,
+  "B. Indonesia": BookText,
+  "B. Jawa": Languages,
+  "B. Inggris": Languages,
+  "Minhaj": BookHeart,
+  "Al-Qur'an & Tajwid": BookOpen,
+  "Quran Tematik": BookOpenCheck
+};
+
+const subjectColors: { [key: string]: string } = {
+  "IPA": "text-green-500",
+  "IPSKn": "text-red-500",
+  "IoT": "text-blue-500",
+  "MFM": "text-purple-500",
+  "B. Indonesia": "text-orange-500",
+  "B. Jawa": "text-yellow-600",
+  "B. Inggris": "text-pink-500",
+  "Minhaj": "text-indigo-500",
+  "Al-Qur'an & Tajwid": "text-teal-500",
+  "Quran Tematik": "text-cyan-500"
+};
+
 export default function StudentDetailPage({ params }: { params: { studentId: string } }) {
   const router = useRouter();
   const { toast } = useToast();
   const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null);
   const [editedProfile, setEditedProfile] = useState<Partial<StudentProfile>>({});
   const [isSaving, setIsSaving] = useState(false);
+  const [academicData, setAcademicData] = useState<any>({ subjects: [] });
 
   useEffect(() => {
     const studentName = decodeURIComponent(params.studentId);
@@ -56,15 +83,47 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
             photoUrl: `https://placehold.co/100x100.png`,
             photoHint: 'student portrait',
             class: studentData?.className,
-            attendance: { present: Math.floor(Math.random() * 20) + 100, late: Math.floor(Math.random() * 5), sick: Math.floor(Math.random() * 3), excused: Math.floor(Math.random() * 2) },
+            // Initialize with empty/zero data
+            attendance: { present: 0, late: 0, sick: 0, excused: 0 },
             savings: {
-                balance: Math.floor(Math.random() * 200000) + 50000,
-                deposits: [ { date: "15 Jul 2024", description: "Setoran rutin", amount: 50000 }, { date: "08 Jul 2024", description: "Setoran rutin", amount: 50000 } ],
-                withdrawals: [ { date: "10 Jul 2024", description: "Beli buku", amount: 25000 } ]
+                balance: 0,
+                deposits: [],
+                withdrawals: []
             }
         };
         setStudentProfile(profileData);
         setEditedProfile(profileData);
+
+        // Process academic data
+        const studentJournals = academicJournalLog.filter(j => j.personalNotes.some((pn: any) => pn.studentName === studentName));
+        const subjects: { [key: string]: any } = {};
+
+        studentJournals.forEach(journal => {
+            if (!subjects[journal.subject]) {
+                subjects[journal.subject] = {
+                    name: journal.subject,
+                    icon: subjectIcons[journal.subject] || BookCopy,
+                    color: subjectColors[journal.subject] || "text-foreground",
+                    averageActivity: 0, // This would need a proper calculation
+                    task: null, // This would need to be fetched
+                    meetings: [],
+                    personalNotes: []
+                };
+            }
+            subjects[journal.subject].meetings.push({
+                date: new Date(journal.timestamp).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }),
+                topic: journal.topic
+            });
+            const personalNote = journal.personalNotes.find((pn: any) => pn.studentName === studentName);
+            if (personalNote) {
+                subjects[journal.subject].personalNotes.push({
+                    date: new Date(journal.timestamp).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }),
+                    note: personalNote.note
+                });
+            }
+        });
+
+        setAcademicData({ subjects: Object.values(subjects) });
     }
   }, [params.studentId]);
 
@@ -105,8 +164,6 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
   if (!studentProfile) {
     return <div className="flex min-h-screen items-center justify-center">Memuat data siswa...</div>;
   }
-
-  const studentAcademicData = academicData;
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
@@ -222,42 +279,50 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
                   </TabsList>
                   <TabsContent value="deposits">
                      <ScrollArea className="h-48">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Tanggal</TableHead>
-                            <TableHead className="text-right">Jumlah</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {studentProfile.savings.deposits.map((item: any, index: number) => (
-                            <TableRow key={index}>
-                              <TableCell>{item.date}</TableCell>
-                              <TableCell className="text-right font-medium text-green-600">{formatCurrency(item.amount)}</TableCell>
+                      {studentProfile.savings.deposits.length > 0 ? (
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Tanggal</TableHead>
+                              <TableHead className="text-right">Jumlah</TableHead>
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                          </TableHeader>
+                          <TableBody>
+                            {studentProfile.savings.deposits.map((item: any, index: number) => (
+                              <TableRow key={index}>
+                                <TableCell>{item.date}</TableCell>
+                                <TableCell className="text-right font-medium text-green-600">{formatCurrency(item.amount)}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      ) : (
+                        <div className="text-center text-muted-foreground p-4">Belum ada data setoran.</div>
+                      )}
                      </ScrollArea>
                   </TabsContent>
                   <TabsContent value="withdrawals">
                      <ScrollArea className="h-48">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Tanggal</TableHead>
-                            <TableHead className="text-right">Jumlah</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {studentProfile.savings.withdrawals.map((item: any, index: number) => (
-                            <TableRow key={index}>
-                              <TableCell>{item.date}</TableCell>
-                              <TableCell className="text-right font-medium text-red-600">-{formatCurrency(item.amount)}</TableCell>
+                      {studentProfile.savings.withdrawals.length > 0 ? (
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Tanggal</TableHead>
+                              <TableHead className="text-right">Jumlah</TableHead>
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                          </TableHeader>
+                          <TableBody>
+                            {studentProfile.savings.withdrawals.map((item: any, index: number) => (
+                              <TableRow key={index}>
+                                <TableCell>{item.date}</TableCell>
+                                <TableCell className="text-right font-medium text-red-600">-{formatCurrency(item.amount)}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      ) : (
+                        <div className="text-center text-muted-foreground p-4">Belum ada data penarikan.</div>
+                      )}
                     </ScrollArea>
                   </TabsContent>
                 </Tabs>
@@ -290,16 +355,16 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
                                     </div>
                                 </ScrollArea>
                             ) : (
-                                <p className="text-sm text-muted-foreground">Belum ada riwayat kegiatan yang tercatat.</p>
+                                <p className="text-sm text-muted-foreground text-center p-4">Belum ada riwayat kegiatan yang tercatat.</p>
                             )}
                         </div>
 
-                        {studentKegiatanData.personalNotes.length > 0 && (
-                            <div className="pt-4 border-t">
-                                <h3 className="font-semibold text-base mb-2 flex items-center gap-2"><StickyNote className="h-4 w-4 text-accent" /> Catatan Personal dari Fasilitator</h3>
+                        <div className="pt-4 border-t">
+                            <h3 className="font-semibold text-base mb-2 flex items-center gap-2"><StickyNote className="h-4 w-4 text-accent" /> Catatan Personal dari Fasilitator</h3>
+                             {studentKegiatanData.personalNotes.length > 0 ? (
                                 <ScrollArea className="h-40">
                                 <div className="space-y-3 pr-4">
-                                    {studentKegiatanData.personalNotes.map((pnote, index) => (
+                                    {studentKegiatanData.personalNotes.map((pnote: any, index) => (
                                     <div key={index} className="text-sm p-3 rounded-md bg-accent/10 border border-accent/20">
                                         <div className="flex justify-between items-center">
                                             <p className="font-semibold text-muted-foreground">{new Date(pnote.timestamp).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
@@ -310,8 +375,10 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
                                     ))}
                                 </div>
                                 </ScrollArea>
-                            </div>
-                        )}
+                             ) : (
+                                <p className="text-sm text-muted-foreground text-center p-4">Belum ada catatan personal yang tercatat.</p>
+                             )}
+                        </div>
                     </div>
                 </CardContent>
             </Card>
@@ -322,88 +389,91 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
                 <CardDescription>Pantau progres dan keaktifan siswa per mata pelajaran.</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  {/* Subject Cards */}
-                  {studentAcademicData.subjects.map(subject => {
-                    return (
-                     <Dialog key={subject.name}>
-                        <DialogTrigger asChild>
-                           <Card className="hover:bg-primary/5 hover:shadow-md transition-all cursor-pointer">
-                              <CardContent className="p-3 flex items-center justify-between">
-                                 <div className="flex items-center gap-4">
-                                     <div className={cn('flex h-10 w-10 items-center justify-center rounded-lg', `${subject.color}/10`)}>
-                                       <subject.icon className={cn('h-5 w-5', subject.color)}/>
-                                     </div>
-                                     <div>
-                                        <p className="font-bold text-base">{subject.name}</p>
-                                        <div className="flex items-center gap-1 text-yellow-500">
-                                            <Star className="h-4 w-4 fill-current" />
-                                            <span className="font-semibold text-sm">{subject.averageActivity.toFixed(1)}</span>
-                                            <span className="text-xs text-muted-foreground">(Rerata Keaktifan)</span>
-                                        </div>
-                                     </div>
-                                 </div>
-                              </CardContent>
-                           </Card>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-[625px]">
-                          <DialogHeader>
-                            <DialogTitle className="flex items-center gap-3 text-2xl">
-                               <div className={cn('flex h-12 w-12 items-center justify-center rounded-lg', `${subject.color}/10`)}>
-                                 <subject.icon className={cn('h-6 w-6', subject.color)}/>
-                               </div>
-                               {subject.name}
-                            </DialogTitle>
-                             <DialogDescription className="flex items-center gap-2 pt-2">
-                                Detail progres belajar siswa pada mata pelajaran ini.
-                             </DialogDescription>
-                          </DialogHeader>
-                          
-                          {subject.task && (
-                            <div className="mt-4 p-4 rounded-lg border bg-secondary/50">
-                                <h3 className="font-bold text-lg mb-2 flex items-center gap-2"><CalendarIcon className="h-5 w-5 text-primary" /> Tugas Aktif</h3>
-                                <p>{subject.task.description}</p>
-                                <Badge variant="destructive" className="mt-2 text-destructive-foreground">
-                                    Deadline: {subject.task.deadline}
-                                </Badge>
-                            </div>
-                          )}
-
-                          <div className="mt-4">
-                            <h3 className="font-bold text-lg mb-2">Riwayat Pertemuan</h3>
-                            <ScrollArea className="h-60">
-                              <div className="space-y-3 pr-4">
-                                {subject.meetings.map((meeting, index) => (
-                                  <div key={index} className="text-sm p-3 rounded-md bg-card border">
-                                    <p className="font-semibold text-muted-foreground">{meeting.date}</p>
-                                    <p className="text-foreground">{meeting.topic}</p>
-                                  </div>
-                                ))}
-                              </div>
-                            </ScrollArea>
-                          </div>
-                          
-                          {subject.personalNotes && subject.personalNotes.length > 0 && (
-                             <div className="mt-4">
-                                <h3 className="font-bold text-lg mb-2 flex items-center gap-2"><StickyNote className="h-5 w-5 text-accent" /> Catatan Personal Fasilitator</h3>
-                                <ScrollArea className="h-40">
-                                  <div className="space-y-3 pr-4">
-                                    {subject.personalNotes.map((pnote, index) => (
-                                      <div key={index} className="text-sm p-3 rounded-md bg-accent/10 border border-accent/20">
-                                        <p className="font-semibold text-muted-foreground">{pnote.date}</p>
-
-                                        <p className="text-accent-foreground/80">"{pnote.note}"</p>
+                {academicData.subjects.length > 0 ? (
+                  <div className="space-y-2">
+                    {academicData.subjects.map((subject: any) => {
+                      return (
+                      <Dialog key={subject.name}>
+                          <DialogTrigger asChild>
+                            <Card className="hover:bg-primary/5 hover:shadow-md transition-all cursor-pointer">
+                                <CardContent className="p-3 flex items-center justify-between">
+                                  <div className="flex items-center gap-4">
+                                      <div className={cn('flex h-10 w-10 items-center justify-center rounded-lg', `${subject.color}/10`)}>
+                                        <subject.icon className={cn('h-5 w-5', subject.color)}/>
                                       </div>
-                                    ))}
+                                      <div>
+                                          <p className="font-bold text-base">{subject.name}</p>
+                                          {subject.averageActivity > 0 && (
+                                            <div className="flex items-center gap-1 text-yellow-500">
+                                                <Star className="h-4 w-4 fill-current" />
+                                                <span className="font-semibold text-sm">{subject.averageActivity.toFixed(1)}</span>
+                                                <span className="text-xs text-muted-foreground">(Rerata Keaktifan)</span>
+                                            </div>
+                                          )}
+                                      </div>
                                   </div>
-                                </ScrollArea>
+                                </CardContent>
+                            </Card>
+                          </DialogTrigger>
+                          <DialogContent className="sm:max-w-[625px]">
+                            <DialogHeader>
+                              <DialogTitle className="flex items-center gap-3 text-2xl">
+                                <div className={cn('flex h-12 w-12 items-center justify-center rounded-lg', `${subject.color}/10`)}>
+                                  <subject.icon className={cn('h-6 w-6', subject.color)}/>
+                                </div>
+                                {subject.name}
+                              </DialogTitle>
+                              <DialogDescription className="flex items-center gap-2 pt-2">
+                                  Detail progres belajar siswa pada mata pelajaran ini.
+                              </DialogDescription>
+                            </DialogHeader>
+                            
+                            {subject.task && (
+                              <div className="mt-4 p-4 rounded-lg border bg-secondary/50">
+                                  <h3 className="font-bold text-lg mb-2 flex items-center gap-2"><CalendarIcon className="h-5 w-5 text-primary" /> Tugas Aktif</h3>
+                                  <p>{subject.task.description}</p>
+                                  <Badge variant="destructive" className="mt-2 text-destructive-foreground">
+                                      Deadline: {subject.task.deadline}
+                                  </Badge>
                               </div>
-                          )}
+                            )}
 
-                        </DialogContent>
-                      </Dialog>
-                  )})}
-                </div>
+                            <div className="mt-4">
+                              <h3 className="font-bold text-lg mb-2">Riwayat Pertemuan</h3>
+                              <ScrollArea className="h-60">
+                                <div className="space-y-3 pr-4">
+                                  {subject.meetings.map((meeting: any, index: number) => (
+                                    <div key={index} className="text-sm p-3 rounded-md bg-card border">
+                                      <p className="font-semibold text-muted-foreground">{meeting.date}</p>
+                                      <p className="text-foreground">{meeting.topic}</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              </ScrollArea>
+                            </div>
+                            
+                            {subject.personalNotes && subject.personalNotes.length > 0 && (
+                              <div className="mt-4">
+                                  <h3 className="font-bold text-lg mb-2 flex items-center gap-2"><StickyNote className="h-5 w-5 text-accent" /> Catatan Personal Fasilitator</h3>
+                                  <ScrollArea className="h-40">
+                                    <div className="space-y-3 pr-4">
+                                      {subject.personalNotes.map((pnote: any, index: number) => (
+                                        <div key={index} className="text-sm p-3 rounded-md bg-accent/10 border border-accent/20">
+                                          <p className="font-semibold text-muted-foreground">{pnote.date}</p>
+                                          <p className="text-accent-foreground/80">"{pnote.note}"</p>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </ScrollArea>
+                                </div>
+                            )}
+                          </DialogContent>
+                        </Dialog>
+                    )}})}
+                  </div>
+                ) : (
+                  <div className="text-center text-muted-foreground p-8">Belum ada data akademik yang tercatat untuk siswa ini.</div>
+                )}
               </CardContent>
             </Card>
           </div>
