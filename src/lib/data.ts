@@ -5,6 +5,9 @@ export const facilitators = [
     { fullName: "Evan Setiawan Parusa", nickname: "Evan", email: "evansparusa@gmail.com", gender: "Laki-laki" },
     { fullName: "Naashiih Aamiinul Basyiir", nickname: "Ibas", email: "ibnufahrurozi02@gmail.com", gender: "Laki-laki" },
     { fullName: "Lisa Purwandari", nickname: "Lisa", email: "", gender: "Perempuan" },
+    { fullName: "Rahmanisa Widhia Anggraini", nickname: "Nisa", email: "", gender: "Perempuan" },
+    { fullName: "Faddliyah", nickname: "Faddliyah", email: "", gender: "Perempuan" },
+    { fullName: "Michael", nickname: "Michael", email: "", gender: "Laki-laki" },
 ];
 export const getLoggedInFacilitator = () => {
     if (typeof window === 'undefined') {
@@ -36,7 +39,17 @@ export const studentsByClass: { [key: string]: string[] } = {
   ],
 };
 
-export const studentDetails: { [key: string]: any } = {};
+export const studentDetails: { [key: string]: any } = {
+    "Muhammad Abdan Khioiri Tsabit": { nickname: "Abdan", nisn: "1234567890", gender: "Laki-laki" },
+    "Muhammad Aqifan al-Fatih": { nickname: "Aqifan", nisn: "1234567891", gender: "Laki-laki" },
+    "Muhammad Irhab Mirza": { nickname: "Irhab", nisn: "1234567892", gender: "Laki-laki" },
+    "Yahya Ayyasyh Satriawan Hidayat": { nickname: "Yahya", nisn: "1234567893", gender: "Laki-laki" },
+    "Athaniya Ghina Rafifa": { nickname: "Niya", nisn: "1234567894", gender: "Perempuan" },
+    "Avicenna Akthar Dhiyaulhaq": { nickname: "Avi", nisn: "1234567895", gender: "Laki-laki" },
+    "Azzam Muhammad Matitaputi": { nickname: "Azzam", nisn: "1234567896", gender: "Laki-laki" },
+    "Nailah Amirah Khoirunnisa'": { nickname: "Nailah", nisn: "1234567897", gender: "Perempuan" },
+};
+
 
 // Create a list of all students with their details for easier access
 export const allStudents = Object.keys(studentsByClass).flatMap(className => 
@@ -96,8 +109,6 @@ export const facilitatorAssignments: {
     classes: {
       "Tarbiyah": ["B. Inggris", "IPA"],
       "Ta'dib": ["B. Inggris", "IPA"],
-      "Ta'lim 1": ["B. Inggris"],
-      "Ta'lim 2": ["B. Inggris"],
     },
     groups: ["MFM", "Minhaj", "Al-Qur'an & Tajwid", "Quran Tematik"],
   },
