@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
+import { id } from "date-fns/locale/id";
 
 type TransactionType = 'setoran' | 'penarikan';
 
@@ -112,7 +113,7 @@ export default function SavingsPage() {
                         )}
                     >
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {transactionDate ? format(transactionDate, "PPP") : <span>Pilih tanggal</span>}
+                        {transactionDate ? format(transactionDate, "PPP", { locale: id }) : <span>Pilih tanggal</span>}
                     </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
@@ -121,6 +122,7 @@ export default function SavingsPage() {
                         selected={transactionDate}
                         onSelect={setTransactionDate}
                         initialFocus
+                        locale={id}
                     />
                     </PopoverContent>
                 </Popover>
