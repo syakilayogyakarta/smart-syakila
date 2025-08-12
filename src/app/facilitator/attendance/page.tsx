@@ -27,7 +27,8 @@ import { cn } from "@/lib/utils";
 type AttendanceStatus = "Hadir" | "Terlambat" | "Sakit" | "Izin";
 
 export default function AttendancePage() {
-  const [timestamp, setTimestamp] = useState("");
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
   const [attendance, setAttendance] = useState<{ [studentName: string]: AttendanceStatus }>({});
   const [buttonState, setButtonState] = useState<"idle" | "loading" | "saved">("idle");
   const router = useRouter();
@@ -35,6 +36,17 @@ export default function AttendancePage() {
   const isMobile = useIsMobile();
 
   useEffect(() => {
+    // This effect runs only on the client, after hydration
+    const now = new Date();
+    const dateOptions: Intl.DateTimeFormatOptions = {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Jakarta'
+    };
+    const timeOptions: Intl.DateTimeFormatOptions = {
+        hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta', timeZoneName: 'short'
+    };
+    setDate(new Intl.DateTimeFormat('id-ID', dateOptions).format(now));
+    setTime(new Intl.DateTimeFormat('id-ID', timeOptions).format(now));
+  
     // Initialize all students with 'Hadir' status
     const initialAttendance: { [studentName: string]: AttendanceStatus } = {};
     classes.forEach(className => {
@@ -43,13 +55,6 @@ export default function AttendancePage() {
       });
     });
     setAttendance(initialAttendance);
-
-    const now = new Date();
-    const options: Intl.DateTimeFormatOptions = {
-      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-      hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta', timeZoneName: 'short'
-    };
-    setTimestamp(new Intl.DateTimeFormat('id-ID', options).format(now));
   }, []);
 
   const handleStatusChange = (studentName: string, status: AttendanceStatus) => {
@@ -96,8 +101,8 @@ export default function AttendancePage() {
           </Button>
           <h1 className="text-3xl font-bold text-foreground">Presensi Siswa</h1>
           <div className="text-muted-foreground mt-2 flex items-center justify-center gap-4">
-              <div className="flex items-center gap-2"><Calendar className="h-4 w-4" /> {timestamp.split(',')[0]}, {timestamp.split(',')[1]}</div>
-              <div className="flex items-center gap-2"><Clock className="h-4 w-4" /> {timestamp.split(' Pukul ')[1]}</div>
+              <div className="flex items-center gap-2"><Calendar className="h-4 w-4" /> {date || "Memuat..."}</div>
+              <div className="flex items-center gap-2"><Clock className="h-4 w-4" /> {time || "..."}</div>
           </div>
         </header>
 
@@ -113,40 +118,39 @@ export default function AttendancePage() {
                         <div key={student} className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-lg bg-card ${index % 2 === 0 ? 'bg-secondary/50' : ''}`}>
                           <p className="font-medium text-foreground mb-4 sm:mb-0">{student}</p>
                           
-                          {/* Desktop: Buttons */}
-                           <div className="hidden sm:grid sm:grid-cols-4 gap-2">
-                            {attendanceOptions.map(option => (
-                              <Button
-                                key={option.id}
-                                variant="outline"
-                                data-active={attendance[student] === option.id}
-                                className={cn(
-                                  "border-2 transition-all duration-200",
-                                  option.style
-                                )}
-                                onClick={() => handleStatusChange(student, option.id)}
-                              >
-                                {option.label}
-                              </Button>
-                            ))}
-                          </div>
-                          
-                          {/* Mobile: Dropdown */}
-                          <div className="w-full sm:hidden">
-                             <Select value={attendance[student]} onValueChange={(value: AttendanceStatus) => handleStatusChange(student, value)}>
-                                <SelectTrigger className={cn("h-12 text-base font-semibold border-2", getStatusStyle(attendance[student]))}>
-                                  <SelectValue placeholder="Pilih status..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {attendanceOptions.map(option => (
-                                      <SelectItem key={option.id} value={option.id} className="text-base">
-                                          {option.label}
-                                      </SelectItem>
-                                    ))}
-                                </SelectContent>
-                             </Select>
-                          </div>
-
+                          {isMobile ? (
+                             <div className="w-full sm:hidden">
+                                <Select value={attendance[student]} onValueChange={(value: AttendanceStatus) => handleStatusChange(student, value)}>
+                                   <SelectTrigger className={cn("h-12 text-base font-semibold border-2", getStatusStyle(attendance[student]))}>
+                                     <SelectValue placeholder="Pilih status..." />
+                                   </SelectTrigger>
+                                   <SelectContent>
+                                       {attendanceOptions.map(option => (
+                                         <SelectItem key={option.id} value={option.id} className="text-base">
+                                             {option.label}
+                                         </SelectItem>
+                                       ))}
+                                   </SelectContent>
+                                </Select>
+                             </div>
+                          ) : (
+                             <div className="hidden sm:grid sm:grid-cols-4 gap-2">
+                              {attendanceOptions.map(option => (
+                                <Button
+                                  key={option.id}
+                                  variant="outline"
+                                  data-active={attendance[student] === option.id}
+                                  className={cn(
+                                    "border-2 transition-all duration-200",
+                                    option.style
+                                  )}
+                                  onClick={() => handleStatusChange(student, option.id)}
+                                >
+                                  {option.label}
+                                </Button>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>

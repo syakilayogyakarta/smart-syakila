@@ -31,7 +31,10 @@ export default function FacilitatorDashboard() {
     } else {
       setFacilitator(loggedInFacilitator);
     }
+  }, [router]);
 
+  useEffect(() => {
+    // This effect runs only on the client, after hydration
     const timer = setInterval(() => {
       const now = new Date();
       const dateOptions: Intl.DateTimeFormatOptions = {
@@ -44,7 +47,7 @@ export default function FacilitatorDashboard() {
       setCurrentTime(new Intl.DateTimeFormat('id-ID', timeOptions).format(now).replace(/\./g, ':'));
     }, 1000);
     return () => clearInterval(timer);
-  }, [router]);
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("loggedInFacilitator");
@@ -70,14 +73,14 @@ export default function FacilitatorDashboard() {
 
         <header className="mb-8">
           <Card className="p-6">
-            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 w-full">
-              <Avatar className="h-20 w-20 sm:h-16 sm:w-16 self-center sm:self-auto">
+            <div className="flex flex-col items-center sm:flex-row sm:items-start gap-4 sm:gap-6 w-full">
+              <Avatar className="h-20 w-20 sm:h-16 sm:w-16 self-center">
                 <AvatarFallback className="bg-primary/20 text-primary">
                   <User className="h-10 w-10 sm:h-8 sm:w-8" />
                 </AvatarFallback>
               </Avatar>
-              <div className="w-full text-center sm:text-left">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between">
+              <div className="w-full flex flex-col items-center text-center sm:items-start sm:text-left">
+                <div className="w-full flex flex-col sm:flex-row sm:items-center justify-between">
                     <div>
                         <h2 className="text-2xl font-bold text-foreground">Selamat Datang, {facilitator.nickname}</h2>
                         <p className="text-muted-foreground">Dasbor Pengelolaan Kelas Anda</p>
@@ -86,11 +89,11 @@ export default function FacilitatorDashboard() {
                         <div className="text-right">
                            <div className="flex items-center justify-end gap-2 text-foreground">
                               <Calendar className="h-5 w-5 text-foreground"/>
-                              <span className="font-semibold text-lg">{currentDate}</span>
+                              <span className="font-semibold text-lg">{currentDate || 'Memuat...'}</span>
                            </div>
                            <div className="flex items-center justify-end gap-2 text-muted-foreground">
                               <Clock className="h-5 w-5 text-muted-foreground"/>
-                              <span className="font-semibold text-lg">{currentTime}</span>
+                              <span className="font-semibold text-lg">{currentTime || '...'}</span>
                            </div>
                         </div>
                          <Button variant="outline" onClick={handleLogout}>
@@ -99,18 +102,18 @@ export default function FacilitatorDashboard() {
                     </div>
                 </div>
 
-                 <div className="sm:hidden mt-4 space-y-2">
+                 <div className="sm:hidden mt-4 space-y-4 w-full text-center">
                     <Separator />
                      <div className="flex items-center justify-center gap-2 text-foreground pt-2">
                           <Calendar className="h-4 w-4 text-foreground"/>
-                          <span className="font-semibold">{currentDate}</span>
+                          <span className="font-semibold">{currentDate || 'Memuat...'}</span>
                        </div>
                        <div className="flex items-center justify-center gap-2 text-muted-foreground">
                           <Clock className="h-4 w-4 text-muted-foreground"/>
-                          <span className="font-semibold">{currentTime}</span>
+                          <span className="font-semibold">{currentTime || '...'}</span>
                        </div>
-                    <Separator className="mt-4"/>
-                    <Button variant="outline" onClick={handleLogout} className="w-full mt-4">
+                    <Separator className="my-4"/>
+                    <Button variant="outline" onClick={handleLogout} className="w-full max-w-xs mx-auto">
                         <LogOut className="mr-2 h-4 w-4" /> Keluar
                     </Button>
                  </div>

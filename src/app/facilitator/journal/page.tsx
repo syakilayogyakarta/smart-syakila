@@ -38,7 +38,8 @@ const groupSubjects = ["Al-Qur'an & Tajwid", "Minhaj", "Quran Tematik", "MFM"];
 
 export default function JournalPage() {
   const [facilitator, setFacilitator] = useState<Facilitator | null>(null);
-  const [timestamp, setTimestamp] = useState("");
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
   
   const [mode, setMode] = useState<"kelas" | "kelompok" | null>(null);
   const [selectedSubject, setSelectedSubject] = useState<string>("");
@@ -66,14 +67,20 @@ export default function JournalPage() {
     } else {
       setFacilitator(loggedInFacilitator);
     }
-
-    const now = new Date();
-    const options: Intl.DateTimeFormatOptions = {
-      year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit',
-      timeZone: 'Asia/Jakarta'
-    };
-    setTimestamp(new Intl.DateTimeFormat('id-ID', options).format(now).replace('.', ':'));
   }, [router]);
+
+  useEffect(() => {
+    // This effect runs only on the client, after hydration
+    const now = new Date();
+    const dateOptions: Intl.DateTimeFormatOptions = {
+      year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Jakarta'
+    };
+    const timeOptions: Intl.DateTimeFormatOptions = {
+      hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta'
+    };
+    setDate(new Intl.DateTimeFormat('id-ID', dateOptions).format(now));
+    setTime(new Intl.DateTimeFormat('id-ID', timeOptions).format(now).replace('.',':'));
+  }, []);
   
   const facilitatorData = useMemo(() => {
     if (!facilitator) return null;
@@ -230,7 +237,7 @@ export default function JournalPage() {
           </Button>
           <h1 className="text-3xl font-bold text-foreground">Jurnal Pembelajaran</h1>
           <p className="text-muted-foreground mt-2 flex items-center justify-center gap-2">
-            <CalendarIcon className="h-4 w-4" /> <span>{timestamp.split('pukul')[0]}</span> <Clock className="h-4 w-4" /> <span>{timestamp.split('pukul')[1]}</span>
+            <CalendarIcon className="h-4 w-4" /> <span>{date || 'Memuat...'}</span> <Clock className="h-4 w-4" /> <span>{time || '...'}</span>
           </p>
         </header>
 
