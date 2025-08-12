@@ -168,27 +168,6 @@ export const facilitatorAssignments: {
   }
 };
 
-
-// Function to get the facilitator for a specific subject and student
-export const getFacilitatorForSubject = (subjectName: string, studentName: string, studentClass: string | undefined): string => {
-  for (const facilitatorName in facilitatorAssignments) {
-    const assignments = facilitatorAssignments[facilitatorName];
-    // Check class assignments
-    if (studentClass && assignments.classes[studentClass]?.includes(subjectName)) {
-      return facilitatorName;
-    }
-    // Check group assignments
-    if (assignments.groups.includes(subjectName)) {
-      // This is complex as multiple facilitators can teach groups. 
-      // This simplistic check returns the first one found.
-      // A more robust system would be needed for a real app.
-      return facilitatorName;
-    }
-  }
-  return "N/A"; // Default if no facilitator is found
-};
-
-
 // Dummy data for academic overview
 // The facilitator name will be dynamically assigned based on the student's class.
 // This is a sample for a student in "Ta'dib" class.
@@ -197,7 +176,6 @@ export const academicData = {
   subjects: [
     {
       name: "IPA",
-      facilitator: "Rahmanisa Widhia Anggraini", // Mengajar IPA di Tarbiyah & Ta'dib
       averageActivity: 4.5,
       icon: Atom,
       color: "text-green-500",
@@ -217,7 +195,6 @@ export const academicData = {
     },
     {
       name: "IPSKn",
-      facilitator: "Amirotun Nafisah", // Mengajar IPSKn di Tarbiyah & Ta'dib
       averageActivity: 4.0,
       icon: Drama,
       color: "text-red-500",
@@ -231,7 +208,6 @@ export const academicData = {
     },
     {
       name: "IoT",
-      facilitator: "Evan Setiawan Parusa", // Mengajar IoT di semua kelas
       averageActivity: 4.8,
       icon: BrainCircuit,
       color: "text-blue-500",
@@ -244,7 +220,6 @@ export const academicData = {
     },
      {
       name: "MFM",
-      facilitator: "Naashiih Aamiinul Basyiir", // Asumsi
       averageActivity: 4.2,
       icon: FunctionSquare,
       color: "text-purple-500",
@@ -260,7 +235,6 @@ export const academicData = {
     },
     {
       name: "B. Indonesia",
-      facilitator: "Naashiih Aamiinul Basyiir", // Mengajar B. Indonesia di Tarbiyah & Ta'dib
       averageActivity: 4.3,
       icon: BookText,
       color: "text-orange-500",
@@ -273,7 +247,6 @@ export const academicData = {
     },
     {
       name: "B. Jawa",
-      facilitator: "Lisa Purwandari", // Mengajar B. Jawa di semua kelas
       averageActivity: 4.1,
       icon: Languages,
       color: "text-yellow-600",
@@ -286,7 +259,6 @@ export const academicData = {
     },
      {
       name: "B. Inggris",
-      facilitator: "Rahmanisa Widhia Anggraini", // Mengajar B. Inggris di semua kelas
       averageActivity: 4.6,
       icon: Languages,
       color: "text-pink-500",
@@ -302,7 +274,6 @@ export const academicData = {
     },
      {
       name: "Minhaj",
-      facilitator: "Amirotun Nafisah", // Asumsi
       averageActivity: 4.7,
       icon: BookHeart,
       color: "text-indigo-500",
@@ -315,7 +286,6 @@ export const academicData = {
     },
      {
       name: "Al-Qur'an & Tajwid",
-      facilitator: "Lisa Purwandari", // Asumsi
       averageActivity: 4.9,
       icon: BookOpen,
       color: "text-teal-500",
@@ -331,7 +301,6 @@ export const academicData = {
     },
      {
       name: "Quran Tematik",
-      facilitator: "Evan Setiawan Parusa", // Asumsi
       averageActivity: 4.4,
       icon: BookOpenCheck,
       color: "text-cyan-500",

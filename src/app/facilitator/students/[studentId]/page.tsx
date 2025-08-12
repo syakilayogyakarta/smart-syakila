@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { studentDetails, studentsByClass, academicData, getKegiatanForStudent, getFacilitatorForSubject, classes as allClassNames } from "@/lib/data";
+import { studentDetails, studentsByClass, academicData, getKegiatanForStudent, allStudents as allStudentData, classes as allClassNames } from "@/lib/data";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -47,7 +47,7 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
     const details = studentDetails[studentName];
     
     if (details) {
-        const className = Object.keys(studentsByClass).find(key => studentsByClass[key].includes(studentName));
+        const studentData = allStudentData.find(s => s.fullName === studentName);
         
         const profileData = {
             fullName: studentName,
@@ -55,7 +55,7 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
             nisn: details.nisn,
             photoUrl: `https://placehold.co/100x100.png`,
             photoHint: 'student portrait',
-            class: className,
+            class: studentData?.className,
             attendance: { present: Math.floor(Math.random() * 20) + 100, late: Math.floor(Math.random() * 5), sick: Math.floor(Math.random() * 3), excused: Math.floor(Math.random() * 2) },
             savings: {
                 balance: Math.floor(Math.random() * 200000) + 50000,
@@ -325,7 +325,6 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
                 <div className="space-y-2">
                   {/* Subject Cards */}
                   {studentAcademicData.subjects.map(subject => {
-                    const facilitatorName = getFacilitatorForSubject(subject.name, studentProfile.fullName, studentProfile.class);
                     return (
                      <Dialog key={subject.name}>
                         <DialogTrigger asChild>
@@ -356,7 +355,7 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
                                {subject.name}
                             </DialogTitle>
                              <DialogDescription className="flex items-center gap-2 pt-2">
-                                <UserCircle className="h-4 w-4" /> Pengampu: {facilitatorName}
+                                Detail progres belajar siswa pada mata pelajaran ini.
                              </DialogDescription>
                           </DialogHeader>
                           
@@ -374,8 +373,8 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
                             <h3 className="font-bold text-lg mb-2">Riwayat Pertemuan</h3>
                             <ScrollArea className="h-60">
                               <div className="space-y-3 pr-4">
-                                {subject.meetings.map(meeting => (
-                                  <div key={meeting.date} className="text-sm p-3 rounded-md bg-card border">
+                                {subject.meetings.map((meeting, index) => (
+                                  <div key={index} className="text-sm p-3 rounded-md bg-card border">
                                     <p className="font-semibold text-muted-foreground">{meeting.date}</p>
                                     <p className="text-foreground">{meeting.topic}</p>
                                   </div>
@@ -413,3 +412,4 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
     </div>
   );
 }
+
