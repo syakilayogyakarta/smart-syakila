@@ -3,17 +3,19 @@
 
 import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, User, Users, Filter } from 'lucide-react';
+import { ArrowLeft, User, Users, Filter, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { studentDetails, studentsByClass, classes } from '@/lib/data';
 import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
 
 export default function StudentsListPage() {
   const router = useRouter();
   const [selectedClass, setSelectedClass] = useState('all');
+  const { toast } = useToast();
 
   const allStudents = useMemo(() => {
     return Object.entries(studentsByClass).flatMap(([className, studentNames]) => 
@@ -36,6 +38,13 @@ export default function StudentsListPage() {
     router.push(`/facilitator/students/${encodeURIComponent(studentId)}`);
   };
 
+  const handleAddStudent = () => {
+    toast({
+      title: "Fitur Dalam Pengembangan",
+      description: "Fungsionalitas untuk menambah siswa baru akan segera tersedia.",
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
@@ -52,11 +61,18 @@ export default function StudentsListPage() {
 
         <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle>Daftar Semua Siswa</CardTitle>
-            <CardDescription>
-              Total {filteredStudents.length} siswa ditemukan. Klik nama siswa untuk melihat detail.
-            </CardDescription>
-            <div className="pt-4">
+            <div className="flex items-center justify-between">
+                <div>
+                    <CardTitle>Daftar Semua Siswa</CardTitle>
+                    <CardDescription>
+                    Total {filteredStudents.length} siswa ditemukan. Klik nama siswa untuk melihat detail.
+                    </CardDescription>
+                </div>
+                <Button onClick={handleAddStudent}>
+                    <PlusCircle className="mr-2 h-4 w-4" /> Tambah Siswa Baru
+                </Button>
+            </div>
+            <div className="pt-4 mt-4 border-t">
               <Label htmlFor="class-filter" className="text-sm font-medium">Filter berdasarkan Kelas</Label>
               <div className="flex items-center gap-2 mt-1 max-w-xs">
                 <Filter className="h-4 w-4 text-muted-foreground" />
