@@ -101,7 +101,9 @@ export default function JournalPage() {
   }, [mode, selectedSubject, facilitator]);
 
   const resetFormFields = (clearMode = false) => {
-    if (clearMode) setMode(null);
+    if (clearMode) {
+      setMode(null);
+    }
     setSelectedSubject("");
     setSelectedClass("");
     setSelectedStudents([]);
