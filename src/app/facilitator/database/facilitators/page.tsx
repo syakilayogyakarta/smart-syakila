@@ -7,7 +7,7 @@ import { ArrowLeft, UserPlus, Users, Loader2, PlusCircle, Trash2, KeyRound } fro
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { getFacilitators, addFacilitator, getLoggedInUser, Facilitator } from '@/lib/data';
+import { getFacilitators, getLoggedInUser, Facilitator } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -65,20 +65,32 @@ export default function ManageFacilitatorsPage() {
         }
         setIsSaving(true);
         try {
-            await addFacilitator({
-                fullName: newFacilitator.fullName,
-                nickname: newFacilitator.nickname,
-                email: newFacilitator.email,
-                gender: newFacilitator.gender,
+            const response = await fetch('/api/facilitators', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    fullName: newFacilitator.fullName,
+                    nickname: newFacilitator.nickname,
+                    email: newFacilitator.email,
+                    gender: newFacilitator.gender,
+                })
             });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Gagal menyimpan fasilitator');
+            }
+
             toast({
                 title: "Fasilitator Baru Ditambahkan!",
                 description: `Data untuk ${newFacilitator.fullName} telah berhasil disimpan.`,
             });
             await fetchData();
             setNewFacilitator(initialNewFacilitatorState);
-        } catch (error) {
-            toast({ title: "Gagal menyimpan", variant: "destructive" });
+        } catch (error: any) {
+            toast({ title: "Gagal menyimpan", description: error.message, variant: "destructive" });
         } finally {
             setIsSaving(false);
         }
