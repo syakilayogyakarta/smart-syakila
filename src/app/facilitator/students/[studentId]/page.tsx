@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { studentDetails, getKegiatanForStudent, allStudents as allStudentData, classes as allClassNames, academicJournalLog } from "@/lib/data";
+import { allStudents as allStudentData, getKegiatanForStudent, classes as allClassNames, academicJournalLog } from "@/lib/data";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -71,19 +71,16 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
 
   useEffect(() => {
     const studentName = decodeURIComponent(params.studentId);
-    const details = studentDetails[studentName];
+    const studentData = allStudentData.find(s => s.fullName === studentName);
     
-    if (details) {
-        const studentData = allStudentData.find(s => s.fullName === studentName);
-        
-        const profileData = {
-            fullName: studentName,
-            nickname: details.nickname,
-            nisn: details.nisn,
+    if (studentData) {
+        const profileData: StudentProfile = {
+            fullName: studentData.fullName,
+            nickname: studentData.nickname || '',
+            nisn: studentData.nisn || '',
             photoUrl: `https://placehold.co/100x100.png`,
             photoHint: 'student portrait',
-            class: studentData?.className,
-            // Initialize with empty/zero data
+            class: studentData.className,
             attendance: { present: 0, late: 0, sick: 0, excused: 0 },
             savings: {
                 balance: 0,
@@ -95,17 +92,22 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
         setEditedProfile(profileData);
 
         // Process academic data
-        const studentJournals = academicJournalLog.filter(j => j.personalNotes.some((pn: any) => pn.studentName === studentName));
+        const studentJournals = academicJournalLog.filter(j => 
+            j.personalNotes.some((pn: any) => pn.studentName === studentName) || 
+            (j.students && j.students.includes(studentName))
+        );
         const subjects: { [key: string]: any } = {};
 
         studentJournals.forEach(journal => {
+            if (!journal.subject) return;
+
             if (!subjects[journal.subject]) {
                 subjects[journal.subject] = {
                     name: journal.subject,
                     icon: subjectIcons[journal.subject] || BookCopy,
                     color: subjectColors[journal.subject] || "text-foreground",
-                    averageActivity: 0, // This would need a proper calculation
-                    task: null, // This would need to be fetched
+                    averageActivity: 0,
+                    task: null,
                     meetings: [],
                     personalNotes: []
                 };
@@ -136,15 +138,14 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
     console.log("Saving changes:", editedProfile);
     // Simulate API call
     setTimeout(() => {
-      // In a real app, you would update the state with the saved data
-      // For this prototype, we just show a success message
+      if(editedProfile.fullName) {
+        setStudentProfile(prev => prev ? { ...prev, ...editedProfile } : null);
+      }
       toast({
         title: "Profil Diperbarui",
         description: `Data untuk ${editedProfile.fullName} telah berhasil disimpan.`,
       });
       setIsSaving(false);
-      // Here you would typically close the dialog, which can be done by managing an 'open' state for the Dialog
-      // For simplicity, we'll rely on the user closing it or using DialogClose
     }, 1500);
   };
 
@@ -162,7 +163,7 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
   const studentKegiatanData = studentProfile ? getKegiatanForStudent(studentProfile.fullName) : { history: [], personalNotes: [] };
 
   if (!studentProfile) {
-    return <div className="flex min-h-screen items-center justify-center">Memuat data siswa...</div>;
+    return <div className="flex min-h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>;
   }
 
   return (
@@ -208,19 +209,19 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
                     <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="fullName" className="text-right">Nama Lengkap</Label>
-                            <Input id="fullName" value={editedProfile.fullName || ''} onChange={(e) => handleInputChange('fullName', e.target.value)} className="col-span-3" />
+                            <Input id="fullName" value={editedProfile.fullName || ''} onChange={(e) => handleInputChange('fullName' as keyof StudentProfile, e.target.value)} className="col-span-3" />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="nickname" className="text-right">Panggilan</Label>
-                            <Input id="nickname" value={editedProfile.nickname || ''} onChange={(e) => handleInputChange('nickname', e.target.value)} className="col-span-3" />
+                            <Input id="nickname" value={editedProfile.nickname || ''} onChange={(e) => handleInputChange('nickname' as keyof StudentProfile, e.target.value)} className="col-span-3" />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="nisn" className="text-right">NISN</Label>
-                            <Input id="nisn" value={editedProfile.nisn || ''} onChange={(e) => handleInputChange('nisn', e.target.value)} className="col-span-3" />
+                            <Input id="nisn" value={editedProfile.nisn || ''} onChange={(e) => handleInputChange('nisn' as keyof StudentProfile, e.target.value)} className="col-span-3" />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="class" className="text-right">Kelas</Label>
-                            <Select onValueChange={(value) => handleInputChange('class', value)} value={editedProfile.class}>
+                            <Select onValueChange={(value) => handleInputChange('class' as keyof StudentProfile, value)} value={editedProfile.class}>
                                 <SelectTrigger className="col-span-3">
                                     <SelectValue placeholder="Pilih kelas" />
                                 </SelectTrigger>

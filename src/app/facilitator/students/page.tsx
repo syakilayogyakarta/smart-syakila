@@ -28,7 +28,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { studentDetails, studentsByClass, classes } from '@/lib/data';
+import { allStudents as allStudentsData, classes } from '@/lib/data';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -48,15 +48,7 @@ export default function StudentsListPage() {
   const [newStudent, setNewStudent] = useState(initialNewStudentState);
   const { toast } = useToast();
 
-  const allStudents = useMemo(() => {
-    return Object.entries(studentsByClass).flatMap(([className, studentNames]) => 
-      studentNames.map(fullName => ({
-        fullName,
-        ...studentDetails[fullName],
-        className
-      }))
-    );
-  }, []);
+  const allStudents = useMemo(() => allStudentsData, []);
 
   const filteredStudents = useMemo(() => {
     if (selectedClass === 'all') {
