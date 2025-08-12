@@ -24,10 +24,18 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { getFacilitators, Facilitator } from "@/lib/data"
 import { useEffect, useState } from "react"
 import { useToast } from "@/hooks/use-toast"
 import { Separator } from "@/components/ui/separator";
+
+// Define interface for Facilitator locally for now
+export interface Facilitator {
+    id: string;
+    fullName: string;
+    nickname: string;
+    email: string;
+    gender: "Laki-laki" | "Perempuan";
+}
 
 export default function LoginPage() {
   const router = useRouter()
@@ -44,7 +52,8 @@ export default function LoginPage() {
 
     async function fetchFacilitators() {
       try {
-        const data = await getFacilitators();
+        const response = await fetch('/api/facilitators');
+        const data: Facilitator[] = await response.json();
         setFacilitators(data);
       } catch (error) {
         console.error("Failed to fetch facilitators", error);

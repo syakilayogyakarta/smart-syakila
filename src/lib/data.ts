@@ -1,3 +1,4 @@
+
 // This file will contain all the functions to interact with the Vercel Blob storage.
 // We will replace all the mock data with functions that fetch data from the blob storage.
 
@@ -91,7 +92,11 @@ export interface StimulationJournalLog {
 async function getFromBlob<T>(key: string): Promise<T[]> {
     try {
         const data = await list({ prefix: key });
-        if (data.blobs.length === 0) return [];
+        if (data.blobs.length === 0) {
+            // If the blob doesn't exist, create it with an empty array
+            await saveToBlob(key, []);
+            return [];
+        };
         const response = await fetch(data.blobs[0].url);
         if (!response.ok) return [];
         return await response.json() as T[];
@@ -111,8 +116,9 @@ async function saveToBlob(key: string, data: any) {
 
 // --- Facilitators ---
 export async function getFacilitators(): Promise<Facilitator[]> {
-    return await getFromBlob<Facilitator>(DB_KEY_FACILITATORS);
+ return await getFromBlob<Facilitator>(DB_KEY_FACILITATORS);
 }
+
 export async function addFacilitator(facilitator: Omit<Facilitator, 'id'>) {
     const facilitators = await getFacilitators();
     const newFacilitator = { ...facilitator, id: crypto.randomUUID() };
@@ -120,6 +126,7 @@ export async function addFacilitator(facilitator: Omit<Facilitator, 'id'>) {
     await saveToBlob(DB_KEY_FACILITATORS, facilitators);
     return newFacilitator;
 }
+
 export async function getLoggedInUser() {
     if (typeof window === 'undefined') return null;
     const facilitatorId = localStorage.getItem("loggedInFacilitatorId");
@@ -137,10 +144,7 @@ export async function getLoggedInUser() {
     if (!facilitatorId) return null;
     const facilitators = await getFacilitators();
     const facilitator = facilitators.find(f => f.id === facilitatorId) || null;
-    if (facilitator) {
-        return { ...facilitator, isAdmin: false };
-    }
-    return null;
+    return facilitator ? { ...facilitator, isAdmin: false } : null;
 }
 
 // --- Classes ---
@@ -222,10 +226,25 @@ export async function deleteSubject(id: string) {
 
 // --- Assignments ---
 export async function getFacilitatorAssignments(): Promise<FacilitatorAssignments> {
-    const results = await getFromBlob<FacilitatorAssignments>(DB_KEY_ASSIGNMENTS);
-    return results[0] || {};
+    try {
+        const data = await list({ prefix: DB_KEY_ASSIGNMENTS });
+        if (data.blobs.length === 0) {
+             // If the blob doesn't exist, create it with an empty object
+            await saveToBlob(DB_KEY_ASSIGNMENTS, {});
+            return {};
+        }
+        const response = await fetch(data.blobs[0].url);
+        if (!response.ok) return {};
+        const assignments = await response.json();
+        // The data is stored in an array in the blob, so we get the first element
+        return assignments[0] || {};
+    } catch (error) {
+        console.error(`Error fetching data for key ${DB_KEY_ASSIGNMENTS}:`, error);
+        return {};
+    }
 }
 export async function saveFacilitatorAssignments(assignments: FacilitatorAssignments) {
+    // Wrap in an array to match the expected structure from getFacilitatorAssignments
     await saveToBlob(DB_KEY_ASSIGNMENTS, [assignments]);
 }
 
@@ -307,3 +326,5 @@ export async function getStudentProfileData(studentId: string) {
         }
     }
 }
+
+    
