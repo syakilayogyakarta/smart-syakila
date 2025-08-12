@@ -3,18 +3,30 @@
 
 import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, User, Users, Filter, PlusCircle } from 'lucide-react';
+import { ArrowLeft, User, Users, Filter, PlusCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { studentDetails, studentsByClass, classes } from '@/lib/data';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+
+const initialNewStudentState = {
+    fullName: '',
+    nickname: '',
+    nisn: '',
+    className: ''
+};
 
 export default function StudentsListPage() {
   const router = useRouter();
   const [selectedClass, setSelectedClass] = useState('all');
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newStudent, setNewStudent] = useState(initialNewStudentState);
   const { toast } = useToast();
 
   const allStudents = useMemo(() => {
@@ -38,11 +50,23 @@ export default function StudentsListPage() {
     router.push(`/facilitator/students/${encodeURIComponent(studentId)}`);
   };
 
-  const handleAddStudent = () => {
-    toast({
-      title: "Fitur Dalam Pengembangan",
-      description: "Fungsionalitas untuk menambah siswa baru akan segera tersedia.",
-    });
+  const handleInputChange = (field: keyof typeof initialNewStudentState, value: string) => {
+    setNewStudent(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSaveNewStudent = () => {
+    setIsSaving(true);
+    console.log("Saving new student:", newStudent);
+    // Simulate API call
+    setTimeout(() => {
+      toast({
+        title: "Siswa Baru Ditambahkan!",
+        description: `Data untuk ${newStudent.fullName} telah berhasil disimulasikan.`,
+      });
+      setIsSaving(false);
+      setIsDialogOpen(false); // Close the dialog
+      setNewStudent(initialNewStudentState); // Reset form
+    }, 1500);
   };
 
   return (
@@ -68,9 +92,55 @@ export default function StudentsListPage() {
                     Total {filteredStudents.length} siswa ditemukan. Klik nama siswa untuk melihat detail.
                     </CardDescription>
                 </div>
-                <Button onClick={handleAddStudent}>
-                    <PlusCircle className="mr-2 h-4 w-4" /> Tambah Siswa Baru
-                </Button>
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                    <DialogTrigger asChild>
+                        <Button>
+                            <PlusCircle className="mr-2 h-4 w-4" /> Tambah Siswa Baru
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                        <DialogTitle>Tambah Profil Siswa</DialogTitle>
+                        <DialogDescription>
+                            Isi detail siswa baru di bawah ini. Klik simpan jika sudah selesai.
+                        </DialogDescription>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="fullName" className="text-right">Nama Lengkap</Label>
+                                <Input id="fullName" value={newStudent.fullName} onChange={(e) => handleInputChange('fullName', e.target.value)} className="col-span-3" />
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="nickname" className="text-right">Panggilan</Label>
+                                <Input id="nickname" value={newStudent.nickname} onChange={(e) => handleInputChange('nickname', e.target.value)} className="col-span-3" />
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="nisn" className="text-right">NISN</Label>
+                                <Input id="nisn" value={newStudent.nisn} onChange={(e) => handleInputChange('nisn', e.target.value)} className="col-span-3" />
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="class" className="text-right">Kelas</Label>
+                                <Select onValueChange={(value) => handleInputChange('className', value)} value={newStudent.className}>
+                                    <SelectTrigger className="col-span-3">
+                                        <SelectValue placeholder="Pilih kelas" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {classes.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <DialogClose asChild>
+                                <Button type="button" variant="secondary">Batal</Button>
+                            </DialogClose>
+                            <Button type="submit" onClick={handleSaveNewStudent} disabled={isSaving}>
+                                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                {isSaving ? 'Menyimpan...' : 'Simpan Siswa'}
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </div>
             <div className="pt-4 mt-4 border-t">
               <Label htmlFor="class-filter" className="text-sm font-medium">Filter berdasarkan Kelas</Label>
