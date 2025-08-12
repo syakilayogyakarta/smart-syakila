@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Calendar as CalendarIcon, Check, Loader2, Landmark, Wallet, Edit3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { studentsByClass, classes } from "@/lib/data";
+import { getClasses, getStudentsByClass as fetchStudentsByClass, Student, Class } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -19,25 +19,47 @@ import { format } from "date-fns";
 import { id } from "date-fns/locale/id";
 
 type TransactionType = 'setoran' | 'penarikan';
+type StudentsByClassMap = { [className: string]: Student[] };
 
 export default function SavingsPage() {
   const [transactionDate, setTransactionDate] = useState<Date | undefined>(new Date());
   const [selectedClass, setSelectedClass] = useState<string>("");
-  const [studentOptions, setStudentOptions] = useState<string[]>([]);
+  const [studentOptions, setStudentOptions] = useState<Student[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<string>("");
   const [transactionType, setTransactionType] = useState<TransactionType>('setoran');
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [buttonState, setButtonState] = useState<"idle" | "loading" | "saved">("idle");
   const [isShaking, setIsShaking] = useState(false);
+  const [classes, setClasses] = useState<Class[]>([]);
+  const [studentsByClass, setStudentsByClass] = useState<StudentsByClassMap>({});
+  const [isLoading, setIsLoading] = useState(true);
   
   const router = useRouter();
   const { toast } = useToast();
 
-  const handleClassChange = (value: string) => {
-    setSelectedClass(value);
+  useEffect(() => {
+    async function fetchData() {
+        try {
+            const [classesData, studentsByClassData] = await Promise.all([
+                getClasses(),
+                fetchStudentsByClass()
+            ]);
+            setClasses(classesData);
+            setStudentsByClass(studentsByClassData);
+        } catch (error) {
+            toast({ title: "Gagal memuat data", variant: "destructive" });
+        } finally {
+            setIsLoading(false);
+        }
+    }
+    fetchData();
+  }, [toast]);
+
+  const handleClassChange = (className: string) => {
+    setSelectedClass(className);
     setSelectedStudent(""); // Reset student selection when class changes
-    setStudentOptions(studentsByClass[value] || []);
+    setStudentOptions(studentsByClass[className] || []);
   };
 
   const handleSave = () => {
@@ -53,6 +75,7 @@ export default function SavingsPage() {
     }
 
     setButtonState("loading");
+    // In a real app, you would call a function to save the transaction to the blob store.
     console.log("Saving transaction:", {
       date: transactionDate,
       student: selectedStudent,
@@ -65,7 +88,7 @@ export default function SavingsPage() {
       setButtonState("saved");
       toast({
         title: "Transaksi Berhasil!",
-        description: `Transaksi ${transactionType} sebesar Rp${parseFloat(amount).toLocaleString('id-ID')} untuk ${selectedStudent} telah disimpan.`,
+        description: `Transaksi telah disimpan.`,
       });
       // Reset form
       setSelectedStudent("");
@@ -81,6 +104,14 @@ export default function SavingsPage() {
   };
   
   const isSaveDisabled = buttonState !== 'idle';
+  
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
@@ -136,7 +167,7 @@ export default function SavingsPage() {
                     <SelectValue placeholder="Pilih Kelas..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {classes.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    {classes.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -147,7 +178,7 @@ export default function SavingsPage() {
                     <SelectValue placeholder="Pilih Siswa..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {studentOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    {studentOptions.map(s => <SelectItem key={s.id} value={s.id}>{s.fullName}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -227,3 +258,5 @@ export default function SavingsPage() {
     </div>
   );
 }
+
+    

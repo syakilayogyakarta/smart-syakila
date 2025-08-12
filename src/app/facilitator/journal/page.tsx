@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { 
   ArrowLeft, Calendar as CalendarIcon, Check, Loader2, BookOpen,
@@ -15,7 +15,23 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { allStudents, facilitatorAssignments, getLoggedInFacilitator, academicJournalLog, studentsByClass } from "@/lib/data";
+import { 
+    getLoggedInFacilitator, 
+    getAcademicJournalLog,
+    addAcademicJournalLog,
+    deleteAcademicJournal,
+    addPersonalNoteToAcademicLog,
+    getStudents,
+    getClasses,
+    getSubjects,
+    getFacilitatorAssignments,
+    Student,
+    Class as AppClass,
+    Subject,
+    FacilitatorAssignments,
+    AcademicJournalLog,
+    Facilitator
+} from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -35,24 +51,14 @@ import {
 } from "@/components/ui/alert-dialog";
 
 type PersonalNote = {
-  id: number;
-  studentName: string;
+  id: string;
+  studentId: string;
   note: string;
 }
-
-type Facilitator = {
-  fullName: string;
-  nickname: string;
-  email: string;
-  gender: string;
-}
-
-type AcademicJournalEntry = typeof academicJournalLog[0];
-type AcademicPersonalNote = AcademicJournalEntry['personalNotes'][0];
+type AcademicPersonalNote = AcademicJournalLog['personalNotes'][0];
 
 const ClientFormattedDate = ({ timestamp }: { timestamp: string }) => {
   const [formattedDate, setFormattedDate] = useState("");
-
   useEffect(() => {
     setFormattedDate(
       new Date(timestamp).toLocaleString('id-ID', {
@@ -61,7 +67,6 @@ const ClientFormattedDate = ({ timestamp }: { timestamp: string }) => {
       })
     );
   }, [timestamp]);
-
   return <span>{formattedDate}</span>;
 };
 
@@ -70,13 +75,13 @@ export default function JournalPage() {
   const [journalDate, setJournalDate] = useState<Date | undefined>(new Date());
   
   const [mode, setMode] = useState<"kelas" | "kelompok" | null>(null);
-  const [selectedSubject, setSelectedSubject] = useState<string>("");
-  const [selectedClass, setSelectedClass] = useState<string>("");
-  const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
+  const [selectedSubjectId, setSelectedSubjectId] = useState<string>("");
+  const [selectedClassId, setSelectedClassId] = useState<string>("");
+  const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
   
   const [topic, setTopic] = useState("");
-  const [studentActiveness, setStudentActiveness] = useState<{ [studentName: string]: number }>({});
-  const [studentHomeworkScores, setStudentHomeworkScores] = useState<{ [studentName: string]: number }>({});
+  const [studentActiveness, setStudentActiveness] = useState<{ [studentId: string]: number }>({});
+  const [studentHomeworkScores, setStudentHomeworkScores] = useState<{ [studentId: string]: number }>({});
   const [assignment, setAssignment] = useState("");
   const [deadline, setDeadline] = useState<Date>();
   const [importantNotes, setImportantNotes] = useState("");
@@ -89,56 +94,86 @@ export default function JournalPage() {
   const router = useRouter();
   const { toast } = useToast();
 
-  const [journals, setJournals] = useState(academicJournalLog);
-  const [newNotes, setNewNotes] = useState<{ [journalId: number]: { studentName: string; note: string } }>({});
+  const [journals, setJournals] = useState<AcademicJournalLog[]>([]);
+  const [newNotes, setNewNotes] = useState<{ [journalId: string]: { studentId: string; note: string } }>({});
+  
+  // Data state
+  const [allStudents, setAllStudents] = useState<Student[]>([]);
+  const [allClasses, setAllClasses] = useState<AppClass[]>([]);
+  const [allSubjects, setAllSubjects] = useState<Subject[]>([]);
+  const [assignments, setAssignments] = useState<FacilitatorAssignments>({});
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+        const loggedInFacilitator = await getLoggedInFacilitator();
+        if (!loggedInFacilitator) {
+            router.push('/login');
+            return;
+        }
+        setFacilitator(loggedInFacilitator);
+
+        const [studentsData, classesData, subjectsData, assignmentsData, journalsData] = await Promise.all([
+            getStudents(),
+            getClasses(),
+            getSubjects(),
+            getFacilitatorAssignments(),
+            getAcademicJournalLog(),
+        ]);
+        setAllStudents(studentsData);
+        setAllClasses(classesData);
+        setAllSubjects(subjectsData);
+        setAssignments(assignmentsData);
+        setJournals(journalsData);
+    } catch (error) {
+        toast({ title: "Gagal memuat data", description: "Terjadi kesalahan saat mengambil data dari server.", variant: "destructive" });
+    } finally {
+        setIsLoading(false);
+    }
+  }, [router, toast]);
 
   useEffect(() => {
-    const loggedInFacilitator = getLoggedInFacilitator();
-    if (!loggedInFacilitator) {
-      router.push('/login');
-    } else {
-      setFacilitator(loggedInFacilitator);
-    }
-  }, [router]);
+    fetchData();
+  }, [fetchData]);
   
   const facilitatorData = useMemo(() => {
     if (!facilitator) return null;
-    return facilitatorAssignments[facilitator.fullName];
-  }, [facilitator]);
+    return assignments[facilitator.id];
+  }, [facilitator, assignments]);
 
   const availableClasses = useMemo(() => {
     if (!facilitatorData) return [];
-    return Object.keys(facilitatorData.classes);
-  }, [facilitatorData]);
+    return allClasses.filter(c => Object.keys(facilitatorData.classes).includes(c.id));
+  }, [facilitatorData, allClasses]);
 
   const availableSubjectsForClass = useMemo(() => {
-    if (!facilitatorData || !selectedClass) return [];
-    return facilitatorData.classes[selectedClass] || [];
-  }, [facilitatorData, selectedClass]);
+    if (!facilitatorData || !selectedClassId) return [];
+    const subjectIds = facilitatorData.classes[selectedClassId] || [];
+    return allSubjects.filter(s => subjectIds.includes(s.id));
+  }, [facilitatorData, selectedClassId, allSubjects]);
   
   const availableGroupSubjects = useMemo(() => {
     if (!facilitatorData) return [];
-    return facilitatorData.groups || [];
-  }, [facilitatorData]);
+    const subjectIds = facilitatorData.groups || [];
+    return allSubjects.filter(s => subjectIds.includes(s.id));
+  }, [facilitatorData, allSubjects]);
   
   const studentOptionsForGroupMode = useMemo(() => {
-    if (mode !== 'kelompok' || !selectedSubject || !facilitator) return [];
-
+    if (mode !== 'kelompok' || !selectedSubjectId || !facilitator) return [];
     let students = allStudents;
-    if (selectedSubject === "Al-Qur'an & Tajwid") {
+    const selectedSubject = allSubjects.find(s => s.id === selectedSubjectId);
+    if (selectedSubject?.name === "Al-Qur'an & Tajwid") {
       students = students.filter(student => student.gender === facilitator.gender);
     }
-    
-    return students.map(s => s.fullName);
-  }, [mode, selectedSubject, facilitator]);
+    return students;
+  }, [mode, selectedSubjectId, facilitator, allStudents, allSubjects]);
 
   const resetFormFields = (clearMode = false) => {
-    if (clearMode) {
-      setMode(null);
-    }
-    setSelectedSubject("");
-    setSelectedClass("");
-    setSelectedStudents([]);
+    if (clearMode) setMode(null);
+    setSelectedSubjectId("");
+    setSelectedClassId("");
+    setSelectedStudentIds([]);
     setStudentActiveness({});
     setStudentHomeworkScores({});
     setTopic("");
@@ -155,36 +190,37 @@ export default function JournalPage() {
     setMode(newMode);
   };
   
-  const handleClassChange = (className: string) => {
-    setSelectedClass(className);
-    setSelectedSubject("");
-    const students = allStudents.filter(s => s.className === className).map(s => s.fullName);
-    setSelectedStudents(students);
-    const initialRatings = Object.fromEntries(students.map(s => [s, 0]));
+  const handleClassChange = (classId: string) => {
+    setSelectedClassId(classId);
+    setSelectedSubjectId("");
+    const students = allStudents.filter(s => s.classId === classId);
+    const studentIds = students.map(s => s.id);
+    setSelectedStudentIds(studentIds);
+    const initialRatings = Object.fromEntries(studentIds.map(id => [id, 0]));
     setStudentActiveness(initialRatings);
     setStudentHomeworkScores(initialRatings);
   };
   
-  const handleSubjectChange = (subject: string) => {
-      setSelectedSubject(subject);
+  const handleSubjectChange = (subjectId: string) => {
+      setSelectedSubjectId(subjectId);
       if(mode === 'kelompok'){
-          setSelectedStudents([]);
+          setSelectedStudentIds([]);
           setStudentActiveness({});
           setStudentHomeworkScores({});
       }
   };
 
-  const handleStudentSelectionChange = (studentName: string, isChecked: boolean) => {
-      setSelectedStudents(prev => {
-          const newSelection = isChecked ? [...prev, studentName] : prev.filter(s => s !== studentName);
+  const handleStudentSelectionChange = (studentId: string, isChecked: boolean) => {
+      setSelectedStudentIds(prev => {
+          const newSelection = isChecked ? [...prev, studentId] : prev.filter(sId => sId !== studentId);
           const newActivities = { ...studentActiveness };
           const newScores = { ...studentHomeworkScores };
           if (!isChecked) {
-              delete newActivities[studentName];
-              delete newScores[studentName];
+              delete newActivities[studentId];
+              delete newScores[studentId];
           } else {
-              newActivities[studentName] = 0;
-              newScores[studentName] = 0;
+              newActivities[studentId] = 0;
+              newScores[studentId] = 0;
           }
           setStudentActiveness(newActivities);
           setStudentHomeworkScores(newScores);
@@ -192,28 +228,28 @@ export default function JournalPage() {
       });
   };
 
-  const handleRatingChange = (studentName: string, rating: number, type: 'activeness' | 'homework') => {
+  const handleRatingChange = (studentId: string, rating: number, type: 'activeness' | 'homework') => {
     if (type === 'activeness') {
-      setStudentActiveness(prev => ({ ...prev, [studentName]: rating }));
+      setStudentActiveness(prev => ({ ...prev, [studentId]: rating }));
     } else {
-      setStudentHomeworkScores(prev => ({ ...prev, [studentName]: rating }));
+      setStudentHomeworkScores(prev => ({ ...prev, [studentId]: rating }));
     }
   };
 
   const addPersonalNote = () => {
-    setPersonalNotes(prev => [...prev, { id: Date.now(), studentName: "", note: "" }]);
+    setPersonalNotes(prev => [...prev, { id: `new-${Date.now()}`, studentId: "", note: "" }]);
   };
 
-  const updatePersonalNote = (id: number, field: 'studentName' | 'note', value: string) => {
+  const updatePersonalNote = (id: string, field: 'studentId' | 'note', value: string) => {
     setPersonalNotes(prev => prev.map(note => note.id === id ? { ...note, [field]: value } : note));
   };
   
-  const removePersonalNote = (id: number) => {
+  const removePersonalNote = (id: string) => {
     setPersonalNotes(prev => prev.filter(note => note.id !== id));
   }
 
-  const handleSave = () => {
-    if (!mode || !selectedSubject || !topic || selectedStudents.length === 0 || !facilitator) {
+  const handleSave = async () => {
+    if (!mode || !selectedSubjectId || !topic || selectedStudentIds.length === 0 || !facilitator) {
       setIsShaking(true);
       toast({
         title: "Data Wajib Belum Lengkap",
@@ -226,72 +262,94 @@ export default function JournalPage() {
 
     setButtonState("loading");
     
-    const newJournalEntry: AcademicJournalEntry = {
-      id: Date.now(),
+    const newJournalEntry: Omit<AcademicJournalLog, 'id'> = {
       timestamp: (journalDate || new Date()).toISOString(),
-      facilitatorName: facilitator.fullName,
-      class: selectedClass,
-      subject: selectedSubject,
+      facilitatorId: facilitator.id,
+      classId: selectedClassId,
+      subjectId: selectedSubjectId,
       topic,
       importantNotes,
-      personalNotes: personalNotes.map(pn => ({ ...pn, facilitatorName: facilitator.fullName }))
+      studentActiveness: studentActiveness,
+      studentHomeworkScores: studentHomeworkScores,
+      personalNotes: personalNotes
+        .filter(pn => pn.studentId && pn.note)
+        .map(pn => ({ ...pn, id: crypto.randomUUID(), facilitatorId: facilitator.id }))
     };
 
-    console.log("Saving journal:", newJournalEntry, studentActiveness, studentHomeworkScores);
-    
-    setTimeout(() => {
-      setJournals(prev => [newJournalEntry, ...prev]);
-      setButtonState("saved");
-      toast({
-        title: "Jurnal Tersimpan!",
-        description: `Jurnal pembelajaran untuk mata pelajaran ${selectedSubject} berhasil disimpan.`,
-      });
-      resetFormFields(true);
-      
-      setTimeout(() => setButtonState("idle"), 2000);
-    }, 1500);
+    try {
+        await addAcademicJournalLog(newJournalEntry);
+        await fetchData(); // Refresh data from server
+        setButtonState("saved");
+        toast({
+            title: "Jurnal Tersimpan!",
+            description: `Jurnal pembelajaran berhasil disimpan.`,
+        });
+        resetFormFields(true);
+        setTimeout(() => setButtonState("idle"), 2000);
+    } catch(e) {
+        toast({ title: "Gagal menyimpan jurnal", variant: "destructive" });
+        setButtonState("idle");
+    }
   };
 
-  const handleAddPersonalNoteToLog = (journalId: number) => {
+  const handleAddPersonalNoteToLog = async (journalId: string) => {
     const noteData = newNotes[journalId];
-    if (!noteData || !noteData.studentName || !noteData.note || !facilitator) {
+    if (!noteData || !noteData.studentId || !noteData.note || !facilitator) {
       toast({ title: "Gagal Menambah Catatan", description: "Mohon pilih siswa dan isi catatan.", variant: "destructive" });
       return;
     }
-    const updatedJournals = journals.map(journal => {
-      if (journal.id === journalId) {
-        const newNote: AcademicPersonalNote = {
-          id: Date.now(),
-          studentName: noteData.studentName,
-          note: noteData.note,
-          facilitatorName: facilitator.fullName
-        };
-        return { ...journal, personalNotes: [...journal.personalNotes, newNote] };
+
+    const newNote: AcademicPersonalNote = {
+      id: crypto.randomUUID(),
+      studentId: noteData.studentId,
+      note: noteData.note,
+      facilitatorId: facilitator.id
+    };
+
+    try {
+        await addPersonalNoteToAcademicLog(journalId, newNote);
+        await fetchData();
+        setNewNotes(prev => ({ ...prev, [journalId]: { studentId: "", note: "" } }));
+        toast({ title: "Catatan Ditambahkan!" });
+    } catch (e) {
+        toast({ title: "Gagal menambah catatan", variant: "destructive" });
+    }
+  };
+
+  const handleNewNoteChange = (journalId: string, field: 'studentId' | 'note', value: string) => {
+    setNewNotes(prev => ({ ...prev, [journalId]: { ...(prev[journalId] || {} as any), [field]: value } }));
+  };
+
+  const handleDeleteJournal = async (journalId: string) => {
+    try {
+        await deleteAcademicJournal(journalId);
+        await fetchData();
+        toast({ title: "Jurnal Dihapus" });
+    } catch (e) {
+        toast({ title: "Gagal menghapus jurnal", variant: "destructive" });
+    }
+  };
+
+  const getStudentOptionsForJournal = (journal: AcademicJournalLog) => {
+      if (journal.classId) {
+          return allStudents.filter(s => s.classId === journal.classId);
       }
-      return journal;
-    });
-    setJournals(updatedJournals);
-    setNewNotes(prev => ({ ...prev, [journalId]: { studentName: "", note: "" } }));
-    toast({ title: "Catatan Ditambahkan!", description: `Catatan personal untuk ${noteData.studentName} berhasil ditambahkan.` });
+      // This part needs adjustment based on how students are recorded for group journals
+      // For now, returning all students as a fallback
+      return allStudents;
   };
 
-  const handleNewNoteChange = (journalId: number, field: 'studentName' | 'note', value: string) => {
-    setNewNotes(prev => ({ ...prev, [journalId]: { ...(prev[journalId] || {}), [field]: value } }));
-  };
-
-  const handleDeleteJournal = (journalId: number) => {
-    setJournals(prev => prev.filter(j => j.id !== journalId));
-    toast({ title: "Jurnal Dihapus", description: "Jurnal berhasil dihapus." });
-  };
-
-  const getStudentOptionsForClass = (className: string) => studentsByClass[className] || [];
+  const getSubjectName = (subjectId: string) => allSubjects.find(s => s.id === subjectId)?.name || "N/A";
+  const getClassName = (classId: string) => allClasses.find(c => c.id === classId)?.name || "Kelompok";
+  const getFacilitatorName = (facilitatorId: string) => facilitator?.fullName; // Simplified
+  const getStudentName = (studentId: string) => allStudents.find(s => s.id === studentId)?.fullName || 'Siswa Dihapus';
   
   const isSaveDisabled = buttonState !== 'idle';
   
-  if (!facilitator) {
+  if (isLoading || !facilitator) {
     return (
         <div className="min-h-screen bg-background p-8 flex items-center justify-center">
-            <p>Memuat data fasilitator...</p>
+            <Loader2 className="h-8 w-8 animate-spin"/>
         </div>
     )
   }
@@ -344,16 +402,16 @@ export default function JournalPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label className="font-semibold">Pilih Kelas</Label>
-                    <Select onValueChange={handleClassChange} value={selectedClass}>
+                    <Select onValueChange={handleClassChange} value={selectedClassId}>
                       <SelectTrigger><SelectValue placeholder="Pilih Kelas..." /></SelectTrigger>
-                      <SelectContent>{availableClasses.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                      <SelectContent>{availableClasses.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
                     <Label className="font-semibold">Pilih Mata Pelajaran</Label>
-                    <Select onValueChange={handleSubjectChange} value={selectedSubject} disabled={!selectedClass}>
+                    <Select onValueChange={handleSubjectChange} value={selectedSubjectId} disabled={!selectedClassId}>
                       <SelectTrigger><SelectValue placeholder="Pilih Mata Pelajaran..." /></SelectTrigger>
-                      <SelectContent>{availableSubjectsForClass.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                      <SelectContent>{availableSubjectsForClass.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
                 </div>
@@ -364,25 +422,25 @@ export default function JournalPage() {
               <div className="space-y-6 pt-4 border-t">
                   <div className="space-y-2">
                     <Label className="font-semibold">Pilih Mata Pelajaran Kelompok</Label>
-                    <Select onValueChange={handleSubjectChange} value={selectedSubject}>
+                    <Select onValueChange={handleSubjectChange} value={selectedSubjectId}>
                       <SelectTrigger><SelectValue placeholder="Pilih Mata Pelajaran..." /></SelectTrigger>
-                      <SelectContent>{availableGroupSubjects.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                      <SelectContent>{availableGroupSubjects.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
-                  {selectedSubject && (
+                  {selectedSubjectId && (
                       <div className="space-y-2">
                           <Label className="font-semibold">Pilih Siswa yang Mengikuti</Label>
                           <Card className="max-h-60 overflow-y-auto">
                               <CardContent className="p-4 space-y-3">
                                   {studentOptionsForGroupMode.map(student => (
-                                      <div key={student} className="flex items-center space-x-2">
+                                      <div key={student.id} className="flex items-center space-x-2">
                                           <Checkbox
-                                              id={`student-${student}`}
-                                              checked={selectedStudents.includes(student)}
-                                              onCheckedChange={(checked) => handleStudentSelectionChange(student, !!checked)}
+                                              id={`student-${student.id}`}
+                                              checked={selectedStudentIds.includes(student.id)}
+                                              onCheckedChange={(checked) => handleStudentSelectionChange(student.id, !!checked)}
                                           />
-                                          <label htmlFor={`student-${student}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                                              {student}
+                                          <label htmlFor={`student-${student.id}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                              {student.fullName}
                                           </label>
                                       </div>
                                   ))}
@@ -393,7 +451,7 @@ export default function JournalPage() {
               </div>
             )}
 
-            {mode && selectedSubject && (
+            {mode && selectedSubjectId && (
               <div className="space-y-6 pt-6 border-t border-dashed">
                  <div className="space-y-2">
                     <Label className="font-semibold">Tanggal Pembelajaran</Label>
@@ -420,18 +478,18 @@ export default function JournalPage() {
                   </div>
                 </div>
 
-                {selectedStudents.length > 0 && (
+                {selectedStudentIds.length > 0 && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
                       <Label className="font-semibold flex items-center gap-2"><Star className="h-4 w-4 text-yellow-500" /> Tingkat Keaktifan Siswa</Label>
                       <div className="space-y-3 rounded-md border p-4 max-h-60 overflow-y-auto">
-                        {selectedStudents.map((student) => (
-                          <div key={student} className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
-                            <p className="font-medium text-foreground mb-2 sm:mb-0 truncate pr-2" title={student}>{student}</p>
+                        {allStudents.filter(s => selectedStudentIds.includes(s.id)).map((student) => (
+                          <div key={student.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
+                            <p className="font-medium text-foreground mb-2 sm:mb-0 truncate pr-2" title={student.fullName}>{student.fullName}</p>
                             <div className="flex items-center gap-1">
                               {[1, 2, 3, 4, 5].map((star) => (
-                                <button key={star} onClick={() => handleRatingChange(student, star, 'activeness')}>
-                                  <Star className={cn("h-6 w-6 transition-colors", studentActiveness[student] >= star ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300')} />
+                                <button key={star} onClick={() => handleRatingChange(student.id, star, 'activeness')}>
+                                  <Star className={cn("h-6 w-6 transition-colors", studentActiveness[student.id] >= star ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300')} />
                                 </button>
                               ))}
                             </div>
@@ -442,13 +500,13 @@ export default function JournalPage() {
                      <div className="space-y-4">
                       <Label className="font-semibold flex items-center gap-2"><Home className="h-4 w-4 text-blue-500" /> Penilaian Tugas/PR</Label>
                       <div className="space-y-3 rounded-md border p-4 max-h-60 overflow-y-auto">
-                        {selectedStudents.map((student) => (
-                          <div key={student} className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
-                            <p className="font-medium text-foreground mb-2 sm:mb-0 truncate pr-2" title={student}>{student}</p>
+                        {allStudents.filter(s => selectedStudentIds.includes(s.id)).map((student) => (
+                          <div key={student.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
+                            <p className="font-medium text-foreground mb-2 sm:mb-0 truncate pr-2" title={student.fullName}>{student.fullName}</p>
                             <div className="flex items-center gap-1">
                               {[1, 2, 3, 4, 5].map((star) => (
-                                <button key={star} onClick={() => handleRatingChange(student, star, 'homework')}>
-                                  <Star className={cn("h-6 w-6 transition-colors", studentHomeworkScores[student] >= star ? 'text-blue-400 fill-blue-400' : 'text-gray-300')} />
+                                <button key={star} onClick={() => handleRatingChange(student.id, star, 'homework')}>
+                                  <Star className={cn("h-6 w-6 transition-colors", studentHomeworkScores[student.id] >= star ? 'text-blue-400 fill-blue-400' : 'text-gray-300')} />
                                 </button>
                               ))}
                             </div>
@@ -489,7 +547,7 @@ export default function JournalPage() {
             
                 <div>
                   {!showPersonalNotes ? (
-                     <Button variant="outline" onClick={() => setShowPersonalNotes(true)} disabled={selectedStudents.length === 0}>
+                     <Button variant="outline" onClick={() => setShowPersonalNotes(true)} disabled={selectedStudentIds.length === 0}>
                         <PlusCircle className="mr-2 h-4 w-4"/> Tambah Catatan Personal (Opsional)
                      </Button>
                   ) : (
@@ -500,9 +558,9 @@ export default function JournalPage() {
                       </div>
                       {personalNotes.map((note) => (
                          <div key={note.id} className="grid grid-cols-1 md:grid-cols-[1fr_2fr_auto] gap-4 items-center rounded-md bg-secondary/30 p-3">
-                            <Select onValueChange={(value) => updatePersonalNote(note.id, 'studentName', value)} value={note.studentName}>
+                            <Select onValueChange={(value) => updatePersonalNote(note.id, 'studentId', value)} value={note.studentId}>
                               <SelectTrigger><SelectValue placeholder="Pilih Siswa..." /></SelectTrigger>
-                              <SelectContent>{selectedStudents.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                              <SelectContent>{allStudents.filter(s=> selectedStudentIds.includes(s.id)).map(s => <SelectItem key={s.id} value={s.id}>{s.fullName}</SelectItem>)}</SelectContent>
                             </Select>
                             <Input placeholder="Tulis catatan personal untuk siswa ini..." value={note.note} onChange={(e) => updatePersonalNote(note.id, 'note', e.target.value)} />
                             <Button variant="destructive" size="icon" onClick={() => removePersonalNote(note.id)}><Trash2 className="h-4 w-4"/></Button>
@@ -535,9 +593,9 @@ export default function JournalPage() {
                         <AccordionItem value={`academic-journal-${journal.id}`} key={journal.id}>
                         <AccordionTrigger className="px-6 py-4 hover:bg-primary/5">
                             <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4 text-left w-full">
-                                <div className="font-semibold text-base">{journal.subject} - {journal.class ? `Kelas ${journal.class}`: 'Kelompok'}</div>
+                                <div className="font-semibold text-base">{getSubjectName(journal.subjectId)} - {getClassName(journal.classId)}</div>
                                 <div className="text-sm text-muted-foreground">
-                                    <span>{journal.facilitatorName}</span> | <ClientFormattedDate timestamp={journal.timestamp} />
+                                    <span>{getFacilitatorName(journal.facilitatorId)}</span> | <ClientFormattedDate timestamp={journal.timestamp} />
                                 </div>
                             </div>
                         </AccordionTrigger>
@@ -557,9 +615,9 @@ export default function JournalPage() {
                                 <h5 className="font-semibold flex items-center gap-2 text-lg"><MessageSquare className="h-5 w-5" />Catatan Personal Siswa</h5>
                                 {journal.personalNotes.map(note => (
                                     <div key={note.id} className="p-3 rounded-md border bg-card">
-                                        <p className="font-bold">{note.studentName}</p>
+                                        <p className="font-bold">{getStudentName(note.studentId)}</p>
                                         <p className="text-sm text-foreground/80 my-1">"{note.note}"</p>
-                                        <p className="text-xs text-muted-foreground text-right">- {note.facilitatorName}</p>
+                                        <p className="text-xs text-muted-foreground text-right">- {getFacilitatorName(note.facilitatorId)}</p>
                                     </div>
                                 ))}
                                 {journal.personalNotes.length === 0 && <p className="text-sm text-muted-foreground">Belum ada catatan personal.</p>}
@@ -569,12 +627,12 @@ export default function JournalPage() {
                                 <h5 className="font-semibold">Tambah Catatan Personal Baru</h5>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <Select 
-                                        onValueChange={(value) => handleNewNoteChange(journal.id, 'studentName', value)} 
-                                        value={newNotes[journal.id]?.studentName || ""}
+                                        onValueChange={(value) => handleNewNoteChange(journal.id, 'studentId', value)} 
+                                        value={newNotes[journal.id]?.studentId || ""}
                                     >
                                         <SelectTrigger><SelectValue placeholder="Pilih Siswa..." /></SelectTrigger>
                                         <SelectContent>
-                                            {getStudentOptionsForClass(journal.class).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                                            {getStudentOptionsForJournal(journal).map(s => <SelectItem key={s.id} value={s.id}>{s.fullName}</SelectItem>)}
                                         </SelectContent>
                                     </Select>
                                     <Input 
@@ -588,7 +646,7 @@ export default function JournalPage() {
                                 </Button>
                             </div>
 
-                            {facilitator.fullName === journal.facilitatorName && (
+                            {facilitator.id === journal.facilitatorId && (
                                 <div className="flex justify-end pt-4 border-t">
                                 <AlertDialog>
                                     <AlertDialogTrigger asChild>

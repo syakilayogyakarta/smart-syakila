@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { 
   ArrowLeft, Calendar as CalendarIcon, Check, Loader2, PlusCircle, X, Trash2, 
@@ -13,7 +13,18 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { allStudents, studentsByClass, classes, getLoggedInFacilitator, stimulationJournalLog } from "@/lib/data";
+import { 
+    getStudents, 
+    getClasses, 
+    getLoggedInFacilitator, 
+    getStimulationJournalLog,
+    addStimulationJournalLog,
+    deleteStimulationJournal,
+    Student,
+    Class as AppClass,
+    StimulationJournalLog,
+    Facilitator
+} from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -35,20 +46,12 @@ import {
 } from "@/components/ui/alert-dialog";
 
 type PersonalNote = {
-  id: number;
-  studentName: string;
+  id: string;
+  studentId: string;
   note: string;
 }
 
-type Facilitator = {
-  fullName: string;
-  nickname: string;
-  email: string;
-  gender: string;
-}
-
-type StimulationJournalEntry = typeof stimulationJournalLog[0];
-type StimulationPersonalNote = StimulationJournalEntry['personalNotes'][0];
+type StimulationPersonalNote = StimulationJournalLog['personalNotes'][0];
 
 const stimulationTypes = [
   "Stimulasi Fitrah",
@@ -59,10 +62,8 @@ const stimulationTypes = [
   "Stimulasi Berkelanjutan & Green Campus"
 ];
 
-
 const ClientFormattedDate = ({ timestamp }: { timestamp: string }) => {
   const [formattedDate, setFormattedDate] = useState("");
-
   useEffect(() => {
     setFormattedDate(
       new Date(timestamp).toLocaleString('id-ID', {
@@ -71,17 +72,15 @@ const ClientFormattedDate = ({ timestamp }: { timestamp: string }) => {
       })
     );
   }, [timestamp]);
-
   return <span>{formattedDate}</span>;
 };
-
 
 export default function StimulationPage() {
   const [facilitator, setFacilitator] = useState<Facilitator | null>(null);
   const [activityDate, setActivityDate] = useState<Date | undefined>(new Date());
   const [mode, setMode] = useState<"klasikal" | "kelas" | "kelompok" | null>(null);
-  const [selectedClass, setSelectedClass] = useState("");
-  const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
+  const [selectedClassId, setSelectedClassId] = useState("");
+  const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
   
   const [kegiatan, setKegiatan] = useState("");
   const [namaPemateri, setNamaPemateri] = useState("");
@@ -97,24 +96,49 @@ export default function StimulationPage() {
   const router = useRouter();
   const { toast } = useToast();
 
-  const [journals, setJournals] = useState(stimulationJournalLog);
-  const [newNotes, setNewNotes] = useState<{ [journalId: number]: { studentName: string; note: string } }>({});
+  const [journals, setJournals] = useState<StimulationJournalLog[]>([]);
+  const [newNotes, setNewNotes] = useState<{ [journalId: string]: { studentId: string; note: string } }>({});
+  
+  const [allStudents, setAllStudents] = useState<Student[]>([]);
+  const [allClasses, setAllClasses] = useState<AppClass[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchData = useCallback(async () => {
+      setIsLoading(true);
+      try {
+          const loggedInFacilitator = await getLoggedInFacilitator();
+          if (!loggedInFacilitator) {
+              router.push('/login');
+              return;
+          }
+          setFacilitator(loggedInFacilitator);
+
+          const [studentsData, classesData, journalsData] = await Promise.all([
+              getStudents(),
+              getClasses(),
+              getStimulationJournalLog()
+          ]);
+          setAllStudents(studentsData);
+          setAllClasses(classesData);
+          setJournals(journalsData);
+      } catch (error) {
+          toast({ title: "Gagal memuat data", variant: "destructive"});
+      } finally {
+          setIsLoading(false);
+      }
+  }, [router, toast]);
 
   useEffect(() => {
-    const loggedInFacilitator = getLoggedInFacilitator();
-    if (!loggedInFacilitator) {
-      router.push('/login');
-    } else {
-      setFacilitator(loggedInFacilitator);
-    }
-  }, [router]);
+    fetchData();
+  }, [fetchData]);
 
-  const allStudentNames = useMemo(() => allStudents.map(s => s.fullName), []);
+
+  const allStudentNames = useMemo(() => allStudents.map(s => s.fullName), [allStudents]);
 
   const resetFormFields = (clearMode = false) => {
     if (clearMode) setMode(null);
-    setSelectedClass("");
-    setSelectedStudents([]);
+    setSelectedClassId("");
+    setSelectedStudentIds([]);
     setKegiatan("");
     setNamaPemateri("");
     setJenisStimulasi("");
@@ -129,36 +153,36 @@ export default function StimulationPage() {
     resetFormFields();
     setMode(newMode);
     if (newMode === 'klasikal') {
-        setSelectedStudents(allStudentNames);
+        setSelectedStudentIds(allStudents.map(s => s.id));
     }
   };
 
-  const handleClassChange = (className: string) => {
-    setSelectedClass(className);
-    const studentsInClass = studentsByClass[className] || [];
-    setSelectedStudents(studentsInClass);
+  const handleClassChange = (classId: string) => {
+    setSelectedClassId(classId);
+    const studentsInClass = allStudents.filter(s => s.classId === classId).map(s => s.id);
+    setSelectedStudentIds(studentsInClass);
   };
 
-  const handleStudentSelectionChange = (studentName: string, isChecked: boolean) => {
-      setSelectedStudents(prev => 
-          isChecked ? [...prev, studentName] : prev.filter(s => s !== studentName)
+  const handleStudentSelectionChange = (studentId: string, isChecked: boolean) => {
+      setSelectedStudentIds(prev => 
+          isChecked ? [...prev, studentId] : prev.filter(sId => sId !== studentId)
       );
   };
 
   const addPersonalNote = () => {
-    setPersonalNotes(prev => [...prev, { id: Date.now(), studentName: "", note: "" }]);
+    setPersonalNotes(prev => [...prev, { id: `new-${Date.now()}`, studentId: "", note: "" }]);
   };
 
-  const updatePersonalNote = (id: number, field: 'studentName' | 'note', value: string) => {
+  const updatePersonalNote = (id: string, field: 'studentId' | 'note', value: string) => {
     setPersonalNotes(prev => prev.map(note => note.id === id ? { ...note, [field]: value } : note));
   };
   
-  const removePersonalNote = (id: number) => {
+  const removePersonalNote = (id: string) => {
     setPersonalNotes(prev => prev.filter(note => note.id !== id));
   }
 
-  const handleSave = () => {
-    if (!mode || !kegiatan || !lokasi || selectedStudents.length === 0 || !facilitator) {
+  const handleSave = async () => {
+    if (!mode || !kegiatan || !lokasi || selectedStudentIds.length === 0 || !facilitator) {
       setIsShaking(true);
       toast({
         title: "Data Wajib Belum Lengkap",
@@ -171,75 +195,99 @@ export default function StimulationPage() {
 
     setButtonState("loading");
 
-    const newJournalEntry: StimulationJournalEntry = {
-      id: Date.now(),
+    const newJournalEntry: Omit<StimulationJournalLog, 'id'> = {
       timestamp: (activityDate || new Date()).toISOString(),
       facilitatorName: facilitator.fullName,
       mode,
-      class: mode === 'kelas' ? selectedClass : '',
-      students: selectedStudents,
+      class: mode === 'kelas' ? (allClasses.find(c => c.id === selectedClassId)?.name || '') : '',
+      students: allStudents.filter(s => selectedStudentIds.includes(s.id)).map(s => s.fullName),
       kegiatan,
       namaPemateri,
       jenisStimulasi,
       lokasi,
       catatanPenting,
-      personalNotes: personalNotes.map(pn => ({ ...pn, facilitatorName: facilitator.fullName, timestamp: (activityDate || new Date()).toISOString() }))
+      personalNotes: personalNotes
+        .filter(pn => pn.studentId && pn.note)
+        .map(pn => ({ 
+            id: Date.now(), 
+            studentName: allStudents.find(s => s.id === pn.studentId)?.fullName || 'Unknown', 
+            note: pn.note, 
+            facilitatorName: facilitator.fullName, 
+            timestamp: (activityDate || new Date()).toISOString() 
+        }))
     };
 
-    console.log("Saving stimulation data:", newJournalEntry);
-    
-    setTimeout(() => {
-      setJournals(prev => [newJournalEntry, ...prev]);
-      setButtonState("saved");
-      toast({
-        title: "Data Tersimpan!",
-        description: `Kegiatan/Stimulasi '${kegiatan}' berhasil disimpan.`,
-      });
-      resetFormFields(true);
-      setTimeout(() => setButtonState("idle"), 2000);
-    }, 1500);
+    try {
+        await addStimulationJournalLog(newJournalEntry);
+        await fetchData();
+        setButtonState("saved");
+        toast({
+            title: "Data Tersimpan!",
+            description: `Kegiatan/Stimulasi '${kegiatan}' berhasil disimpan.`,
+        });
+        resetFormFields(true);
+        setTimeout(() => setButtonState("idle"), 2000);
+    } catch(e) {
+        toast({ title: "Gagal menyimpan", variant: "destructive"});
+        setButtonState("idle");
+    }
   };
   
-  const handleAddPersonalNoteToLog = (journalId: number) => {
+  const handleAddPersonalNoteToLog = async (journalId: string) => {
     const noteData = newNotes[journalId];
-    if (!noteData || !noteData.studentName || !noteData.note || !facilitator) {
+    const journal = journals.find(j => j.id === journalId);
+    if (!noteData || !noteData.studentId || !noteData.note || !facilitator || !journal) {
       toast({ title: "Gagal Menambah Catatan", description: "Mohon pilih siswa dan isi catatan.", variant: "destructive" });
       return;
     }
-    const updatedJournals = journals.map(journal => {
-      if (journal.id === journalId) {
-        const newNote: StimulationPersonalNote = {
-          id: Date.now(),
-          studentName: noteData.studentName,
-          note: noteData.note,
-          facilitatorName: facilitator.fullName,
-          timestamp: new Date().toISOString()
-        };
-        return { ...journal, personalNotes: [...journal.personalNotes, newNote] };
+    
+    // This is complex as we need to update a nested object in blob storage, which is not ideal.
+    // The current `data.ts` does not support this. It would require fetching, updating, and re-saving the entire log.
+    // For now, this will just update the local state. A proper backend would be needed for this to persist.
+    
+    const studentName = allStudents.find(s => s.id === noteData.studentId)?.fullName || 'Unknown';
+    const newNote = {
+        id: Date.now(),
+        studentName: studentName,
+        note: noteData.note,
+        facilitatorName: facilitator.fullName,
+        timestamp: new Date().toISOString()
+    };
+    
+    const updatedJournals = journals.map(j => {
+      if (j.id === journalId) {
+        return { ...j, personalNotes: [...j.personalNotes, newNote] };
       }
-      return journal;
+      return j;
     });
     setJournals(updatedJournals);
-    setNewNotes(prev => ({ ...prev, [journalId]: { studentName: "", note: "" } }));
-    toast({ title: "Catatan Ditambahkan!", description: `Catatan personal untuk ${noteData.studentName} berhasil ditambahkan.` });
+    // await saveStimulationJournalLog(updatedJournals) // this function would need to be created.
+    
+    setNewNotes(prev => ({ ...prev, [journalId]: { studentId: "", note: "" } }));
+    toast({ title: "Catatan Ditambahkan (Lokal)!", description: `Catatan personal untuk ${studentName} berhasil ditambahkan.` });
   };
 
-  const handleNewNoteChange = (journalId: number, field: 'studentName' | 'note', value: string) => {
-    setNewNotes(prev => ({ ...prev, [journalId]: { ...(prev[journalId] || {}), [field]: value } }));
+  const handleNewNoteChange = (journalId: string, field: 'studentId' | 'note', value: string) => {
+    setNewNotes(prev => ({ ...prev, [journalId]: { ...(prev[journalId] || {} as any), [field]: value } }));
   };
 
-  const handleDeleteJournal = (journalId: number) => {
-    setJournals(prev => prev.filter(j => j.id !== journalId));
-    toast({ title: "Catatan Dihapus", description: "Catatan kegiatan berhasil dihapus." });
+  const handleDeleteJournal = async (journalId: string) => {
+    try {
+        await deleteStimulationJournal(journalId);
+        await fetchData();
+        toast({ title: "Catatan Dihapus", description: "Catatan kegiatan berhasil dihapus." });
+    } catch (e) {
+        toast({ title: "Gagal menghapus", variant: "destructive"});
+    }
   };
 
   const isSaveDisabled = buttonState !== 'idle';
-  const studentOptionsForNotes = selectedStudents;
+  const studentOptionsForNotes = allStudents.filter(s => selectedStudentIds.includes(s.id));
 
-  if (!facilitator) {
+  if (isLoading || !facilitator) {
     return (
         <div className="min-h-screen bg-background p-8 flex items-center justify-center">
-            <p>Memuat data fasilitator...</p>
+            <Loader2 className="h-8 w-8 animate-spin" />
         </div>
     )
   }
@@ -300,9 +348,9 @@ export default function StimulationPage() {
             {mode === 'kelas' && (
               <div className="space-y-2 pt-4 border-t">
                   <Label className="font-semibold">Pilih Kelas</Label>
-                  <Select onValueChange={handleClassChange} value={selectedClass}>
+                  <Select onValueChange={handleClassChange} value={selectedClassId}>
                     <SelectTrigger><SelectValue placeholder="Pilih Kelas..." /></SelectTrigger>
-                    <SelectContent>{classes.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                    <SelectContent>{allClasses.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
                   </Select>
               </div>
             )}
@@ -312,15 +360,15 @@ export default function StimulationPage() {
                   <Label className="font-semibold">Pilih Siswa yang Mengikuti</Label>
                   <Card className="max-h-60 overflow-y-auto">
                       <CardContent className="p-4 space-y-3">
-                          {allStudentNames.map(student => (
-                              <div key={student} className="flex items-center space-x-2">
+                          {allStudents.map(student => (
+                              <div key={student.id} className="flex items-center space-x-2">
                                   <Checkbox
-                                      id={`student-${student}`}
-                                      checked={selectedStudents.includes(student)}
-                                      onCheckedChange={(checked) => handleStudentSelectionChange(student, !!checked)}
+                                      id={`student-${student.id}`}
+                                      checked={selectedStudentIds.includes(student.id)}
+                                      onCheckedChange={(checked) => handleStudentSelectionChange(student.id, !!checked)}
                                   />
-                                  <label htmlFor={`student-${student}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                                      {student}
+                                  <label htmlFor={`student-${student.id}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                      {student.fullName}
                                   </label>
                               </div>
                           ))}
@@ -391,7 +439,7 @@ export default function StimulationPage() {
                 
                 <div>
                   {!showPersonalNotes ? (
-                    <Button variant="outline" onClick={() => { setShowPersonalNotes(true); if (personalNotes.length === 0) addPersonalNote(); }} disabled={selectedStudents.length === 0}>
+                    <Button variant="outline" onClick={() => { setShowPersonalNotes(true); if (personalNotes.length === 0) addPersonalNote(); }} disabled={selectedStudentIds.length === 0}>
                         <PlusCircle className="mr-2 h-4 w-4"/> Tambah Catatan Personal (Opsional)
                     </Button>
                   ) : (
@@ -403,9 +451,9 @@ export default function StimulationPage() {
                       
                       {personalNotes.map((note) => (
                         <div key={note.id} className="grid grid-cols-1 md:grid-cols-[1fr_2fr_auto] gap-4 items-center rounded-md bg-secondary/30 p-3">
-                            <Select onValueChange={(value) => updatePersonalNote(note.id, 'studentName', value)} value={note.studentName}>
+                            <Select onValueChange={(value) => updatePersonalNote(note.id, 'studentId', value)} value={note.studentId}>
                               <SelectTrigger><SelectValue placeholder="Pilih Siswa..." /></SelectTrigger>
-                              <SelectContent>{studentOptionsForNotes.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                              <SelectContent>{studentOptionsForNotes.map(s => <SelectItem key={s.id} value={s.id}>{s.fullName}</SelectItem>)}</SelectContent>
                             </Select>
                             <Input placeholder="Tulis catatan personal untuk siswa ini..." value={note.note} onChange={(e) => updatePersonalNote(note.id, 'note', e.target.value)} />
                             <Button variant="destructive" size="icon" onClick={() => removePersonalNote(note.id)}><Trash2 className="h-4 w-4"/></Button>
@@ -476,21 +524,21 @@ export default function StimulationPage() {
                                 <h5 className="font-semibold">Tambah Catatan Personal Baru</h5>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <Select 
-                                        onValueChange={(value) => handleNewNoteChange(journal.id, 'studentName', value)} 
-                                        value={newNotes[journal.id]?.studentName || ""}
+                                        onValueChange={(value) => handleNewNoteChange(String(journal.id), 'studentId', value)} 
+                                        value={newNotes[String(journal.id)]?.studentId || ""}
                                     >
                                         <SelectTrigger><SelectValue placeholder="Pilih Siswa..." /></SelectTrigger>
                                         <SelectContent>
-                                            {journal.students.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                                            {allStudents.filter(s => journal.students.includes(s.fullName)).map(s => <SelectItem key={s.id} value={s.id}>{s.fullName}</SelectItem>)}
                                         </SelectContent>
                                     </Select>
                                     <Input 
                                         placeholder="Tulis catatan..." 
-                                        value={newNotes[journal.id]?.note || ""}
-                                        onChange={(e) => handleNewNoteChange(journal.id, 'note', e.target.value)}
+                                        value={newNotes[String(journal.id)]?.note || ""}
+                                        onChange={(e) => handleNewNoteChange(String(journal.id), 'note', e.target.value)}
                                     />
                                 </div>
-                                <Button onClick={() => handleAddPersonalNoteToLog(journal.id)} size="sm">
+                                <Button onClick={() => handleAddPersonalNoteToLog(String(journal.id))} size="sm">
                                     <Send className="mr-2 h-4 w-4" /> Kirim Catatan
                                 </Button>
                             </div>
@@ -503,7 +551,7 @@ export default function StimulationPage() {
                                     </AlertDialogTrigger>
                                     <AlertDialogContent>
                                     <AlertDialogHeader><AlertDialogTitle>Anda yakin ingin menghapus catatan ini?</AlertDialogTitle><AlertDialogDescription>Tindakan ini tidak dapat diurungkan.</AlertDialogDescription></AlertDialogHeader>
-                                    <AlertDialogFooter><AlertDialogCancel>Batal</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteJournal(journal.id)}>Ya, Hapus</AlertDialogAction></AlertDialogFooter>
+                                    <AlertDialogFooter><AlertDialogCancel>Batal</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteJournal(String(journal.id))}>Ya, Hapus</AlertDialogAction></AlertDialogFooter>
                                     </AlertDialogContent>
                                 </AlertDialog>
                                 </div>
@@ -522,3 +570,5 @@ export default function StimulationPage() {
     </div>
   );
 }
+
+    

@@ -18,22 +18,57 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { studentsByClass, classes } from "@/lib/data";
+import { getClasses, getStudentsByClass as fetchStudentsByClass, Student, Class } from "@/lib/data";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
 type AttendanceStatus = "Hadir" | "Terlambat" | "Sakit" | "Izin";
+type StudentsByClassMap = { [className: string]: Student[] };
 
 export default function AttendancePage() {
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
-  const [attendance, setAttendance] = useState<{ [studentName: string]: AttendanceStatus }>({});
+  const [attendance, setAttendance] = useState<{ [studentId: string]: AttendanceStatus }>({});
   const [buttonState, setButtonState] = useState<"idle" | "loading" | "saved">("idle");
+  const [classes, setClasses] = useState<Class[]>([]);
+  const [studentsByClass, setStudentsByClass] = useState<StudentsByClassMap>({});
+  const [isLoading, setIsLoading] = useState(true);
+
   const router = useRouter();
   const { toast } = useToast();
   const isMobile = useIsMobile();
+
+  useEffect(() => {
+    async function fetchData() {
+        try {
+            const [classesData, studentsByClassData] = await Promise.all([
+                getClasses(),
+                fetchStudentsByClass()
+            ]);
+            
+            setClasses(classesData);
+            setStudentsByClass(studentsByClassData);
+
+            // Initialize all students with 'Hadir' status
+            const initialAttendance: { [studentId: string]: AttendanceStatus } = {};
+            classesData.forEach(c => {
+                (studentsByClassData[c.name] || []).forEach(student => {
+                    initialAttendance[student.id] = 'Hadir';
+                });
+            });
+            setAttendance(initialAttendance);
+
+        } catch (error) {
+            toast({ title: "Gagal memuat data kelas atau siswa", variant: "destructive" });
+        } finally {
+            setIsLoading(false);
+        }
+    }
+    fetchData();
+  }, [toast]);
+  
 
   useEffect(() => {
     // This effect runs only on the client, after hydration
@@ -46,24 +81,16 @@ export default function AttendancePage() {
     };
     setDate(new Intl.DateTimeFormat('id-ID', dateOptions).format(now));
     setTime(new Intl.DateTimeFormat('id-ID', timeOptions).format(now));
-  
-    // Initialize all students with 'Hadir' status
-    const initialAttendance: { [studentName: string]: AttendanceStatus } = {};
-    classes.forEach(className => {
-      (studentsByClass[className] || []).forEach(student => {
-        initialAttendance[student] = 'Hadir';
-      });
-    });
-    setAttendance(initialAttendance);
   }, []);
 
-  const handleStatusChange = (studentName: string, status: AttendanceStatus) => {
-    setAttendance(prev => ({ ...prev, [studentName]: status }));
+  const handleStatusChange = (studentId: string, status: AttendanceStatus) => {
+    setAttendance(prev => ({ ...prev, [studentId]: status }));
   };
   
   const handleSave = () => {
     setButtonState("loading");
     console.log("Saving attendance:", attendance);
+    // Here you would call a function to save the attendance data to your backend/blob
     setTimeout(() => {
       setButtonState("saved");
       toast({
@@ -91,6 +118,13 @@ export default function AttendancePage() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background p-8 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
@@ -108,20 +142,20 @@ export default function AttendancePage() {
 
         <Card>
           <CardContent className="p-0">
-            <Accordion type="multiple" className="w-full" defaultValue={classes.length > 0 ? [`kelas-${classes[0].toLowerCase().replace(' ', '-')}`] : []}>
-              {classes.map((className) => (
-                <AccordionItem value={`kelas-${className.toLowerCase().replace(' ', '-')}`} key={className}>
-                  <AccordionTrigger className="px-6 py-4 text-lg font-semibold hover:bg-primary/5">{`Kelas ${className}`}</AccordionTrigger>
+            <Accordion type="multiple" className="w-full" defaultValue={classes.length > 0 ? [`kelas-${classes[0].name.toLowerCase().replace(' ', '-')}`] : []}>
+              {classes.map((c) => (
+                <AccordionItem value={`kelas-${c.name.toLowerCase().replace(' ', '-')}`} key={c.id}>
+                  <AccordionTrigger className="px-6 py-4 text-lg font-semibold hover:bg-primary/5">{c.name}</AccordionTrigger>
                   <AccordionContent className="px-6 pt-0 pb-4">
                     <div className="space-y-4">
-                      {(studentsByClass[className] || []).map((student, index) => (
-                        <div key={student} className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-lg bg-card ${index % 2 === 0 ? 'bg-secondary/50' : ''}`}>
-                          <p className="font-medium text-foreground mb-4 sm:mb-0">{student}</p>
+                      {(studentsByClass[c.name] || []).map((student, index) => (
+                        <div key={student.id} className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-lg bg-card ${index % 2 === 0 ? 'bg-secondary/50' : ''}`}>
+                          <p className="font-medium text-foreground mb-4 sm:mb-0">{student.fullName}</p>
                           
                           {isMobile ? (
                              <div className="w-full sm:hidden">
-                                <Select value={attendance[student]} onValueChange={(value: AttendanceStatus) => handleStatusChange(student, value)}>
-                                   <SelectTrigger className={cn("h-12 text-base font-semibold border-2", getStatusStyle(attendance[student]))}>
+                                <Select value={attendance[student.id]} onValueChange={(value: AttendanceStatus) => handleStatusChange(student.id, value)}>
+                                   <SelectTrigger className={cn("h-12 text-base font-semibold border-2", getStatusStyle(attendance[student.id]))}>
                                      <SelectValue placeholder="Pilih status..." />
                                    </SelectTrigger>
                                    <SelectContent>
@@ -139,12 +173,12 @@ export default function AttendancePage() {
                                 <Button
                                   key={option.id}
                                   variant="outline"
-                                  data-active={attendance[student] === option.id}
+                                  data-active={attendance[student.id] === option.id}
                                   className={cn(
                                     "border-2 transition-all duration-200",
                                     option.style
                                   )}
-                                  onClick={() => handleStatusChange(student, option.id)}
+                                  onClick={() => handleStatusChange(student.id, option.id)}
                                 >
                                   {option.label}
                                 </Button>
@@ -178,3 +212,5 @@ export default function AttendancePage() {
     </div>
   );
 }
+
+    
