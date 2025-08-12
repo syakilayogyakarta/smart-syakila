@@ -14,22 +14,25 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { getLoggedInFacilitator } from "@/lib/data";
+import { getLoggedInFacilitator, Facilitator } from "@/lib/data";
 import { useRouter } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
 
 export default function FacilitatorDashboard() {
   const router = useRouter();
-  const [facilitator, setFacilitator] = useState<any>(null);
+  const [facilitator, setFacilitator] = useState<Facilitator | null>(null);
   const [currentDate, setCurrentDate] = useState("");
 
   useEffect(() => {
-    const loggedInFacilitator = getLoggedInFacilitator();
-    if (!loggedInFacilitator) {
-      router.push('/login');
-    } else {
-      setFacilitator(loggedInFacilitator);
+    async function checkAuth() {
+        const loggedInFacilitator = await getLoggedInFacilitator();
+        if (!loggedInFacilitator) {
+          router.push('/login');
+        } else {
+          setFacilitator(loggedInFacilitator);
+        }
     }
+    checkAuth();
   }, [router]);
 
   useEffect(() => {
@@ -42,7 +45,7 @@ export default function FacilitatorDashboard() {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("loggedInFacilitator");
+    localStorage.removeItem("loggedInFacilitatorId");
     router.push('/login');
   };
   

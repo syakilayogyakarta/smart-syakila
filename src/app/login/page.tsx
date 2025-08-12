@@ -2,7 +2,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { User, Users } from "lucide-react"
+import { User, Users, Loader2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -12,15 +12,33 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { facilitators } from "@/lib/data"
+import { getFacilitators, Facilitator } from "@/lib/data"
+import { useEffect, useState } from "react"
 
 export default function LoginPage() {
   const router = useRouter()
+  const [facilitators, setFacilitators] = useState<Facilitator[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const handleLogin = (facilitatorFullName: string) => {
+  useEffect(() => {
+    async function fetchFacilitators() {
+      try {
+        const data = await getFacilitators();
+        setFacilitators(data);
+      } catch (error) {
+        console.error("Failed to fetch facilitators", error);
+        // Handle error, maybe show a toast
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchFacilitators();
+  }, []);
+
+  const handleLogin = (facilitatorId: string) => {
     // In a real app, you'd use a proper auth system.
     // For this prototype, we'll use localStorage to remember the user.
-    localStorage.setItem("loggedInFacilitator", facilitatorFullName)
+    localStorage.setItem("loggedInFacilitatorId", facilitatorId)
     router.push('/facilitator/dashboard');
   }
 
@@ -40,17 +58,25 @@ export default function LoginPage() {
           <CardDescription>Klik pada nama Anda untuk masuk ke dasbor.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          {facilitators.map((facilitator) => (
-             <Button 
-                key={facilitator.fullName} 
-                className="w-full justify-start h-14 text-lg" 
-                variant="outline"
-                onClick={() => handleLogin(facilitator.fullName)}
-              >
-                <User className="mr-4 h-5 w-5 text-primary" />
-                {facilitator.gender === 'Laki-laki' ? 'Mas' : 'Mba'} {facilitator.nickname}
-             </Button>
-          ))}
+          {isLoading ? (
+            <div className="flex justify-center items-center h-24">
+              <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+          ) : facilitators.length > 0 ? (
+            facilitators.map((facilitator) => (
+              <Button 
+                  key={facilitator.id} 
+                  className="w-full justify-start h-14 text-lg" 
+                  variant="outline"
+                  onClick={() => handleLogin(facilitator.id)}
+                >
+                  <User className="mr-4 h-5 w-5 text-primary" />
+                  {facilitator.gender === 'Laki-laki' ? 'Mas' : 'Mba'} {facilitator.nickname}
+              </Button>
+            ))
+          ) : (
+             <p className="text-center text-muted-foreground">Belum ada data fasilitator. Silakan tambahkan terlebih dahulu.</p>
+          )}
         </CardContent>
       </Card>
     </main>

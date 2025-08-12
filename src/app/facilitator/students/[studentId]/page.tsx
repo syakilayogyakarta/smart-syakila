@@ -1,10 +1,10 @@
 
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import { allStudents as allStudentData, getKegiatanForStudent, classes as allClassNames, academicJournalLog } from "@/lib/data";
+import React, { useEffect, useState, useCallback } from 'react';
+import { getStudentProfileData, getAcademicJournalLog, getKegiatanForStudent, getClasses, updateStudent, Student, Class as AppClass } from "@/lib/data";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -20,13 +20,8 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 
-type StudentProfile = {
-    fullName: string;
-    nickname: string;
-    nisn: string;
-    photoUrl: string;
-    photoHint: string;
-    class: string | undefined;
+type StudentProfile = Student & {
+    className: string;
     attendance: { present: number; late: number; sick: number; excused: number };
     savings: {
         balance: number;
@@ -34,6 +29,9 @@ type StudentProfile = {
         withdrawals: { date: string; description: string; amount: number }[];
     }
 }
+
+type EditableProfile = Partial<Pick<Student, "fullName" | "nickname" | "nisn" | "classId">>;
+
 
 const subjectIcons: { [key: string]: React.ElementType } = {
   "IPA": Atom,
@@ -64,107 +62,124 @@ const subjectColors: { [key: string]: string } = {
 export default function StudentDetailPage({ params }: { params: { studentId: string } }) {
   const router = useRouter();
   const { toast } = useToast();
+  const studentId = decodeURIComponent(params.studentId);
+  
   const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null);
-  const [editedProfile, setEditedProfile] = useState<Partial<StudentProfile>>({});
+  const [editedProfile, setEditedProfile] = useState<EditableProfile>({});
   const [isSaving, setIsSaving] = useState(false);
   const [academicData, setAcademicData] = useState<any>({ subjects: [] });
+  const [studentKegiatanData, setStudentKegiatanData] = useState<any>({ history: [], personalNotes: [] });
+  const [allClasses, setAllClasses] = useState<AppClass[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const studentName = decodeURIComponent(params.studentId);
-    const studentData = allStudentData.find(s => s.fullName === studentName);
-    
-    if (studentData) {
-        const profileData: StudentProfile = {
-            fullName: studentData.fullName,
-            nickname: studentData.nickname || '',
-            nisn: studentData.nisn || '',
-            photoUrl: `https://placehold.co/100x100.png`,
-            photoHint: 'student portrait',
-            class: studentData.className,
-            attendance: { present: 0, late: 0, sick: 0, excused: 0 },
-            savings: {
-                balance: 0,
-                deposits: [],
-                withdrawals: []
-            }
-        };
-        setStudentProfile(profileData);
-        setEditedProfile(profileData);
+  const fetchAllData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+        const profileData = await getStudentProfileData(studentId);
+        if (!profileData) {
+            toast({ title: "Siswa tidak ditemukan", variant: "destructive" });
+            router.push('/facilitator/students');
+            return;
+        }
+        setStudentProfile(profileData as StudentProfile);
+        setEditedProfile({
+            fullName: profileData.fullName,
+            nickname: profileData.nickname,
+            nisn: profileData.nisn,
+            classId: profileData.classId
+        });
 
+        const [academicLog, stimulationLog, classesData] = await Promise.all([
+            getAcademicJournalLog(),
+            getKegiatanForStudent(profileData.fullName),
+            getClasses(),
+        ]);
+
+        setAllClasses(classesData);
+        setStudentKegiatanData(stimulationLog);
+        
         // Process academic data
-        const studentJournals = academicJournalLog.filter(j => 
-            j.personalNotes.some((pn: any) => pn.studentName === studentName) || 
-            (j.students && j.students.includes(studentName))
+        const studentJournals = academicLog.filter(j => 
+            j.personalNotes.some((pn: any) => pn.studentId === studentId)
         );
         const subjects: { [key: string]: any } = {};
 
         studentJournals.forEach(journal => {
-            if (!journal.subject) return;
-
-            if (!subjects[journal.subject]) {
-                subjects[journal.subject] = {
-                    name: journal.subject,
-                    icon: subjectIcons[journal.subject] || BookCopy,
-                    color: subjectColors[journal.subject] || "text-foreground",
-                    averageActivity: 0,
-                    task: null,
+            // This needs to be adapted to use subjectId and fetch subject name
+            const subjectName = "Unknown Subject"; // Placeholder
+            if (!subjects[subjectName]) {
+                subjects[subjectName] = {
+                    name: subjectName,
+                    icon: subjectIcons[subjectName] || BookCopy,
+                    color: subjectColors[subjectName] || "text-foreground",
                     meetings: [],
                     personalNotes: []
                 };
             }
-            subjects[journal.subject].meetings.push({
+            subjects[subjectName].meetings.push({
                 date: new Date(journal.timestamp).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }),
                 topic: journal.topic
             });
-            const personalNote = journal.personalNotes.find((pn: any) => pn.studentName === studentName);
+            const personalNote = journal.personalNotes.find((pn: any) => pn.studentId === studentId);
             if (personalNote) {
-                subjects[journal.subject].personalNotes.push({
+                subjects[subjectName].personalNotes.push({
                     date: new Date(journal.timestamp).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }),
                     note: personalNote.note
                 });
             }
         });
-
         setAcademicData({ subjects: Object.values(subjects) });
-    }
-  }, [params.studentId]);
 
-  const handleInputChange = (field: keyof StudentProfile, value: string) => {
+    } catch (error) {
+        console.error("Failed to load student data:", error);
+        toast({ title: "Gagal memuat data siswa", variant: "destructive"});
+    } finally {
+        setIsLoading(false);
+    }
+  }, [studentId, router, toast]);
+
+  useEffect(() => {
+    fetchAllData();
+  }, [fetchAllData]);
+
+  const handleInputChange = (field: keyof EditableProfile, value: string) => {
     setEditedProfile(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (!editedProfile.fullName) {
+        toast({title: "Nama tidak boleh kosong", variant: "destructive"});
+        return;
+    }
     setIsSaving(true);
-    console.log("Saving changes:", editedProfile);
-    // Simulate API call
-    setTimeout(() => {
-      if(editedProfile.fullName) {
-        setStudentProfile(prev => prev ? { ...prev, ...editedProfile } : null);
-      }
-      toast({
-        title: "Profil Diperbarui",
-        description: `Data untuk ${editedProfile.fullName} telah berhasil disimpan.`,
-      });
-      setIsSaving(false);
-    }, 1500);
+    try {
+        await updateStudent(studentId, editedProfile);
+        toast({
+            title: "Profil Diperbarui",
+            description: `Data untuk ${editedProfile.fullName} telah berhasil disimpan.`,
+        });
+        await fetchAllData(); // Refresh data
+    } catch (error) {
+        toast({title: "Gagal menyimpan perubahan", variant: "destructive"});
+    } finally {
+        setIsSaving(false);
+    }
   };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount);
   };
+  
+  if (isLoading || !studentProfile) {
+    return <div className="flex min-h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+  }
 
-  const attendanceStats = studentProfile ? [
+  const attendanceStats = studentProfile.attendance ? [
     { label: "Hadir", value: studentProfile.attendance.present, icon: CheckCircle2, color: "text-green-500" },
     { label: "Terlambat", value: studentProfile.attendance.late, icon: AlertCircle, color: "text-yellow-500" },
     { label: "Sakit", value: studentProfile.attendance.sick, icon: Briefcase, color: "text-blue-500" },
     { label: "Izin", value: studentProfile.attendance.excused, icon: Activity, color: "text-orange-500" },
   ] : [];
-
-  const studentKegiatanData = studentProfile ? getKegiatanForStudent(studentProfile.fullName) : { history: [], personalNotes: [] };
-
-  if (!studentProfile) {
-    return <div className="flex min-h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>;
-  }
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
@@ -183,14 +198,14 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
         <Card className="p-6 flex flex-col sm:flex-row items-center justify-between shadow-md">
             <div className="flex items-center gap-6">
               <Avatar className="h-24 w-24 border-4 border-primary">
-                {studentProfile.photoUrl && <Image src={studentProfile.photoUrl} alt={studentProfile.fullName} width={100} height={100} data-ai-hint={studentProfile.photoHint} />}
+                <Image src={`https://placehold.co/100x100.png`} alt={studentProfile.fullName} width={100} height={100} data-ai-hint={'student portrait'} />
                 <AvatarFallback className="bg-primary/20 text-primary">
                   <User className="h-10 w-10" />
                 </AvatarFallback>
               </Avatar>
               <div>
                 <h2 className="text-3xl font-bold text-foreground">{studentProfile.fullName}</h2>
-                <p className="text-muted-foreground text-lg">NISN: {studentProfile.nisn} | Kelas: {studentProfile.class}</p>
+                <p className="text-muted-foreground text-lg">NISN: {studentProfile.nisn} | Kelas: {studentProfile.className}</p>
               </div>
             </div>
             <Dialog>
@@ -209,24 +224,24 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
                     <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="fullName" className="text-right">Nama Lengkap</Label>
-                            <Input id="fullName" value={editedProfile.fullName || ''} onChange={(e) => handleInputChange('fullName' as keyof StudentProfile, e.target.value)} className="col-span-3" />
+                            <Input id="fullName" value={editedProfile.fullName || ''} onChange={(e) => handleInputChange('fullName', e.target.value)} className="col-span-3" />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="nickname" className="text-right">Panggilan</Label>
-                            <Input id="nickname" value={editedProfile.nickname || ''} onChange={(e) => handleInputChange('nickname' as keyof StudentProfile, e.target.value)} className="col-span-3" />
+                            <Input id="nickname" value={editedProfile.nickname || ''} onChange={(e) => handleInputChange('nickname', e.target.value)} className="col-span-3" />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="nisn" className="text-right">NISN</Label>
-                            <Input id="nisn" value={editedProfile.nisn || ''} onChange={(e) => handleInputChange('nisn' as keyof StudentProfile, e.target.value)} className="col-span-3" />
+                            <Input id="nisn" value={editedProfile.nisn || ''} onChange={(e) => handleInputChange('nisn', e.target.value)} className="col-span-3" />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="class" className="text-right">Kelas</Label>
-                            <Select onValueChange={(value) => handleInputChange('class' as keyof StudentProfile, value)} value={editedProfile.class}>
+                            <Select onValueChange={(value) => handleInputChange('classId', value)} value={editedProfile.classId}>
                                 <SelectTrigger className="col-span-3">
                                     <SelectValue placeholder="Pilih kelas" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {allClassNames.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                                    {allClasses.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                                 </SelectContent>
                             </Select>
                         </div>
@@ -346,7 +361,7 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
                             {studentKegiatanData.history.length > 0 ? (
                                 <ScrollArea className="h-40">
                                     <div className="space-y-3 pr-4">
-                                    {studentKegiatanData.history.map((keg, index) => (
+                                    {studentKegiatanData.history.map((keg: any, index: number) => (
                                         <div key={index} className="text-sm p-3 rounded-md bg-card border">
                                             <p className="font-semibold text-muted-foreground">{new Date(keg.timestamp).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
                                             <p className="text-foreground font-medium">{keg.kegiatan}</p>
@@ -365,7 +380,7 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
                              {studentKegiatanData.personalNotes.length > 0 ? (
                                 <ScrollArea className="h-40">
                                 <div className="space-y-3 pr-4">
-                                    {studentKegiatanData.personalNotes.map((pnote: any, index) => (
+                                    {studentKegiatanData.personalNotes.map((pnote: any, index: number) => (
                                     <div key={index} className="text-sm p-3 rounded-md bg-accent/10 border border-accent/20">
                                         <div className="flex justify-between items-center">
                                             <p className="font-semibold text-muted-foreground">{new Date(pnote.timestamp).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}</p>

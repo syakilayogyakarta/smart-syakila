@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, User, Users, Filter, PlusCircle, Loader2, MoreHorizontal, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -28,7 +28,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { allStudents as allStudentsData, classes } from '@/lib/data';
+import { getStudents, getClasses, addStudent, deleteStudent, Student, Class as AppClass } from '@/lib/data';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -37,25 +37,44 @@ const initialNewStudentState = {
     fullName: '',
     nickname: '',
     nisn: '',
-    className: ''
+    classId: '',
+    gender: '' as "Laki-laki" | "Perempuan",
 };
 
 export default function StudentsListPage() {
   const router = useRouter();
+  const [students, setStudents] = useState<Student[]>([]);
+  const [classes, setClasses] = useState<AppClass[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedClass, setSelectedClass] = useState('all');
   const [isSaving, setIsSaving] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newStudent, setNewStudent] = useState(initialNewStudentState);
   const { toast } = useToast();
 
-  const allStudents = useMemo(() => allStudentsData, []);
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+        const [studentData, classData] = await Promise.all([getStudents(), getClasses()]);
+        setStudents(studentData);
+        setClasses(classData);
+    } catch (error) {
+        toast({ title: "Gagal memuat data", description: "Terjadi kesalahan saat mengambil data siswa dan kelas.", variant: "destructive"});
+    } finally {
+        setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const filteredStudents = useMemo(() => {
     if (selectedClass === 'all') {
-      return allStudents;
+      return students;
     }
-    return allStudents.filter(student => student.className === selectedClass);
-  }, [selectedClass, allStudents]);
+    return students.filter(student => student.classId === selectedClass);
+  }, [selectedClass, students]);
 
   const handleStudentClick = (studentId: string) => {
     router.push(`/facilitator/students/${encodeURIComponent(studentId)}`);
@@ -65,28 +84,58 @@ export default function StudentsListPage() {
     setNewStudent(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSaveNewStudent = () => {
+  const handleSaveNewStudent = async () => {
+    if (!newStudent.fullName || !newStudent.classId || !newStudent.gender) {
+        toast({ title: "Data tidak lengkap", description: "Nama, kelas, dan gender wajib diisi.", variant: "destructive"});
+        return;
+    }
     setIsSaving(true);
-    console.log("Saving new student:", newStudent);
-    // Simulate API call
-    setTimeout(() => {
-      toast({
-        title: "Siswa Baru Ditambahkan!",
-        description: `Data untuk ${newStudent.fullName} telah berhasil disimulasikan.`,
-      });
-      setIsSaving(false);
-      setIsAddDialogOpen(false); // Close the dialog
-      setNewStudent(initialNewStudentState); // Reset form
-    }, 1500);
+    try {
+        await addStudent({
+            fullName: newStudent.fullName,
+            nickname: newStudent.nickname,
+            nisn: newStudent.nisn,
+            classId: newStudent.classId,
+            gender: newStudent.gender
+        });
+        toast({
+            title: "Siswa Baru Ditambahkan!",
+            description: `Data untuk ${newStudent.fullName} telah berhasil disimpan.`,
+        });
+        await fetchData(); // Refresh data
+        setIsAddDialogOpen(false);
+        setNewStudent(initialNewStudentState);
+    } catch (error) {
+        toast({ title: "Gagal menyimpan", description: "Terjadi kesalahan saat menyimpan siswa baru.", variant: "destructive"});
+    } finally {
+        setIsSaving(false);
+    }
   };
   
-  const handleDeleteStudent = (studentName: string) => {
-     // Simulate API call
-    toast({
-        title: "Siswa Dihapus",
-        description: `Data untuk ${studentName} telah berhasil dihapus (simulasi).`,
-        variant: "destructive"
-      });
+  const handleDeleteStudent = async (student: Student) => {
+    try {
+        await deleteStudent(student.id);
+        toast({
+            title: "Siswa Dihapus",
+            description: `Data untuk ${student.fullName} telah berhasil dihapus.`,
+            variant: "destructive"
+        });
+        await fetchData(); // Refresh data
+    } catch (error) {
+        toast({ title: "Gagal menghapus", description: "Terjadi kesalahan saat menghapus siswa.", variant: "destructive"});
+    }
+  }
+  
+  const getClassName = (classId: string) => {
+      return classes.find(c => c.id === classId)?.name || 'Tidak diketahui';
+  }
+
+  if (isLoading) {
+    return (
+        <div className="flex min-h-screen items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+    );
   }
 
   return (
@@ -140,12 +189,24 @@ export default function StudentsListPage() {
                             </div>
                             <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="class" className="text-right">Kelas</Label>
-                                <Select onValueChange={(value) => handleInputChange('className', value)} value={newStudent.className}>
+                                <Select onValueChange={(value) => handleInputChange('classId', value)} value={newStudent.classId}>
                                     <SelectTrigger className="col-span-3">
                                         <SelectValue placeholder="Pilih kelas" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {classes.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                                        {classes.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="gender" className="text-right">Gender</Label>
+                                <Select onValueChange={(value) => handleInputChange('gender', value)} value={newStudent.gender}>
+                                    <SelectTrigger className="col-span-3">
+                                        <SelectValue placeholder="Pilih gender" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Laki-laki">Laki-laki</SelectItem>
+                                        <SelectItem value="Perempuan">Perempuan</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -173,7 +234,7 @@ export default function StudentsListPage() {
                   <SelectContent>
                     <SelectItem value="all">Semua Kelas</SelectItem>
                     {classes.map(c => (
-                      <SelectItem key={c} value={c}>{c}</SelectItem>
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -194,15 +255,15 @@ export default function StudentsListPage() {
                 <TableBody>
                   {filteredStudents.length > 0 ? (
                     filteredStudents.map((student) => (
-                      <TableRow key={student.fullName}>
+                      <TableRow key={student.id}>
                         <TableCell 
                             className="font-medium text-foreground cursor-pointer hover:text-primary hover:underline"
-                            onClick={() => handleStudentClick(student.fullName)}
+                            onClick={() => handleStudentClick(student.id)}
                         >
                             {student.fullName}
                             <p className="text-xs text-muted-foreground font-normal">Panggilan: {student.nickname}</p>
                         </TableCell>
-                        <TableCell>{student.className}</TableCell>
+                        <TableCell>{getClassName(student.classId)}</TableCell>
                         <TableCell>{student.nisn}</TableCell>
                         <TableCell className="text-right">
                           <AlertDialog>
@@ -215,7 +276,7 @@ export default function StudentsListPage() {
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
                                 <DropdownMenuLabel>Tindakan</DropdownMenuLabel>
-                                <DropdownMenuItem onClick={() => handleStudentClick(student.fullName)}>
+                                <DropdownMenuItem onClick={() => handleStudentClick(student.id)}>
                                   <Edit className="mr-2 h-4 w-4" />
                                   <span>Edit Profil</span>
                                 </DropdownMenuItem>
@@ -232,12 +293,12 @@ export default function StudentsListPage() {
                               <AlertDialogHeader>
                                 <AlertDialogTitle>Anda yakin ingin menghapus siswa ini?</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  Tindakan ini tidak dapat diurungkan. Data siswa <span className="font-bold">{student.fullName}</span> akan dihapus secara permanen (simulasi).
+                                  Tindakan ini tidak dapat diurungkan. Data siswa <span className="font-bold">{student.fullName}</span> akan dihapus secara permanen.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Batal</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDeleteStudent(student.fullName)} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
+                                <AlertDialogAction onClick={() => handleDeleteStudent(student)} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
                                   Ya, Hapus
                                 </AlertDialogAction>
                               </AlertDialogFooter>
