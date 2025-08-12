@@ -5,7 +5,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { 
   ArrowLeft, Calendar as CalendarIcon, Check, Loader2, BookOpen,
-  User, Star, PlusCircle, X, Trash2, StickyNote, Layers, Users, School, MessageSquare, Send
+  User, Star, PlusCircle, X, Trash2, StickyNote, Layers, Users, School, MessageSquare, Send, Home
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -75,7 +75,8 @@ export default function JournalPage() {
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   
   const [topic, setTopic] = useState("");
-  const [studentActivity, setStudentActivity] = useState<{ [studentName: string]: number }>({});
+  const [studentActiveness, setStudentActiveness] = useState<{ [studentName: string]: number }>({});
+  const [studentHomeworkScores, setStudentHomeworkScores] = useState<{ [studentName: string]: number }>({});
   const [assignment, setAssignment] = useState("");
   const [deadline, setDeadline] = useState<Date>();
   const [importantNotes, setImportantNotes] = useState("");
@@ -138,7 +139,8 @@ export default function JournalPage() {
     setSelectedSubject("");
     setSelectedClass("");
     setSelectedStudents([]);
-    setStudentActivity({});
+    setStudentActiveness({});
+    setStudentHomeworkScores({});
     setTopic("");
     setAssignment("");
     setDeadline(undefined);
@@ -158,33 +160,44 @@ export default function JournalPage() {
     setSelectedSubject("");
     const students = allStudents.filter(s => s.className === className).map(s => s.fullName);
     setSelectedStudents(students);
-    setStudentActivity(Object.fromEntries(students.map(s => [s, 0])));
+    const initialRatings = Object.fromEntries(students.map(s => [s, 0]));
+    setStudentActiveness(initialRatings);
+    setStudentHomeworkScores(initialRatings);
   };
   
   const handleSubjectChange = (subject: string) => {
       setSelectedSubject(subject);
       if(mode === 'kelompok'){
           setSelectedStudents([]);
-          setStudentActivity({});
+          setStudentActiveness({});
+          setStudentHomeworkScores({});
       }
   };
 
   const handleStudentSelectionChange = (studentName: string, isChecked: boolean) => {
       setSelectedStudents(prev => {
           const newSelection = isChecked ? [...prev, studentName] : prev.filter(s => s !== studentName);
-          const newActivities = { ...studentActivity };
+          const newActivities = { ...studentActiveness };
+          const newScores = { ...studentHomeworkScores };
           if (!isChecked) {
               delete newActivities[studentName];
+              delete newScores[studentName];
           } else {
               newActivities[studentName] = 0;
+              newScores[studentName] = 0;
           }
-          setStudentActivity(newActivities);
+          setStudentActiveness(newActivities);
+          setStudentHomeworkScores(newScores);
           return newSelection;
       });
   };
 
-  const handleActivityChange = (studentName: string, rating: number) => {
-    setStudentActivity(prev => ({ ...prev, [studentName]: rating }));
+  const handleRatingChange = (studentName: string, rating: number, type: 'activeness' | 'homework') => {
+    if (type === 'activeness') {
+      setStudentActiveness(prev => ({ ...prev, [studentName]: rating }));
+    } else {
+      setStudentHomeworkScores(prev => ({ ...prev, [studentName]: rating }));
+    }
   };
 
   const addPersonalNote = () => {
@@ -224,7 +237,7 @@ export default function JournalPage() {
       personalNotes: personalNotes.map(pn => ({ ...pn, facilitatorName: facilitator.fullName }))
     };
 
-    console.log("Saving journal:", newJournalEntry);
+    console.log("Saving journal:", newJournalEntry, studentActiveness, studentHomeworkScores);
     
     setTimeout(() => {
       setJournals(prev => [newJournalEntry, ...prev]);
@@ -408,21 +421,40 @@ export default function JournalPage() {
                 </div>
 
                 {selectedStudents.length > 0 && (
-                  <div className="space-y-4">
-                    <Label className="font-semibold">Tingkat Keaktifan Siswa</Label>
-                    <div className="space-y-3 rounded-md border p-4">
-                      {selectedStudents.map((student) => (
-                        <div key={student} className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
-                          <p className="font-medium text-foreground mb-2 sm:mb-0">{student}</p>
-                          <div className="flex items-center gap-1">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              <button key={star} onClick={() => handleActivityChange(student, star)}>
-                                <Star className={cn("h-6 w-6 transition-colors", studentActivity[student] >= star ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300')} />
-                              </button>
-                            ))}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <Label className="font-semibold flex items-center gap-2"><Star className="h-4 w-4 text-yellow-500" /> Tingkat Keaktifan Siswa</Label>
+                      <div className="space-y-3 rounded-md border p-4 max-h-60 overflow-y-auto">
+                        {selectedStudents.map((student) => (
+                          <div key={student} className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
+                            <p className="font-medium text-foreground mb-2 sm:mb-0 truncate pr-2" title={student}>{student}</p>
+                            <div className="flex items-center gap-1">
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <button key={star} onClick={() => handleRatingChange(student, star, 'activeness')}>
+                                  <Star className={cn("h-6 w-6 transition-colors", studentActiveness[student] >= star ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300')} />
+                                </button>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
+                    </div>
+                     <div className="space-y-4">
+                      <Label className="font-semibold flex items-center gap-2"><Home className="h-4 w-4 text-blue-500" /> Penilaian Tugas/PR</Label>
+                      <div className="space-y-3 rounded-md border p-4 max-h-60 overflow-y-auto">
+                        {selectedStudents.map((student) => (
+                          <div key={student} className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
+                            <p className="font-medium text-foreground mb-2 sm:mb-0 truncate pr-2" title={student}>{student}</p>
+                            <div className="flex items-center gap-1">
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <button key={star} onClick={() => handleRatingChange(student, star, 'homework')}>
+                                  <Star className={cn("h-6 w-6 transition-colors", studentHomeworkScores[student] >= star ? 'text-blue-400 fill-blue-400' : 'text-gray-300')} />
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )}
