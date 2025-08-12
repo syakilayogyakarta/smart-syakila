@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Database, Book, School, PlusCircle, Pencil, Trash2, BookUser, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -65,6 +65,8 @@ export default function DatabasePage() {
         variant: "destructive"
       });
       router.push('/facilitator/dashboard');
+    } else {
+        router.push('/login');
     }
     setIsLoading(false);
   }, [router, toast]);
