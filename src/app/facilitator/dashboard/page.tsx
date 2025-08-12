@@ -3,7 +3,7 @@
 
 import Link from "next/link"
 import React, { useState, useEffect } from "react";
-import { ClipboardCheck, Banknote, ArrowRight, User, BookOpen, Activity, BookCopy, Calendar, LogOut, Users } from "lucide-react"
+import { ClipboardCheck, Banknote, ArrowRight, User, BookOpen, Activity, Database, Calendar, LogOut, Users } from "lucide-react"
 
 import {
   Card,
@@ -107,7 +107,7 @@ export default function FacilitatorDashboard() {
         </header>
 
         <main>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {!['Faddliyah', 'Michael'].includes(facilitator.fullName) && (
               <>
                 <Link href="/facilitator/attendance" passHref>
@@ -158,6 +158,24 @@ export default function FacilitatorDashboard() {
                     <CardContent>
                       <div className="font-semibold text-orange-500 flex items-center justify-center">
                         Lihat Data
+                        <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+
+                <Link href="/facilitator/database" passHref>
+                  <Card className="group relative overflow-hidden text-center transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 h-full flex flex-col justify-between">
+                    <CardHeader>
+                      <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-indigo-500/10 transition-transform duration-300 group-hover:scale-110">
+                        <Database className="h-12 w-12 text-indigo-500" />
+                      </div>
+                      <CardTitle>Kelola Data Master</CardTitle>
+                      <CardDescription>Ubah data mata pelajaran & kelas.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="font-semibold text-indigo-500 flex items-center justify-center">
+                        Buka Pengelola
                         <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                       </div>
                     </CardContent>

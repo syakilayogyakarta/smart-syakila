@@ -92,6 +92,19 @@ export const allStudents = Object.keys(studentDetails).map(fullName => {
     };
 });
 
+export const allSubjects = [
+  "IPA",
+  "IPSKn",
+  "IoT",
+  "MFM",
+  "B. Indonesia",
+  "B. Jawa",
+  "B. Inggris",
+  "Minhaj",
+  "Al-Qur'an & Tajwid",
+  "Quran Tematik"
+];
+
 
 // New, more detailed data structure for facilitator assignments
 export const facilitatorAssignments: { 
