@@ -3,12 +3,31 @@
 
 import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, User, Users, Filter, PlusCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, User, Users, Filter, PlusCircle, Loader2, MoreHorizontal, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { studentDetails, studentsByClass, classes } from '@/lib/data';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -25,7 +44,7 @@ export default function StudentsListPage() {
   const router = useRouter();
   const [selectedClass, setSelectedClass] = useState('all');
   const [isSaving, setIsSaving] = useState(false);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newStudent, setNewStudent] = useState(initialNewStudentState);
   const { toast } = useToast();
 
@@ -64,10 +83,19 @@ export default function StudentsListPage() {
         description: `Data untuk ${newStudent.fullName} telah berhasil disimulasikan.`,
       });
       setIsSaving(false);
-      setIsDialogOpen(false); // Close the dialog
+      setIsAddDialogOpen(false); // Close the dialog
       setNewStudent(initialNewStudentState); // Reset form
     }, 1500);
   };
+  
+  const handleDeleteStudent = (studentName: string) => {
+     // Simulate API call
+    toast({
+        title: "Siswa Dihapus",
+        description: `Data untuk ${studentName} telah berhasil dihapus (simulasi).`,
+        variant: "destructive"
+      });
+  }
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
@@ -92,7 +120,7 @@ export default function StudentsListPage() {
                     Total {filteredStudents.length} siswa ditemukan. Klik nama siswa untuk melihat detail.
                     </CardDescription>
                 </div>
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                     <DialogTrigger asChild>
                         <Button>
                             <PlusCircle className="mr-2 h-4 w-4" /> Tambah Siswa Baru
@@ -166,19 +194,64 @@ export default function StudentsListPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Nama Lengkap</TableHead>
-                    <TableHead>Nama Panggilan</TableHead>
                     <TableHead>Kelas</TableHead>
                     <TableHead>NISN</TableHead>
+                    <TableHead className="text-right">Tindakan</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredStudents.length > 0 ? (
                     filteredStudents.map((student) => (
-                      <TableRow key={student.fullName} className="cursor-pointer hover:bg-muted/50" onClick={() => handleStudentClick(student.fullName)}>
-                        <TableCell className="font-medium text-foreground hover:text-primary hover:underline">{student.fullName}</TableCell>
-                        <TableCell>{student.nickname}</TableCell>
+                      <TableRow key={student.fullName}>
+                        <TableCell 
+                            className="font-medium text-foreground cursor-pointer hover:text-primary hover:underline"
+                            onClick={() => handleStudentClick(student.fullName)}
+                        >
+                            {student.fullName}
+                            <p className="text-xs text-muted-foreground font-normal">Panggilan: {student.nickname}</p>
+                        </TableCell>
                         <TableCell>{student.className}</TableCell>
                         <TableCell>{student.nisn}</TableCell>
+                        <TableCell className="text-right">
+                          <AlertDialog>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                  <span className="sr-only">Buka menu</span>
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Tindakan</DropdownMenuLabel>
+                                <DropdownMenuItem onClick={() => handleStudentClick(student.fullName)}>
+                                  <Edit className="mr-2 h-4 w-4" />
+                                  <span>Edit Profil</span>
+                                </DropdownMenuItem>
+                                 <DropdownMenuSeparator />
+                                <AlertDialogTrigger asChild>
+                                  <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10">
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    <span>Hapus Siswa</span>
+                                  </DropdownMenuItem>
+                                </AlertDialogTrigger>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Anda yakin ingin menghapus siswa ini?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Tindakan ini tidak dapat diurungkan. Data siswa <span className="font-bold">{student.fullName}</span> akan dihapus secara permanen (simulasi).
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Batal</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDeleteStudent(student.fullName)} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
+                                  Ya, Hapus
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </TableCell>
                       </TableRow>
                     ))
                   ) : (
