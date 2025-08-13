@@ -229,23 +229,26 @@ export async function getFacilitatorAssignments(): Promise<FacilitatorAssignment
     try {
         const data = await list({ prefix: DB_KEY_ASSIGNMENTS });
         if (data.blobs.length === 0) {
-             // If the blob doesn't exist, create it with an empty object
             await saveToBlob(DB_KEY_ASSIGNMENTS, {});
             return {};
         }
         const response = await fetch(data.blobs[0].url);
         if (!response.ok) return {};
-        const assignments = await response.json();
-        // The data is stored in an array in the blob, so we get the first element
-        return assignments[0] || {};
+        const assignmentsData = await response.json();
+        
+        // Handle cases where the blob might contain an array or an object
+        if (Array.isArray(assignmentsData)) {
+            return assignmentsData[0] || {};
+        }
+        return assignmentsData || {};
+
     } catch (error) {
         console.error(`Error fetching data for key ${DB_KEY_ASSIGNMENTS}:`, error);
         return {};
     }
 }
 export async function saveFacilitatorAssignments(assignments: FacilitatorAssignments) {
-    // Wrap in an array to match the expected structure from getFacilitatorAssignments
-    await saveToBlob(DB_KEY_ASSIGNMENTS, [assignments]);
+    await saveToBlob(DB_KEY_ASSIGNMENTS, assignments);
 }
 
 // --- Academic Journal ---

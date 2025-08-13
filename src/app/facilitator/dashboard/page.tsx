@@ -114,7 +114,7 @@ export default function FacilitatorDashboard() {
 
         <main>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {!user.isAdmin && (
+            {user && !user.isAdmin && (
               <>
                 <Link href="/facilitator/attendance" passHref>
                   <Card className="group relative overflow-hidden text-center transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 h-full flex flex-col justify-between">
@@ -212,10 +212,10 @@ export default function FacilitatorDashboard() {
               <Card className="group relative overflow-hidden text-center transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 h-full flex flex-col justify-between">
                 <CardHeader>
                   <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-accent/10 transition-transform duration-300 group-hover:scale-110">
-                    {user.isAdmin ? <UserCog className="h-12 w-12 text-accent" /> : <Database className="h-12 w-12 text-accent" />}
+                    {user && user.isAdmin ? <UserCog className="h-12 w-12 text-accent" /> : <Database className="h-12 w-12 text-accent" />}
                   </div>
                   <CardTitle>Kelola Data Master</CardTitle>
-                  <CardDescription>{user.isAdmin ? "Kelola kelas, mapel & fasilitator" : "Ubah data mata pelajaran & kelas"}</CardDescription>
+                  <CardDescription>{user && user.isAdmin ? "Kelola kelas, mapel & fasilitator" : "Ubah data mata pelajaran & kelas"}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="font-semibold text-accent flex items-center justify-center">
@@ -232,3 +232,5 @@ export default function FacilitatorDashboard() {
     </div>
   );
 }
+
+    

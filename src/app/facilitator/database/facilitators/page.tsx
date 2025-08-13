@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, UserPlus, Users, Loader2, PlusCircle, Trash2, KeyRound } from 'lucide-react';
+import { ArrowLeft, UserPlus, Users, Loader2, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -24,13 +24,13 @@ const initialNewFacilitatorState = {
 export default function ManageFacilitatorsPage() {
     const router = useRouter();
     const { toast } = useToast();
+    const [isAuthorized, setIsAuthorized] = useState(false);
     const [facilitators, setFacilitators] = useState<Facilitator[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [newFacilitator, setNewFacilitator] = useState(initialNewFacilitatorState);
 
     const fetchData = async () => {
-        setIsLoading(true);
         try {
             const facilitatorData = await getFacilitators();
             setFacilitators(facilitatorData);
@@ -48,7 +48,8 @@ export default function ManageFacilitatorsPage() {
                 toast({ title: "Akses Ditolak", description: "Hanya admin yang dapat mengakses halaman ini.", variant: "destructive" });
                 router.push('/facilitator/dashboard');
             } else {
-                fetchData();
+                setIsAuthorized(true);
+                await fetchData();
             }
         };
         checkAdmin();
@@ -96,9 +97,15 @@ export default function ManageFacilitatorsPage() {
         }
     };
     
-    // NOTE: Delete facilitator functionality is complex due to assignments.
-    // We will omit it for now to prevent data integrity issues.
-
+    if (!isAuthorized) {
+        return (
+            <div className="flex min-h-screen items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin" />
+                <p className="ml-2">Memverifikasi akses...</p>
+            </div>
+        );
+    }
+    
     if (isLoading) {
         return (
             <div className="flex min-h-screen items-center justify-center">
@@ -204,3 +211,5 @@ export default function ManageFacilitatorsPage() {
         </div>
     );
 }
+
+    
