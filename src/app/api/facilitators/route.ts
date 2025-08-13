@@ -1,6 +1,5 @@
-
 import { NextResponse } from 'next/server';
-import { getFacilitators, addFacilitator as addFacilitatorToDb, Facilitator } from '@/lib/data';
+import { getFacilitators, addFacilitator as addFacilitatorToDb, Facilitator } from "@/lib/data";
 
 export async function GET(request: Request) {
   try {
@@ -14,7 +13,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
     try {
-        const facilitatorData: Omit<Facilitator, 'id'> = await request.json();
+        const facilitatorData: Omit<Facilitator, "id"> = await request.json();
         
         if (!facilitatorData.fullName || !facilitatorData.nickname || !facilitatorData.email || !facilitatorData.gender) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
