@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { getFacilitators, Facilitator } from "@/lib/data";
+import { type Facilitator } from "@/lib/data";
 import { useRouter } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
 import { Loader2 } from "lucide-react";
@@ -243,23 +243,25 @@ export default function FacilitatorDashboard() {
               </Card>
             </Link>
 
-            <Link href="/facilitator/database" passHref>
-              <Card className="group relative overflow-hidden text-center transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 h-full flex flex-col justify-between">
-                <CardHeader>
-                  <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-accent/10 transition-transform duration-300 group-hover:scale-110">
-                    {user && user.isAdmin ? <UserCog className="h-12 w-12 text-accent" /> : <Database className="h-12 w-12 text-accent" />}
-                  </div>
-                  <CardTitle>Kelola Data Master</CardTitle>
-                  <CardDescription>{user && user.isAdmin ? "Kelola kelas, mapel & fasilitator" : "Ubah data mata pelajaran & kelas"}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="font-semibold text-accent flex items-center justify-center">
-                    Buka Pengelola
-                    <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
+            {user && user.isAdmin && (
+              <Link href="/facilitator/database" passHref>
+                <Card className="group relative overflow-hidden text-center transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 h-full flex flex-col justify-between">
+                  <CardHeader>
+                    <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-accent/10 transition-transform duration-300 group-hover:scale-110">
+                      <UserCog className="h-12 w-12 text-accent" />
+                    </div>
+                    <CardTitle>Kelola Data Master</CardTitle>
+                    <CardDescription>Kelola kelas, mapel & fasilitator</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="font-semibold text-accent flex items-center justify-center">
+                      Buka Pengelola
+                      <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            )}
 
           </div>
         </main>
