@@ -35,7 +35,8 @@ import {
 import { Input } from '@/components/ui/input';
 
 type User = (Facilitator & { isAdmin: false }) | { id: 'admin', fullName: string, nickname: string, isAdmin: true } | null;
-type EditableFacilitator = Partial<Omit<Facilitator, 'id'>>;
+type EditableFacilitator = Partial<Omit<Facilitator, 'id' | 'email'>> & { email?: string };
+
 
 const initialFacilitatorState: Omit<Facilitator, 'id'> = {
     fullName: '',
@@ -96,26 +97,12 @@ export default function DatabasePage() {
         const isAdmin = localStorage.getItem("isAdmin") === "true";
         if (isAdmin) {
             setUser({ id: 'admin', fullName: 'Admin', nickname: 'Admin', isAdmin: true });
+            await fetchData();
         } else {
-             const facilitatorId = localStorage.getItem("loggedInFacilitatorId");
-             if (facilitatorId) {
-                const response = await fetch('/api/facilitators');
-                 if (response.ok) {
-                    const allFacilitators: Facilitator[] = await response.json();
-                    const facilitator = allFacilitators.find(f => f.id === facilitatorId);
-                    if (facilitator) {
-                        setUser({ ...facilitator, isAdmin: false });
-                    } else {
-                         router.push('/login');
-                         return;
-                    }
-                 }
-             } else {
-                 router.push('/login');
-                 return;
-             }
+            // Non-admins should not be on this page.
+            router.push('/facilitator/dashboard');
+            return;
         }
-        await fetchData();
         setIsLoading(false);
     }
     checkAuthAndFetchData();
