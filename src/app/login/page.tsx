@@ -78,8 +78,11 @@ export default function LoginPage() {
 
   const handleAdminLogin = () => {
     setIsSubmitting(true);
+    // This should be a more secure check in a real app
     if (password === "SYAKILA123") {
       localStorage.setItem("isAdmin", "true");
+      // Intentionally not setting facilitatorId for admin
+      localStorage.removeItem("loggedInFacilitatorId");
       toast({
         title: "Login Berhasil!",
         description: "Anda masuk sebagai Admin Utama.",
