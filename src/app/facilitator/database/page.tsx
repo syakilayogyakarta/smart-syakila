@@ -208,8 +208,16 @@ export default function DatabasePage() {
           if (currentFacilitator) { // Editing
               await updateFacilitator(currentFacilitator.id, facilitatorFormState);
               toast({ title: `Data ${facilitatorFormState.fullName} diperbarui` });
-          } else { // Adding
-              await addFacilitator(facilitatorFormState as Omit<Facilitator, 'id'>);
+          } else { // Adding via API route
+              const response = await fetch('/api/facilitators', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(facilitatorFormState),
+              });
+              if (!response.ok) {
+                  const errorData = await response.json();
+                  throw new Error(errorData.error || 'Gagal menambah fasilitator');
+              }
               toast({ title: `Fasilitator ${facilitatorFormState.fullName} ditambahkan`});
           }
           await fetchData();

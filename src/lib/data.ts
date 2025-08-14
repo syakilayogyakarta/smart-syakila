@@ -202,10 +202,13 @@ export async function getLoggedInUser() {
         // In a real app, you might want to re-validate the facilitatorId against the server
         // For this app, we'll fetch the list and find the user.
         // This should be called from a client component to avoid build-time errors.
-        const facilitators = await getFacilitators();
-        const facilitator = facilitators.find(f => f.id === facilitatorId);
-        if (facilitator) {
-            return { ...facilitator, isAdmin: false };
+        const response = await fetch('/api/facilitators');
+        if (response.ok) {
+            const facilitators: Facilitator[] = await response.json();
+            const facilitator = facilitators.find(f => f.id === facilitatorId);
+            if (facilitator) {
+                return { ...facilitator, isAdmin: false };
+            }
         }
     }
     
