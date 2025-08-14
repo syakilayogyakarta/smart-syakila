@@ -74,6 +74,7 @@ export default function DatabasePage() {
   const [inputValue, setInputValue] = useState(''); // Generic input for simple dialogs
 
   const fetchFacilitatorsViaApi = async (): Promise<Facilitator[]> => {
+      // The revalidate option on the route handler should prevent caching
       const response = await fetch('/api/facilitators');
       if (!response.ok) {
           toast({ title: "Gagal memuat data fasilitator", variant: "destructive" });
@@ -83,7 +84,8 @@ export default function DatabasePage() {
   };
 
   const fetchData = useCallback(async () => {
-    setIsLoading(true);
+    // We don't need to set loading to true here on every refetch,
+    // only on the initial load.
     try {
         const [subjectsData, classesData, facilitatorsData, assignmentsData] = await Promise.all([
             getSubjects(),
@@ -97,13 +99,12 @@ export default function DatabasePage() {
         setFacilitatorAssignments(assignmentsData);
     } catch (error) {
         toast({ title: "Gagal memuat data", variant: "destructive" });
-    } finally {
-        setIsLoading(false);
     }
   }, [toast]);
 
   useEffect(() => {
     const checkAuthAndFetchData = async () => {
+        setIsLoading(true);
         // This check is now client-side only
         const isAdmin = localStorage.getItem("isAdmin") === "true";
         if (isAdmin) {
@@ -129,6 +130,7 @@ export default function DatabasePage() {
              }
         }
         await fetchData();
+        setIsLoading(false);
     }
     checkAuthAndFetchData();
   }, [router, fetchData]);
@@ -656,5 +658,4 @@ export default function DatabasePage() {
     </div>
   );
 }
-
     

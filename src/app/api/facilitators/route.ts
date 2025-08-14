@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getFacilitators, addFacilitator, updateFacilitator, deleteFacilitator as deleteFacilitatorFromDb, Facilitator } from "@/lib/data";
 
+// Disable caching for this route.
+export const revalidate = 0;
+
 export async function GET() {
   try {
     const facilitators = await getFacilitators();
