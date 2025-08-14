@@ -195,20 +195,17 @@ export async function getLoggedInUser() {
     }
 
     if (facilitatorId) {
-        try {
-            // This now fetches from the API route, making it more reliable client-side
-            const response = await fetch('/api/facilitators');
-            if (response.ok) {
-                const facilitators: Facilitator[] = await response.json();
-                const facilitator = facilitators.find(f => f.id === facilitatorId);
-                if (facilitator) {
-                    return { ...facilitator, isAdmin: false };
-                }
-            } else {
-                 console.error("Failed to fetch facilitators for login check");
+        // Fetching from the API route ensures we get fresh data from the server
+        // and avoids issues with server-side caching of the blob data.
+        const response = await fetch('/api/facilitators');
+        if (response.ok) {
+            const facilitators: Facilitator[] = await response.json();
+            const facilitator = facilitators.find(f => f.id === facilitatorId);
+            if (facilitator) {
+                return { ...facilitator, isAdmin: false };
             }
-        } catch (error) {
-             console.error("Error fetching facilitators during login check:", error);
+        } else {
+             console.error("Failed to fetch facilitators for login check");
         }
     }
     
