@@ -19,6 +19,11 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
+        const existingFacilitators = await getFacilitators();
+        if (existingFacilitators.some(f => f.email === facilitatorData.email)) {
+            return NextResponse.json({ error: 'A facilitator with this email already exists.' }, { status: 409 }); // 409 Conflict
+        }
+
         const newFacilitator = await addFacilitatorToDb(facilitatorData);
         return NextResponse.json(newFacilitator, { status: 201 });
 

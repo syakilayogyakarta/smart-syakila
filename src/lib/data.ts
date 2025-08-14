@@ -1,4 +1,3 @@
-
 // This file will contain all the functions to interact with the Vercel Blob storage.
 // We will replace all the mock data with functions that fetch data from the blob storage.
 
@@ -108,6 +107,16 @@ async function getFromBlob<T>(key: string): Promise<T[]> {
 
 // Helper function to save data to blob
 async function saveToBlob(key: string, data: any) {
+    // To ensure overwrite, we delete the old blob first if it exists.
+    try {
+        const existingBlob = await head(key);
+        if (existingBlob) {
+            await del(key);
+        }
+    } catch (error) {
+        // Ignore if the blob doesn't exist, that's fine.
+    }
+
     await put(key, JSON.stringify(data, null, 2), {
         access: 'public',
         contentType: 'application/json',
@@ -329,5 +338,3 @@ export async function getStudentProfileData(studentId: string) {
         }
     }
 }
-
-    
