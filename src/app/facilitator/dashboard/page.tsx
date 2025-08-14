@@ -17,6 +17,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { getLoggedInUser, Facilitator } from "@/lib/data";
 import { useRouter } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
+import { Loader2 } from "lucide-react";
 
 type LoggedInUser = (Facilitator & { isAdmin: false }) | { id: 'admin', fullName: string, nickname: string, isAdmin: true };
 
@@ -24,14 +25,22 @@ export default function FacilitatorDashboard() {
   const router = useRouter();
   const [user, setUser] = useState<LoggedInUser | null>(null);
   const [currentDate, setCurrentDate] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function checkAuth() {
-        const loggedInUser = await getLoggedInUser();
-        if (!loggedInUser) {
-          router.push('/login');
-        } else {
-          setUser(loggedInUser);
+        try {
+            const loggedInUser = await getLoggedInUser();
+            if (!loggedInUser) {
+              router.push('/login');
+            } else {
+              setUser(loggedInUser);
+            }
+        } catch (error) {
+             console.error("Failed to check auth:", error);
+             router.push('/login');
+        } finally {
+            setIsLoading(false);
         }
     }
     checkAuth();
@@ -52,9 +61,10 @@ export default function FacilitatorDashboard() {
     router.push('/login');
   };
   
-  if (!user) {
+  if (isLoading || !user) {
     return (
         <div className="min-h-screen bg-background p-8 flex items-center justify-center">
+             <Loader2 className="mr-2 h-8 w-8 animate-spin" />
             <p>Memuat data pengguna...</p>
         </div>
     )
@@ -232,5 +242,4 @@ export default function FacilitatorDashboard() {
     </div>
   );
 }
-
     

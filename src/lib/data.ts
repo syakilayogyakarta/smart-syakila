@@ -1,3 +1,4 @@
+
 // This file will contain all the functions to interact with the Vercel Blob storage.
 // We will replace all the mock data with functions that fetch data from the blob storage.
 
@@ -109,10 +110,7 @@ async function getFromBlob<T>(key: string): Promise<T[]> {
 async function saveToBlob(key: string, data: any) {
     // To ensure overwrite, we delete the old blob first if it exists.
     try {
-        const existingBlob = await head(key);
-        if (existingBlob) {
-            await del(key);
-        }
+        await del(key);
     } catch (error) {
         // Ignore if the blob doesn't exist, that's fine.
     }
@@ -128,13 +126,36 @@ export async function getFacilitators(): Promise<Facilitator[]> {
  return await getFromBlob<Facilitator>(DB_KEY_FACILITATORS);
 }
 
-export async function addFacilitator(facilitator: Omit<Facilitator, 'id'>) {
+export async function addFacilitator(facilitatorData: Omit<Facilitator, 'id'>) {
     const facilitators = await getFacilitators();
-    const newFacilitator = { ...facilitator, id: crypto.randomUUID() };
+
+    if (facilitators.some(f => f.email === facilitatorData.email)) {
+        throw new Error('A facilitator with this email already exists.');
+    }
+    
+    const newFacilitator = { ...facilitatorData, id: crypto.randomUUID() };
     facilitators.push(newFacilitator);
     await saveToBlob(DB_KEY_FACILITATORS, facilitators);
     return newFacilitator;
 }
+
+export async function updateFacilitator(id: string, data: Partial<Omit<Facilitator, 'id'>>) {
+    let facilitators = await getFacilitators();
+    const existingFacilitator = facilitators.find(f => f.email === data.email && f.id !== id);
+    if (existingFacilitator) {
+        throw new Error('Another facilitator with this email already exists.');
+    }
+    facilitators = facilitators.map(f => f.id === id ? { ...f, ...data } : f);
+    await saveToBlob(DB_KEY_FACILITATORS, facilitators);
+}
+
+export async function deleteFacilitator(id: string) {
+    let facilitators = await getFacilitators();
+    facilitators = facilitators.filter(f => f.id !== id);
+    // TODO: Also clean up assignments for this facilitator
+    await saveToBlob(DB_KEY_FACILITATORS, facilitators);
+}
+
 
 export async function getLoggedInUser() {
     if (typeof window === 'undefined') return null;
@@ -162,6 +183,9 @@ export async function getClasses(): Promise<Class[]> {
 }
 export async function addClass(name: string): Promise<Class> {
     const classes = await getClasses();
+     if (classes.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+        throw new Error('Class with this name already exists.');
+    }
     const newClass = { id: crypto.randomUUID(), name };
     classes.push(newClass);
     await saveToBlob(DB_KEY_CLASSES, classes);
@@ -169,6 +193,9 @@ export async function addClass(name: string): Promise<Class> {
 }
 export async function updateClass(id: string, name: string) {
     let classes = await getClasses();
+    if (classes.some(c => c.name.toLowerCase() === name.toLowerCase() && c.id !== id)) {
+        throw new Error('Another class with this name already exists.');
+    }
     classes = classes.map(c => c.id === id ? { ...c, name } : c);
     await saveToBlob(DB_KEY_CLASSES, classes);
 }
@@ -194,12 +221,18 @@ export async function getStudentsByClass() {
 }
 export async function addStudent(student: Omit<Student, 'id'>) {
     const students = await getStudents();
+    if (student.nisn && students.some(s => s.nisn === student.nisn)) {
+        throw new Error('A student with this NISN already exists.');
+    }
     const newStudent = { ...student, id: crypto.randomUUID() };
     students.push(newStudent);
     await saveToBlob(DB_KEY_STUDENTS, students);
 }
 export async function updateStudent(id: string, data: Partial<Student>) {
     let students = await getStudents();
+    if (data.nisn && students.some(s => s.nisn === data.nisn && s.id !== id)) {
+         throw new Error('Another student with this NISN already exists.');
+    }
     students = students.map(s => s.id === id ? { ...s, ...data } : s);
     await saveToBlob(DB_KEY_STUDENTS, students);
 }
@@ -216,6 +249,9 @@ export async function getSubjects(): Promise<Subject[]> {
 }
 export async function addSubject(name: string): Promise<Subject> {
     const subjects = await getSubjects();
+     if (subjects.some(s => s.name.toLowerCase() === name.toLowerCase())) {
+        throw new Error('Subject with this name already exists.');
+    }
     const newSubject = { id: crypto.randomUUID(), name };
     subjects.push(newSubject);
     await saveToBlob(DB_KEY_SUBJECTS, subjects);
@@ -223,6 +259,9 @@ export async function addSubject(name: string): Promise<Subject> {
 }
 export async function updateSubject(id: string, name: string) {
     let subjects = await getSubjects();
+    if (subjects.some(s => s.name.toLowerCase() === name.toLowerCase() && s.id !== id)) {
+         throw new Error('Another subject with this name already exists.');
+    }
     subjects = subjects.map(s => s.id === id ? { ...s, name } : s);
     await saveToBlob(DB_KEY_SUBJECTS, subjects);
 }
@@ -245,9 +284,8 @@ export async function getFacilitatorAssignments(): Promise<FacilitatorAssignment
         if (!response.ok) return {};
         const assignmentsData = await response.json();
         
-        // Handle cases where the blob might contain an array or an object
         if (Array.isArray(assignmentsData)) {
-            return assignmentsData[0] || {};
+            return {}; // Should be an object, not an array. Return empty to prevent errors.
         }
         return assignmentsData || {};
 
@@ -279,6 +317,9 @@ export async function addPersonalNoteToAcademicLog(journalId: string, noteData: 
     let logs = await getAcademicJournalLog();
     logs = logs.map(log => {
         if (log.id === journalId) {
+            if (!log.personalNotes) {
+              log.personalNotes = [];
+            }
             log.personalNotes.push(noteData);
         }
         return log;
@@ -310,7 +351,7 @@ export async function getKegiatanForStudent(studentName: string) {
     const history = log.filter(journal => journal.students.includes(studentName));
     
     const personalNotes = log.flatMap(journal => 
-        journal.personalNotes.filter((note: any) => note.studentName === studentName)
+        (journal.personalNotes || []).filter((note: any) => note.studentName === studentName)
     );
 
     return { history, personalNotes };

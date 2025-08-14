@@ -3,7 +3,10 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Database, Book, School, PlusCircle, Pencil, Trash2, BookUser, Loader2, UserCog } from 'lucide-react';
+import { 
+    ArrowLeft, Database, Book, School, PlusCircle, Pencil, Trash2, 
+    BookUser, Loader2, UserCog, MoreHorizontal, UserPlus 
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -11,7 +14,7 @@ import {
     getLoggedInUser, 
     getSubjects, addSubject, updateSubject, deleteSubject, Subject,
     getClasses, addClass, updateClass, deleteClass, Class as AppClass,
-    getFacilitators, Facilitator,
+    getFacilitators, addFacilitator, updateFacilitator, deleteFacilitator, Facilitator,
     getFacilitatorAssignments, saveFacilitatorAssignments, FacilitatorAssignments
 } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
@@ -19,22 +22,29 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
+    Dialog, DialogContent, DialogHeader, DialogTitle, 
+    DialogDescription, DialogTrigger, DialogFooter, DialogClose 
+} from "@/components/ui/dialog";
+import { 
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
+  DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from '@/components/ui/input';
-import Link from 'next/link';
 
 type User = (Facilitator & { isAdmin: false }) | { id: 'admin', fullName: string, nickname: string, isAdmin: true } | null;
+type EditableFacilitator = Partial<Omit<Facilitator, 'id'>>;
+
+const initialFacilitatorState: Omit<Facilitator, 'id'> = {
+    fullName: '',
+    nickname: '',
+    email: '',
+    gender: '' as "Laki-laki" | "Perempuan",
+};
 
 export default function DatabasePage() {
   const router = useRouter();
@@ -53,12 +63,17 @@ export default function DatabasePage() {
   const [selectedClass, setSelectedClass] = useState('');
   const [assignedSubjects, setAssignedSubjects] = useState<string[]>([]); // stores subject IDs
 
-  // Dialog state
+  // Dialog state for Subjects, Classes, and Facilitators
   const [isSubjectDialogOpen, setIsSubjectDialogOpen] = useState(false);
   const [isClassDialogOpen, setIsClassDialogOpen] = useState(false);
+  const [isFacilitatorDialogOpen, setIsFacilitatorDialogOpen] = useState(false);
+  
   const [currentSubject, setCurrentSubject] = useState<Subject | null>(null);
   const [currentClass, setCurrentClass] = useState<AppClass | null>(null);
-  const [inputValue, setInputValue] = useState('');
+  const [currentFacilitator, setCurrentFacilitator] = useState<Facilitator | null>(null);
+  const [facilitatorFormState, setFacilitatorFormState] = useState<EditableFacilitator>(initialFacilitatorState);
+  
+  const [inputValue, setInputValue] = useState(''); // Generic input for simple dialogs
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -116,7 +131,7 @@ export default function DatabasePage() {
         await fetchData(); // Refresh
         setIsSubjectDialogOpen(false);
     } catch (e) {
-        toast({ title: "Gagal menyimpan", variant: "destructive" });
+        toast({ title: "Gagal menyimpan", description: (e as Error).message, variant: "destructive" });
     }
   };
 
@@ -126,7 +141,7 @@ export default function DatabasePage() {
         toast({ title: "Mata Pelajaran Dihapus", variant: "destructive" });
         await fetchData(); // Refresh
     } catch (e) {
-        toast({ title: "Gagal menghapus", variant: "destructive" });
+        toast({ title: "Gagal menghapus", description: (e as Error).message, variant: "destructive" });
     }
   };
   
@@ -153,7 +168,7 @@ export default function DatabasePage() {
         await fetchData(); // Refresh
         setIsClassDialogOpen(false);
     } catch(e) {
-        toast({ title: "Gagal menyimpan", variant: "destructive" });
+        toast({ title: "Gagal menyimpan", description: (e as Error).message, variant: "destructive" });
     }
   };
   
@@ -163,8 +178,46 @@ export default function DatabasePage() {
         toast({ title: "Kelas Dihapus", variant: "destructive" });
         await fetchData(); // Refresh
     } catch(e) {
-        toast({ title: "Gagal menghapus", variant: "destructive" });
+        toast({ title: "Gagal menghapus", description: (e as Error).message, variant: "destructive" });
     }
+  };
+  
+  // --- Facilitator Management ---
+  const handleOpenFacilitatorDialog = (facilitator: Facilitator | null) => {
+    setCurrentFacilitator(facilitator);
+    setFacilitatorFormState(facilitator ? { ...facilitator } : initialFacilitatorState);
+    setIsFacilitatorDialogOpen(true);
+  };
+
+  const handleSaveFacilitator = async () => {
+      if (!facilitatorFormState.fullName || !facilitatorFormState.email || !facilitatorFormState.gender) {
+          toast({ title: "Data tidak lengkap", description: "Nama, Email, dan Gender wajib diisi.", variant: "destructive"});
+          return;
+      }
+      
+      try {
+          if (currentFacilitator) { // Editing
+              await updateFacilitator(currentFacilitator.id, facilitatorFormState);
+              toast({ title: `Data ${facilitatorFormState.fullName} diperbarui` });
+          } else { // Adding
+              await addFacilitator(facilitatorFormState as Omit<Facilitator, 'id'>);
+              toast({ title: `Fasilitator ${facilitatorFormState.fullName} ditambahkan`});
+          }
+          await fetchData();
+          setIsFacilitatorDialogOpen(false);
+      } catch (e) {
+          toast({ title: "Gagal menyimpan fasilitator", description: (e as Error).message, variant: "destructive" });
+      }
+  };
+  
+  const handleDeleteFacilitator = async (facilitator: Facilitator) => {
+      try {
+          await deleteFacilitator(facilitator.id);
+          toast({ title: `Fasilitator ${facilitator.fullName} dihapus`, variant: "destructive" });
+          await fetchData();
+      } catch (e) {
+          toast({ title: "Gagal menghapus fasilitator", description: (e as Error).message, variant: "destructive" });
+      }
   };
 
 
@@ -218,7 +271,7 @@ export default function DatabasePage() {
             description: `Penugasan telah diperbarui.`
         });
     } catch(e) {
-        toast({ title: "Gagal menyimpan penugasan", variant: "destructive" });
+        toast({ title: "Gagal menyimpan penugasan", description: (e as Error).message, variant: "destructive" });
     }
   };
 
@@ -241,26 +294,78 @@ export default function DatabasePage() {
             <Database className="h-8 w-8 text-accent" />
             Kelola Data Master
           </h1>
-          <p className="text-muted-foreground mt-2">Tambah, ubah, atau hapus data mata pelajaran, kelas, dan penugasan fasilitator.</p>
+          <p className="text-muted-foreground mt-2">Tambah, ubah, atau hapus data mata pelajaran, kelas, dan fasilitator.</p>
         </header>
 
         <main className="space-y-8">
 
           {user.isAdmin && (
-            <Card className="shadow-lg border-accent">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <UserCog className="h-6 w-6 text-accent" />
-                        Manajemen Fasilitator
-                    </CardTitle>
-                    <CardDescription>Tambah atau kelola fasilitator yang terdaftar di sistem.</CardDescription>
+            <Card className="shadow-lg">
+                <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                        <CardTitle className="flex items-center gap-2">
+                            <UserCog className="h-6 w-6 text-accent" />
+                            Manajemen Fasilitator
+                        </CardTitle>
+                        <CardDescription>Kelola fasilitator yang terdaftar di sistem.</CardDescription>
+                    </div>
+                    <Button onClick={() => handleOpenFacilitatorDialog(null)}>
+                        <UserPlus className="mr-2 h-4 w-4" /> Tambah Fasilitator
+                    </Button>
                 </CardHeader>
                 <CardContent>
-                    <Link href="/facilitator/database/facilitators" passHref>
-                        <Button variant="accent">
-                            <PlusCircle className="mr-2 h-4 w-4" /> Buka Manajemen Fasilitator
-                        </Button>
-                    </Link>
+                    <div className="border rounded-md">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Nama</TableHead>
+                                    <TableHead>Email</TableHead>
+                                    <TableHead>Gender</TableHead>
+                                    <TableHead className="text-right">Tindakan</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {facilitators.map(f => (
+                                    <TableRow key={f.id}>
+                                        <TableCell className="font-medium">{f.fullName} <span className="text-muted-foreground">({f.nickname})</span></TableCell>
+                                        <TableCell>{f.email}</TableCell>
+                                        <TableCell>{f.gender}</TableCell>
+                                        <TableCell className="text-right">
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent>
+                                                    <DropdownMenuLabel>Tindakan</DropdownMenuLabel>
+                                                    <DropdownMenuItem onClick={() => handleOpenFacilitatorDialog(f)}>
+                                                        <Pencil className="mr-2 h-4 w-4" /> Edit
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuSeparator />
+                                                     <AlertDialog>
+                                                        <AlertDialogTrigger asChild>
+                                                            <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10">
+                                                                <Trash2 className="mr-2 h-4 w-4" /> Hapus
+                                                            </DropdownMenuItem>
+                                                        </AlertDialogTrigger>
+                                                        <AlertDialogContent>
+                                                            <AlertDialogHeader>
+                                                                <AlertDialogTitle>Anda yakin ingin menghapus {f.fullName}?</AlertDialogTitle>
+                                                                <AlertDialogDescription>Tindakan ini tidak dapat dibatalkan.</AlertDialogDescription>
+                                                            </AlertDialogHeader>
+                                                            <AlertDialogFooter>
+                                                                <AlertDialogCancel>Batal</AlertDialogCancel>
+                                                                <AlertDialogAction onClick={() => handleDeleteFacilitator(f)}>Ya, Hapus</AlertDialogAction>
+                                                            </AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
                 </CardContent>
             </Card>
           )}
@@ -465,6 +570,43 @@ export default function DatabasePage() {
               <DialogFooter>
                   <DialogClose asChild><Button variant="outline">Batal</Button></DialogClose>
                   <Button onClick={handleSaveClass}>Simpan</Button>
+              </DialogFooter>
+          </DialogContent>
+      </Dialog>
+
+       {/* Facilitator Dialog */}
+      <Dialog open={isFacilitatorDialogOpen} onOpenChange={setIsFacilitatorDialogOpen}>
+          <DialogContent>
+              <DialogHeader>
+                  <DialogTitle>{currentFacilitator ? 'Ubah Fasilitator' : 'Tambah Fasilitator Baru'}</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="space-y-2">
+                    <Label htmlFor="fullName">Nama Lengkap</Label>
+                    <Input id="fullName" value={facilitatorFormState.fullName || ''} onChange={(e) => setFacilitatorFormState(p => ({...p, fullName: e.target.value}))} />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="nickname">Nama Panggilan</Label>
+                    <Input id="nickname" value={facilitatorFormState.nickname || ''} onChange={(e) => setFacilitatorFormState(p => ({...p, nickname: e.target.value}))} />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input id="email" type="email" value={facilitatorFormState.email || ''} onChange={(e) => setFacilitatorFormState(p => ({...p, email: e.target.value}))} />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="gender">Gender</Label>
+                    <Select onValueChange={(value) => setFacilitatorFormState(p => ({...p, gender: value as any}))} value={facilitatorFormState.gender}>
+                        <SelectTrigger id="gender"><SelectValue placeholder="Pilih gender" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="Laki-laki">Laki-laki</SelectItem>
+                            <SelectItem value="Perempuan">Perempuan</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+              </div>
+              <DialogFooter>
+                  <DialogClose asChild><Button variant="outline">Batal</Button></DialogClose>
+                  <Button onClick={handleSaveFacilitator}>Simpan</Button>
               </DialogFooter>
           </DialogContent>
       </Dialog>
