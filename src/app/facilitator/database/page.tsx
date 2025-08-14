@@ -14,8 +14,7 @@ import {
     getLoggedInUser, 
     getSubjects, addSubject, updateSubject, deleteSubject, Subject,
     getClasses, addClass, updateClass, deleteClass, Class as AppClass,
-    addFacilitator, updateFacilitator, deleteFacilitator, Facilitator,
-    getFacilitatorAssignments, saveFacilitatorAssignments, FacilitatorAssignments
+    getFacilitatorAssignments, saveFacilitatorAssignments, FacilitatorAssignments, Facilitator
 } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -90,7 +89,7 @@ export default function DatabasePage() {
         const [subjectsData, classesData, facilitatorsData, assignmentsData] = await Promise.all([
             getSubjects(),
             getClasses(),
-            fetchFacilitatorsViaApi(), // Use API route to fetch facilitators
+            fetchFacilitatorsViaApi(),
             getFacilitatorAssignments()
         ]);
         setSubjects(subjectsData);
@@ -115,9 +114,9 @@ export default function DatabasePage() {
         }
     }
     checkAuthAndFetchData();
-  }, [router, toast]);
+  }, [router]);
   
-  // --- Subject Management ---
+  // --- Subject Management (Server Action) ---
   const handleOpenSubjectDialog = (subject: Subject | null) => {
     setCurrentSubject(subject);
     setInputValue(subject?.name || '');
@@ -130,14 +129,14 @@ export default function DatabasePage() {
       return;
     }
     try {
-        if (currentSubject) { // Editing
+        if (currentSubject) {
             await updateSubject(currentSubject.id, inputValue.trim());
             toast({ title: "Mata Pelajaran Diperbarui" });
-        } else { // Adding
+        } else {
             await addSubject(inputValue.trim());
             toast({ title: "Mata Pelajaran Ditambahkan" });
         }
-        await fetchData(); // Refresh
+        await fetchData();
         setIsSubjectDialogOpen(false);
     } catch (e) {
         toast({ title: "Gagal menyimpan", description: (e as Error).message, variant: "destructive" });
@@ -148,13 +147,13 @@ export default function DatabasePage() {
     try {
         await deleteSubject(subject.id);
         toast({ title: "Mata Pelajaran Dihapus", variant: "destructive" });
-        await fetchData(); // Refresh
+        await fetchData();
     } catch (e) {
         toast({ title: "Gagal menghapus", description: (e as Error).message, variant: "destructive" });
     }
   };
   
-  // --- Class Management ---
+  // --- Class Management (Server Action) ---
   const handleOpenClassDialog = (className: AppClass | null) => {
     setCurrentClass(className);
     setInputValue(className?.name || '');
@@ -167,14 +166,14 @@ export default function DatabasePage() {
       return;
     }
     try {
-        if (currentClass) { // Editing
+        if (currentClass) {
             await updateClass(currentClass.id, inputValue.trim());
             toast({ title: "Kelas Diperbarui" });
-        } else { // Adding
+        } else {
             await addClass(inputValue.trim());
             toast({ title: "Kelas Ditambahkan" });
         }
-        await fetchData(); // Refresh
+        await fetchData();
         setIsClassDialogOpen(false);
     } catch(e) {
         toast({ title: "Gagal menyimpan", description: (e as Error).message, variant: "destructive" });
@@ -185,13 +184,13 @@ export default function DatabasePage() {
      try {
         await deleteClass(className.id);
         toast({ title: "Kelas Dihapus", variant: "destructive" });
-        await fetchData(); // Refresh
+        await fetchData();
     } catch(e) {
         toast({ title: "Gagal menghapus", description: (e as Error).message, variant: "destructive" });
     }
   };
   
-  // --- Facilitator Management ---
+  // --- Facilitator Management (API Route) ---
   const handleOpenFacilitatorDialog = (facilitator: Facilitator | null) => {
     setCurrentFacilitator(facilitator);
     setFacilitatorFormState(facilitator ? { ...facilitator } : initialFacilitatorState);
@@ -205,21 +204,21 @@ export default function DatabasePage() {
       }
       
       try {
-          if (currentFacilitator) { // Editing
-              await updateFacilitator(currentFacilitator.id, facilitatorFormState);
-              toast({ title: `Data ${facilitatorFormState.fullName} diperbarui` });
-          } else { // Adding via API route
-              const response = await fetch('/api/facilitators', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(facilitatorFormState),
-              });
-              if (!response.ok) {
-                  const errorData = await response.json();
-                  throw new Error(errorData.error || 'Gagal menambah fasilitator');
-              }
-              toast({ title: `Fasilitator ${facilitatorFormState.fullName} ditambahkan`});
+          const method = currentFacilitator ? 'PUT' : 'POST';
+          const body = currentFacilitator ? JSON.stringify({ id: currentFacilitator.id, ...facilitatorFormState }) : JSON.stringify(facilitatorFormState);
+
+          const response = await fetch('/api/facilitators', {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: body,
+          });
+
+          if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.error || 'Gagal menyimpan fasilitator');
           }
+
+          toast({ title: `Data fasilitator berhasil ${currentFacilitator ? 'diperbarui' : 'ditambahkan'}`});
           await fetchData();
           setIsFacilitatorDialogOpen(false);
       } catch (e) {
@@ -229,7 +228,17 @@ export default function DatabasePage() {
   
   const handleDeleteFacilitator = async (facilitator: Facilitator) => {
       try {
-          await deleteFacilitator(facilitator.id);
+          const response = await fetch('/api/facilitators', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: facilitator.id }),
+          });
+
+           if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.error || 'Gagal menghapus fasilitator');
+          }
+
           toast({ title: `Fasilitator ${facilitator.fullName} dihapus`, variant: "destructive" });
           await fetchData();
       } catch (e) {
@@ -238,7 +247,7 @@ export default function DatabasePage() {
   };
 
 
-  // --- Assignment Management ---
+  // --- Assignment Management (Server Action) ---
   const handleFacilitatorChange = (facilitatorId: string) => {
     setSelectedFacilitator(facilitatorId);
     setSelectedClass('');
@@ -354,7 +363,7 @@ export default function DatabasePage() {
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent>
                                                     <DropdownMenuLabel>Tindakan</DropdownMenuLabel>
-                                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => handleOpenFacilitatorDialog(f)}>
+                                                    <DropdownMenuItem onSelect={(e) => {e.preventDefault(); handleOpenFacilitatorDialog(f);}}>
                                                         <Pencil className="mr-2 h-4 w-4" /> Edit
                                                     </DropdownMenuItem>
                                                     <DropdownMenuSeparator />

@@ -1,4 +1,6 @@
 
+'use server';
+
 // This file will contain all the functions to interact with the Vercel Blob storage.
 // We will replace all the mock data with functions that fetch data from the blob storage.
 
@@ -112,7 +114,6 @@ async function getFromBlob<T>(key: string, isObject: boolean = false): Promise<T
     try {
         const { blobs } = await list({ prefix: key, limit: 1 });
         if (blobs.length === 0) {
-            // If the blob doesn't exist, create it with an empty array/object
             const initialData = isObject ? {} : [];
             await saveToBlob(key, initialData);
             return initialData as T;
@@ -122,7 +123,6 @@ async function getFromBlob<T>(key: string, isObject: boolean = false): Promise<T
             console.error(`Failed to fetch blob ${key}, status: ${response.status}`);
             return (isObject ? {} : []) as T;
         }
-        // Handle cases where the blob might be empty
         const text = await response.text();
         if (!text) {
              return (isObject ? {} : []) as T;
@@ -136,8 +136,6 @@ async function getFromBlob<T>(key: string, isObject: boolean = false): Promise<T
 
 // Helper function to save data to blob
 async function saveToBlob(key: string, data: any) {
-    // Overwrite the blob by putting new content.
-    // The `put` operation in Vercel Blob automatically overwrites.
     await put(key, JSON.stringify(data, null, 2), {
         access: 'public',
         contentType: 'application/json',
@@ -175,13 +173,11 @@ export async function updateFacilitator(id: string, data: Partial<Omit<Facilitat
 export async function deleteFacilitator(id: string) {
     let facilitators = await getFacilitators();
     facilitators = facilitators.filter(f => f.id !== id);
-    // TODO: Also clean up assignments for this facilitator
     await saveToBlob(DB_KEY_FACILITATORS, facilitators);
 }
 
 
 export async function getLoggedInUser() {
-    // This function must run on the client-side to access localStorage
     if (typeof window === 'undefined') {
         return null;
     }
@@ -199,20 +195,23 @@ export async function getLoggedInUser() {
     }
 
     if (facilitatorId) {
-        // In a real app, you might want to re-validate the facilitatorId against the server
-        // For this app, we'll fetch the list and find the user.
-        // This should be called from a client component to avoid build-time errors.
-        const response = await fetch('/api/facilitators');
-        if (response.ok) {
-            const facilitators: Facilitator[] = await response.json();
-            const facilitator = facilitators.find(f => f.id === facilitatorId);
-            if (facilitator) {
-                return { ...facilitator, isAdmin: false };
+        try {
+            // This now fetches from the API route, making it more reliable client-side
+            const response = await fetch('/api/facilitators');
+            if (response.ok) {
+                const facilitators: Facilitator[] = await response.json();
+                const facilitator = facilitators.find(f => f.id === facilitatorId);
+                if (facilitator) {
+                    return { ...facilitator, isAdmin: false };
+                }
+            } else {
+                 console.error("Failed to fetch facilitators for login check");
             }
+        } catch (error) {
+             console.error("Error fetching facilitators during login check:", error);
         }
     }
     
-    // If no valid session is found, return null
     return null;
 }
 

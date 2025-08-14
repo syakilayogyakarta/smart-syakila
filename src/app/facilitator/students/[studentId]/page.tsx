@@ -66,6 +66,7 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
   const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null);
   const [editedProfile, setEditedProfile] = useState<EditableProfile>({});
   const [isSaving, setIsSaving] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [academicData, setAcademicData] = useState<any>({ subjects: [] });
   const [studentKegiatanData, setStudentKegiatanData] = useState<any>({ history: [], personalNotes: [] });
   const [allClasses, setAllClasses] = useState<AppClass[]>([]);
@@ -182,8 +183,9 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
             description: `Data untuk ${editedProfile.fullName} telah berhasil disimpan.`,
         });
         await fetchAllData(); // Refresh data
+        setIsEditDialogOpen(false);
     } catch (error) {
-        toast({title: "Gagal menyimpan perubahan", variant: "destructive"});
+        toast({title: "Gagal menyimpan perubahan", description: (error as Error).message, variant: "destructive"});
     } finally {
         setIsSaving(false);
     }
@@ -231,7 +233,7 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
                 <p className="text-muted-foreground text-lg">NISN: {studentProfile.nisn} | Kelas: {studentProfile.className}</p>
               </div>
             </div>
-            <Dialog>
+            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                 <DialogTrigger asChild>
                     <Button variant="outline">
                         <Edit className="mr-2 h-4 w-4" /> Edit Profil

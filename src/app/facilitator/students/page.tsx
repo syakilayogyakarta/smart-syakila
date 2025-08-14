@@ -106,7 +106,7 @@ export default function StudentsListPage() {
         setIsAddDialogOpen(false);
         setNewStudent(initialNewStudentState);
     } catch (error) {
-        toast({ title: "Gagal menyimpan", description: "Terjadi kesalahan saat menyimpan siswa baru.", variant: "destructive"});
+        toast({ title: "Gagal menyimpan", description: (error as Error).message, variant: "destructive"});
     } finally {
         setIsSaving(false);
     }
@@ -122,7 +122,7 @@ export default function StudentsListPage() {
         });
         await fetchData(); // Refresh data
     } catch (error) {
-        toast({ title: "Gagal menghapus", description: "Terjadi kesalahan saat menghapus siswa.", variant: "destructive"});
+        toast({ title: "Gagal menghapus", description: (error as Error).message, variant: "destructive"});
     }
   }
   
@@ -282,7 +282,7 @@ export default function StudentsListPage() {
                                 </DropdownMenuItem>
                                  <DropdownMenuSeparator />
                                 <AlertDialogTrigger asChild>
-                                  <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10">
+                                  <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:text-destructive focus:bg-destructive/10">
                                     <Trash2 className="mr-2 h-4 w-4" />
                                     <span>Hapus Siswa</span>
                                   </DropdownMenuItem>
