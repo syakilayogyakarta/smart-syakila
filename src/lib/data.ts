@@ -139,6 +139,7 @@ async function saveToBlob(key: string, data: any) {
     await put(key, JSON.stringify(data, null, 2), {
         access: 'public',
         contentType: 'application/json',
+        allowOverwrite: true, // Allow overwriting the blob
     });
 }
 
@@ -416,5 +417,3 @@ export async function getStudentProfileData(studentId: string) {
         }
     };
 }
-
-    
