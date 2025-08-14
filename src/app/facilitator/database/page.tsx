@@ -14,7 +14,7 @@ import {
     getLoggedInUser, 
     getSubjects, addSubject, updateSubject, deleteSubject, Subject,
     getClasses, addClass, updateClass, deleteClass, Class as AppClass,
-    getFacilitators, addFacilitator, updateFacilitator, deleteFacilitator, Facilitator,
+    addFacilitator, updateFacilitator, deleteFacilitator, Facilitator,
     getFacilitatorAssignments, saveFacilitatorAssignments, FacilitatorAssignments
 } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
@@ -75,13 +75,22 @@ export default function DatabasePage() {
   
   const [inputValue, setInputValue] = useState(''); // Generic input for simple dialogs
 
+  const fetchFacilitatorsViaApi = async (): Promise<Facilitator[]> => {
+      const response = await fetch('/api/facilitators');
+      if (!response.ok) {
+          toast({ title: "Gagal memuat data fasilitator", variant: "destructive" });
+          return [];
+      }
+      return response.json();
+  };
+
   const fetchData = async () => {
     setIsLoading(true);
     try {
         const [subjectsData, classesData, facilitatorsData, assignmentsData] = await Promise.all([
             getSubjects(),
             getClasses(),
-            getFacilitators(),
+            fetchFacilitatorsViaApi(), // Use API route to fetch facilitators
             getFacilitatorAssignments()
         ]);
         setSubjects(subjectsData);
@@ -613,3 +622,5 @@ export default function DatabasePage() {
     </div>
   );
 }
+
+    
