@@ -158,9 +158,13 @@ export async function deleteFacilitator(id: string) {
 
 
 export async function getLoggedInUser() {
-    if (typeof window === 'undefined') return null;
-    const facilitatorId = localStorage.getItem("loggedInFacilitatorId");
+    // This function must run on the client-side to access localStorage
+    if (typeof window === 'undefined') {
+        return null;
+    }
+
     const isAdmin = localStorage.getItem("isAdmin") === "true";
+    const facilitatorId = localStorage.getItem("loggedInFacilitatorId");
 
     if (isAdmin) {
         return {
@@ -168,13 +172,21 @@ export async function getLoggedInUser() {
             fullName: 'Admin Utama',
             nickname: 'Admin',
             isAdmin: true,
-        }
+        };
     }
 
-    if (!facilitatorId) return null;
-    const facilitators = await getFacilitators();
-    const facilitator = facilitators.find(f => f.id === facilitatorId) || null;
-    return facilitator ? { ...facilitator, isAdmin: false } : null;
+    if (facilitatorId) {
+        // In a real app, you might want to re-validate the facilitatorId against the server
+        // For this app, we'll fetch the list and find the user.
+        const facilitators = await getFacilitators();
+        const facilitator = facilitators.find(f => f.id === facilitatorId);
+        if (facilitator) {
+            return { ...facilitator, isAdmin: false };
+        }
+    }
+    
+    // If no valid session is found, return null
+    return null;
 }
 
 // --- Classes ---
@@ -379,3 +391,5 @@ export async function getStudentProfileData(studentId: string) {
         }
     }
 }
+
+    

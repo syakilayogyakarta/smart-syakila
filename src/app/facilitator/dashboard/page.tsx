@@ -30,11 +30,13 @@ export default function FacilitatorDashboard() {
   useEffect(() => {
     async function checkAuth() {
         try {
+            // getLoggedInUser now runs on client and fetches data if needed
             const loggedInUser = await getLoggedInUser();
-            if (!loggedInUser) {
-              router.push('/login');
-            } else {
+            if (loggedInUser) {
               setUser(loggedInUser);
+            } else {
+              // If no user is found in localStorage or validated, redirect to login
+              router.push('/login');
             }
         } catch (error) {
              console.error("Failed to check auth:", error);
@@ -242,4 +244,5 @@ export default function FacilitatorDashboard() {
     </div>
   );
 }
+
     
