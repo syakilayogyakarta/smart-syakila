@@ -139,7 +139,7 @@ async function saveToBlob(key: string, data: any) {
     await put(key, JSON.stringify(data, null, 2), {
         access: 'public',
         contentType: 'application/json',
-        allowOverwrite: true, // Allow overwriting the blob
+        allowOverwrite: true,
     });
 }
 
@@ -366,6 +366,37 @@ export async function addSavingTransaction(transaction: Omit<SavingTransaction, 
     return newTransaction;
 }
 
+// Helper function to initialize all DB files if they don't exist
+async function initializeDatabase() {
+    await Promise.all([
+        getFacilitators(),
+        getClasses(),
+        getStudents(),
+        getSubjects(),
+        getFacilitatorAssignments(),
+        getAcademicJournalLog(),
+        getStimulationJournalLog(),
+        getAttendanceLog(),
+        getSavingsTransactions()
+    ]);
+}
+
+
+// --- User Session ---
+export async function getLoggedInUser(): Promise<(Facilitator & { isAdmin: false }) | { id: 'admin', fullName: string, nickname: string, isAdmin: true } | null> {
+    // This is a server-side function, so we can't use localStorage here directly.
+    // The logic has been moved to the client-side components (dashboard/page.tsx).
+    // This function can still be used to fetch facilitator data by ID if needed,
+    // but the session checking part is now on the client.
+
+    // Proactively initialize all database files on first load
+    await initializeDatabase();
+    
+    // The rest of the function is kept for potential server-side usage if needed,
+    // but the primary login logic is now client-side.
+    return null; // Return null as client-side will handle the session.
+}
+
 
 // --- Student Profile Data Aggregation ---
 export async function getStudentProfileData(studentId: string) {
@@ -417,3 +448,5 @@ export async function getStudentProfileData(studentId: string) {
         }
     };
 }
+
+    
