@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { getLoggedInUser, Facilitator } from "@/lib/data";
+import { getFacilitators, Facilitator } from "@/lib/data";
 import { useRouter } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
 import { Loader2 } from "lucide-react";
@@ -28,32 +28,57 @@ export default function FacilitatorDashboard() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    async function checkAuth() {
-        try {
-            const loggedInUser = await getLoggedInUser();
-            if (loggedInUser) {
-              setUser(loggedInUser);
-            } else {
-              router.push('/login');
-            }
-        } catch (error) {
-             console.error("Failed to check auth:", error);
-             router.push('/login');
-        } finally {
-            setIsLoading(false);
-        }
-    }
-    checkAuth();
-  }, [router]);
-
-  useEffect(() => {
     // This effect runs only on the client, after hydration
     const now = new Date();
     const dateOptions: Intl.DateTimeFormatOptions = {
       weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Jakarta'
     };
     setCurrentDate(new Intl.DateTimeFormat('id-ID', dateOptions).format(now));
-  }, []);
+    
+    async function checkAuth() {
+        const isAdmin = localStorage.getItem("isAdmin") === "true";
+        const facilitatorId = localStorage.getItem("loggedInFacilitatorId");
+
+        if (isAdmin) {
+            setUser({
+                id: 'admin',
+                fullName: 'Admin Utama',
+                nickname: 'Admin',
+                isAdmin: true,
+            });
+            setIsLoading(false);
+        } else if (facilitatorId) {
+            try {
+                // Fetching from the API route ensures we get fresh data from the server
+                // and avoids issues with server-side caching of the blob data.
+                const response = await fetch('/api/facilitators');
+                if (response.ok) {
+                    const facilitators: Facilitator[] = await response.json();
+                    const facilitator = facilitators.find(f => f.id === facilitatorId);
+                    if (facilitator) {
+                        setUser({ ...facilitator, isAdmin: false });
+                    } else {
+                        // Facilitator ID in storage is invalid
+                        router.push('/login');
+                    }
+                } else {
+                     console.error("Failed to fetch facilitators for login check");
+                     router.push('/login');
+                }
+            } catch (error) {
+                 console.error("Failed to check auth:", error);
+                 router.push('/login');
+            } finally {
+                setIsLoading(false);
+            }
+        } else {
+            // No session found
+            router.push('/login');
+        }
+    }
+    
+    checkAuth();
+  }, [router]);
 
   const handleLogout = () => {
     localStorage.removeItem("loggedInFacilitatorId");
@@ -242,3 +267,5 @@ export default function FacilitatorDashboard() {
     </div>
   );
 }
+
+    

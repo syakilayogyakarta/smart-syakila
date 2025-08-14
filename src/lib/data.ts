@@ -176,42 +176,6 @@ export async function deleteFacilitator(id: string) {
     await saveToBlob(DB_KEY_FACILITATORS, facilitators);
 }
 
-
-export async function getLoggedInUser() {
-    if (typeof window === 'undefined') {
-        return null;
-    }
-
-    const isAdmin = localStorage.getItem("isAdmin") === "true";
-    const facilitatorId = localStorage.getItem("loggedInFacilitatorId");
-
-    if (isAdmin) {
-        return {
-            id: 'admin',
-            fullName: 'Admin Utama',
-            nickname: 'Admin',
-            isAdmin: true,
-        };
-    }
-
-    if (facilitatorId) {
-        // Fetching from the API route ensures we get fresh data from the server
-        // and avoids issues with server-side caching of the blob data.
-        const response = await fetch('/api/facilitators');
-        if (response.ok) {
-            const facilitators: Facilitator[] = await response.json();
-            const facilitator = facilitators.find(f => f.id === facilitatorId);
-            if (facilitator) {
-                return { ...facilitator, isAdmin: false };
-            }
-        } else {
-             console.error("Failed to fetch facilitators for login check");
-        }
-    }
-    
-    return null;
-}
-
 // --- Classes ---
 export async function getClasses(): Promise<Class[]> {
     return await getFromBlob<Class[]>(DB_KEY_CLASSES);
@@ -452,3 +416,5 @@ export async function getStudentProfileData(studentId: string) {
         }
     };
 }
+
+    

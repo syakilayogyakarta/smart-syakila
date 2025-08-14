@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
     ArrowLeft, Database, Book, School, PlusCircle, Pencil, Trash2, 
@@ -11,7 +11,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { 
-    getLoggedInUser, 
     getSubjects, addSubject, updateSubject, deleteSubject, Subject,
     getClasses, addClass, updateClass, deleteClass, Class as AppClass,
     getFacilitatorAssignments, saveFacilitatorAssignments, FacilitatorAssignments, Facilitator
@@ -83,7 +82,7 @@ export default function DatabasePage() {
       return response.json();
   };
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setIsLoading(true);
     try {
         const [subjectsData, classesData, facilitatorsData, assignmentsData] = await Promise.all([
@@ -101,20 +100,38 @@ export default function DatabasePage() {
     } finally {
         setIsLoading(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     const checkAuthAndFetchData = async () => {
-        const loggedInUser = await getLoggedInUser();
-        if (loggedInUser) {
-             setUser(loggedInUser);
-             await fetchData();
+        // This check is now client-side only
+        const isAdmin = localStorage.getItem("isAdmin") === "true";
+        if (isAdmin) {
+            setUser({ id: 'admin', fullName: 'Admin', nickname: 'Admin', isAdmin: true });
         } else {
-            router.push('/login');
+             // Non-admins can also see this page, so we fetch their data
+             const facilitatorId = localStorage.getItem("loggedInFacilitatorId");
+             if (facilitatorId) {
+                const response = await fetch('/api/facilitators');
+                 if (response.ok) {
+                    const allFacilitators: Facilitator[] = await response.json();
+                    const facilitator = allFacilitators.find(f => f.id === facilitatorId);
+                    if (facilitator) {
+                        setUser({ ...facilitator, isAdmin: false });
+                    } else {
+                         router.push('/login');
+                         return;
+                    }
+                 }
+             } else {
+                 router.push('/login');
+                 return;
+             }
         }
+        await fetchData();
     }
     checkAuthAndFetchData();
-  }, [router]);
+  }, [router, fetchData]);
   
   // --- Subject Management (Server Action) ---
   const handleOpenSubjectDialog = (subject: Subject | null) => {
