@@ -73,24 +73,12 @@ export default function DatabasePage() {
   
   const [inputValue, setInputValue] = useState(''); // Generic input for simple dialogs
 
-  const fetchFacilitatorsViaApi = async (): Promise<Facilitator[]> => {
-      // The revalidate option on the route handler should prevent caching
-      const response = await fetch('/api/facilitators');
-      if (!response.ok) {
-          toast({ title: "Gagal memuat data fasilitator", variant: "destructive" });
-          return [];
-      }
-      return response.json();
-  };
-
   const fetchData = useCallback(async () => {
-    // We don't need to set loading to true here on every refetch,
-    // only on the initial load.
     try {
         const [subjectsData, classesData, facilitatorsData, assignmentsData] = await Promise.all([
             getSubjects(),
             getClasses(),
-            fetchFacilitatorsViaApi(),
+            fetch('/api/facilitators').then(res => res.json()),
             getFacilitatorAssignments()
         ]);
         setSubjects(subjectsData);
@@ -105,12 +93,10 @@ export default function DatabasePage() {
   useEffect(() => {
     const checkAuthAndFetchData = async () => {
         setIsLoading(true);
-        // This check is now client-side only
         const isAdmin = localStorage.getItem("isAdmin") === "true";
         if (isAdmin) {
             setUser({ id: 'admin', fullName: 'Admin', nickname: 'Admin', isAdmin: true });
         } else {
-             // Non-admins can also see this page, so we fetch their data
              const facilitatorId = localStorage.getItem("loggedInFacilitatorId");
              if (facilitatorId) {
                 const response = await fetch('/api/facilitators');
@@ -155,7 +141,7 @@ export default function DatabasePage() {
             await addSubject(inputValue.trim());
             toast({ title: "Mata Pelajaran Ditambahkan" });
         }
-        await fetchData();
+        router.refresh();
         setIsSubjectDialogOpen(false);
     } catch (e) {
         toast({ title: "Gagal menyimpan", description: (e as Error).message, variant: "destructive" });
@@ -166,7 +152,7 @@ export default function DatabasePage() {
     try {
         await deleteSubject(subject.id);
         toast({ title: "Mata Pelajaran Dihapus", variant: "destructive" });
-        await fetchData();
+        router.refresh();
     } catch (e) {
         toast({ title: "Gagal menghapus", description: (e as Error).message, variant: "destructive" });
     }
@@ -192,7 +178,7 @@ export default function DatabasePage() {
             await addClass(inputValue.trim());
             toast({ title: "Kelas Ditambahkan" });
         }
-        await fetchData();
+        router.refresh();
         setIsClassDialogOpen(false);
     } catch(e) {
         toast({ title: "Gagal menyimpan", description: (e as Error).message, variant: "destructive" });
@@ -203,7 +189,7 @@ export default function DatabasePage() {
      try {
         await deleteClass(className.id);
         toast({ title: "Kelas Dihapus", variant: "destructive" });
-        await fetchData();
+        router.refresh();
     } catch(e) {
         toast({ title: "Gagal menghapus", description: (e as Error).message, variant: "destructive" });
     }
@@ -238,7 +224,7 @@ export default function DatabasePage() {
           }
 
           toast({ title: `Data fasilitator berhasil ${currentFacilitator ? 'diperbarui' : 'ditambahkan'}`});
-          await fetchData();
+          router.refresh();
           setIsFacilitatorDialogOpen(false);
       } catch (e) {
           toast({ title: "Gagal menyimpan fasilitator", description: (e as Error).message, variant: "destructive" });
@@ -259,7 +245,7 @@ export default function DatabasePage() {
           }
 
           toast({ title: `Fasilitator ${facilitator.fullName} dihapus`, variant: "destructive" });
-          await fetchData();
+          router.refresh();
       } catch (e) {
           toast({ title: "Gagal menghapus fasilitator", description: (e as Error).message, variant: "destructive" });
       }
@@ -315,6 +301,7 @@ export default function DatabasePage() {
             title: "Penugasan Disimpan!",
             description: `Penugasan telah diperbarui.`
         });
+        router.refresh();
     } catch(e) {
         toast({ title: "Gagal menyimpan penugasan", description: (e as Error).message, variant: "destructive" });
     }

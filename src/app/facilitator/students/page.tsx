@@ -52,22 +52,21 @@ export default function StudentsListPage() {
   const [newStudent, setNewStudent] = useState(initialNewStudentState);
   const { toast } = useToast();
 
-  const fetchData = async () => {
-    setIsLoading(true);
-    try {
-        const [studentData, classData] = await Promise.all([getStudents(), getClasses()]);
-        setStudents(studentData);
-        setClasses(classData);
-    } catch (error) {
-        toast({ title: "Gagal memuat data", description: "Terjadi kesalahan saat mengambil data siswa dan kelas.", variant: "destructive"});
-    } finally {
-        setIsLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const fetchData = async () => {
+        setIsLoading(true);
+        try {
+            const [studentData, classData] = await Promise.all([getStudents(), getClasses()]);
+            setStudents(studentData);
+            setClasses(classData);
+        } catch (error) {
+            toast({ title: "Gagal memuat data", description: "Terjadi kesalahan saat mengambil data siswa dan kelas.", variant: "destructive"});
+        } finally {
+            setIsLoading(false);
+        }
+    };
     fetchData();
-  }, []);
+  }, [toast]);
 
   const filteredStudents = useMemo(() => {
     if (selectedClass === 'all') {
@@ -102,7 +101,7 @@ export default function StudentsListPage() {
             title: "Siswa Baru Ditambahkan!",
             description: `Data untuk ${newStudent.fullName} telah berhasil disimpan.`,
         });
-        await fetchData(); // Refresh data
+        router.refresh();
         setIsAddDialogOpen(false);
         setNewStudent(initialNewStudentState);
     } catch (error) {
@@ -120,7 +119,7 @@ export default function StudentsListPage() {
             description: `Data untuk ${student.fullName} telah berhasil dihapus.`,
             variant: "destructive"
         });
-        await fetchData(); // Refresh data
+        router.refresh();
     } catch (error) {
         toast({ title: "Gagal menghapus", description: (error as Error).message, variant: "destructive"});
     }

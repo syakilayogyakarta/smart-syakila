@@ -104,38 +104,46 @@ export default function JournalPage() {
   const [assignments, setAssignments] = useState<FacilitatorAssignments>({});
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchData = useCallback(async () => {
-    setIsLoading(true);
-    try {
-        const loggedInUser = await getLoggedInUser();
-        if (!loggedInUser || loggedInUser.isAdmin) {
-            router.push('/login');
-            return;
-        }
-        setFacilitator(loggedInUser as Facilitator);
-
-        const [studentsData, classesData, subjectsData, assignmentsData, journalsData] = await Promise.all([
-            getStudents(),
-            getClasses(),
-            getSubjects(),
-            getFacilitatorAssignments(),
-            getAcademicJournalLog(),
-        ]);
-        setAllStudents(studentsData);
-        setAllClasses(classesData);
-        setAllSubjects(subjectsData);
-        setAssignments(assignmentsData);
-        setJournals(journalsData);
-    } catch (error) {
-        toast({ title: "Gagal memuat data", description: "Terjadi kesalahan saat mengambil data dari server.", variant: "destructive" });
-    } finally {
-        setIsLoading(false);
-    }
-  }, [router, toast]);
-
   useEffect(() => {
+    const fetchData = async () => {
+        setIsLoading(true);
+        try {
+            const facilitatorId = localStorage.getItem('loggedInFacilitatorId');
+             if (!facilitatorId) {
+                router.push('/login');
+                return;
+            }
+            // Fetch all facilitators and find the logged-in one
+            const facilitatorsResponse = await fetch('/api/facilitators');
+            const allFacilitators: Facilitator[] = await facilitatorsResponse.json();
+            const loggedInFacilitator = allFacilitators.find(f => f.id === facilitatorId);
+
+            if (!loggedInFacilitator) {
+                router.push('/login');
+                return;
+            }
+            setFacilitator(loggedInFacilitator);
+
+            const [studentsData, classesData, subjectsData, assignmentsData, journalsData] = await Promise.all([
+                getStudents(),
+                getClasses(),
+                getSubjects(),
+                getFacilitatorAssignments(),
+                getAcademicJournalLog(),
+            ]);
+            setAllStudents(studentsData);
+            setAllClasses(classesData);
+            setAllSubjects(subjectsData);
+            setAssignments(assignmentsData);
+            setJournals(journalsData);
+        } catch (error) {
+            toast({ title: "Gagal memuat data", description: "Terjadi kesalahan saat mengambil data dari server.", variant: "destructive" });
+        } finally {
+            setIsLoading(false);
+        }
+    };
     fetchData();
-  }, [fetchData]);
+  }, [router, toast]);
   
   const facilitatorData = useMemo(() => {
     if (!facilitator) return null;
@@ -278,7 +286,7 @@ export default function JournalPage() {
 
     try {
         await addAcademicJournalLog(newJournalEntry);
-        await fetchData(); // Refresh data from server
+        router.refresh();
         setButtonState("saved");
         toast({
             title: "Jurnal Tersimpan!",
@@ -308,7 +316,7 @@ export default function JournalPage() {
 
     try {
         await addPersonalNoteToAcademicLog(journalId, newNote);
-        await fetchData();
+        router.refresh();
         setNewNotes(prev => ({ ...prev, [journalId]: { studentId: "", note: "" } }));
         toast({ title: "Catatan Ditambahkan!" });
     } catch (e) {
@@ -323,7 +331,7 @@ export default function JournalPage() {
   const handleDeleteJournal = async (journalId: string) => {
     try {
         await deleteAcademicJournal(journalId);
-        await fetchData();
+        router.refresh();
         toast({ title: "Jurnal Dihapus" });
     } catch (e) {
         toast({ title: "Gagal menghapus jurnal", variant: "destructive" });
@@ -334,8 +342,6 @@ export default function JournalPage() {
       if (journal.classId) {
           return allStudents.filter(s => s.classId === journal.classId);
       }
-      // This part needs adjustment based on how students are recorded for group journals
-      // For now, returning all students as a fallback
       return allStudents;
   };
 

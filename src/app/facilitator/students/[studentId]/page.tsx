@@ -73,98 +73,97 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
   const [allSubjects, setAllSubjects] = useState<Subject[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchAllData = useCallback(async () => {
-    setIsLoading(true);
-    try {
-        const profileData = await getStudentProfileData(studentId);
-        if (!profileData) {
-            toast({ title: "Siswa tidak ditemukan", variant: "destructive" });
-            router.push('/facilitator/students');
-            return;
-        }
-        setStudentProfile(profileData as StudentProfile);
-        setEditedProfile({
-            fullName: profileData.fullName,
-            nickname: profileData.nickname,
-            nisn: profileData.nisn,
-            classId: profileData.classId
-        });
-
-        const [academicLog, stimulationLog, classesData, subjectsData] = await Promise.all([
-            getAcademicJournalLog(),
-            getKegiatanForStudent(profileData.fullName),
-            getClasses(),
-            getSubjects(),
-        ]);
-        
-        setAllClasses(classesData);
-        setAllSubjects(subjectsData);
-        setStudentKegiatanData(stimulationLog);
-        
-        const studentJournals = academicLog.filter(j => 
-            (j.studentActiveness && Object.keys(j.studentActiveness).includes(studentId)) || 
-            (j.personalNotes && j.personalNotes.some((pn: any) => pn.studentId === studentId))
-        );
-
-        const subjects: { [key: string]: any } = {};
-
-        studentJournals.forEach(journal => {
-            const subjectInfo = subjectsData.find(s => s.id === journal.subjectId);
-            if (!subjectInfo) return;
-            const subjectName = subjectInfo.name;
-
-            if (!subjects[subjectName]) {
-                subjects[subjectName] = {
-                    name: subjectName,
-                    icon: subjectIcons[subjectName] || BookCopy,
-                    color: subjectColors[subjectName] || "text-foreground",
-                    meetings: [],
-                    personalNotes: [],
-                    totalActivity: 0,
-                    activityCount: 0,
-                };
+  useEffect(() => {
+    const fetchAllData = async () => {
+        setIsLoading(true);
+        try {
+            const profileData = await getStudentProfileData(studentId);
+            if (!profileData) {
+                toast({ title: "Siswa tidak ditemukan", variant: "destructive" });
+                router.push('/facilitator/students');
+                return;
             }
-            
-            if (journal.studentActiveness && journal.studentActiveness[studentId]) {
-                subjects[subjectName].totalActivity += journal.studentActiveness[studentId];
-                subjects[subjectName].activityCount++;
-            }
-            
-            subjects[subjectName].meetings.push({
-                date: new Date(journal.timestamp).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }),
-                topic: journal.topic
+            setStudentProfile(profileData as StudentProfile);
+            setEditedProfile({
+                fullName: profileData.fullName,
+                nickname: profileData.nickname,
+                nisn: profileData.nisn,
+                classId: profileData.classId
             });
 
-            const personalNote = journal.personalNotes.find((pn: any) => pn.studentId === studentId);
-            if (personalNote) {
-                subjects[subjectName].personalNotes.push({
+            const [academicLog, stimulationLog, classesData, subjectsData] = await Promise.all([
+                getAcademicJournalLog(),
+                getKegiatanForStudent(profileData.fullName),
+                getClasses(),
+                getSubjects(),
+            ]);
+            
+            setAllClasses(classesData);
+            setAllSubjects(subjectsData);
+            setStudentKegiatanData(stimulationLog);
+            
+            const studentJournals = academicLog.filter(j => 
+                (j.studentActiveness && Object.keys(j.studentActiveness).includes(studentId)) || 
+                (j.personalNotes && j.personalNotes.some((pn: any) => pn.studentId === studentId))
+            );
+
+            const subjects: { [key: string]: any } = {};
+
+            studentJournals.forEach(journal => {
+                const subjectInfo = subjectsData.find(s => s.id === journal.subjectId);
+                if (!subjectInfo) return;
+                const subjectName = subjectInfo.name;
+
+                if (!subjects[subjectName]) {
+                    subjects[subjectName] = {
+                        name: subjectName,
+                        icon: subjectIcons[subjectName] || BookCopy,
+                        color: subjectColors[subjectName] || "text-foreground",
+                        meetings: [],
+                        personalNotes: [],
+                        totalActivity: 0,
+                        activityCount: 0,
+                    };
+                }
+                
+                if (journal.studentActiveness && journal.studentActiveness[studentId]) {
+                    subjects[subjectName].totalActivity += journal.studentActiveness[studentId];
+                    subjects[subjectName].activityCount++;
+                }
+                
+                subjects[subjectName].meetings.push({
                     date: new Date(journal.timestamp).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }),
-                    note: personalNote.note
+                    topic: journal.topic
                 });
-            }
-        });
-        
-        Object.keys(subjects).forEach(subjectName => {
-           if (subjects[subjectName].activityCount > 0) {
-              subjects[subjectName].averageActivity = subjects[subjectName].totalActivity / subjects[subjectName].activityCount;
-           } else {
-              subjects[subjectName].averageActivity = 0;
-           }
-        });
 
-        setAcademicData({ subjects: Object.values(subjects) });
+                const personalNote = journal.personalNotes.find((pn: any) => pn.studentId === studentId);
+                if (personalNote) {
+                    subjects[subjectName].personalNotes.push({
+                        date: new Date(journal.timestamp).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }),
+                        note: personalNote.note
+                    });
+                }
+            });
+            
+            Object.keys(subjects).forEach(subjectName => {
+               if (subjects[subjectName].activityCount > 0) {
+                  subjects[subjectName].averageActivity = subjects[subjectName].totalActivity / subjects[subjectName].activityCount;
+               } else {
+                  subjects[subjectName].averageActivity = 0;
+               }
+            });
 
-    } catch (error) {
-        console.error("Failed to load student data:", error);
-        toast({ title: "Gagal memuat data siswa", variant: "destructive"});
-    } finally {
-        setIsLoading(false);
-    }
-  }, [studentId, router, toast]);
+            setAcademicData({ subjects: Object.values(subjects) });
 
-  useEffect(() => {
+        } catch (error) {
+            console.error("Failed to load student data:", error);
+            toast({ title: "Gagal memuat data siswa", variant: "destructive"});
+        } finally {
+            setIsLoading(false);
+        }
+    };
     fetchAllData();
-  }, [fetchAllData]);
+  }, [studentId, router, toast]);
 
   const handleInputChange = (field: keyof EditableProfile, value: string) => {
     setEditedProfile(prev => ({ ...prev, [field]: value }));
@@ -182,7 +181,7 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
             title: "Profil Diperbarui",
             description: `Data untuk ${editedProfile.fullName} telah berhasil disimpan.`,
         });
-        await fetchAllData(); // Refresh data
+        router.refresh(); // Refresh data
         setIsEditDialogOpen(false);
     } catch (error) {
         toast({title: "Gagal menyimpan perubahan", description: (error as Error).message, variant: "destructive"});

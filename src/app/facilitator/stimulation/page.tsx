@@ -103,34 +103,42 @@ export default function StimulationPage() {
   const [allClasses, setAllClasses] = useState<AppClass[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchData = useCallback(async () => {
-      setIsLoading(true);
-      try {
-          const loggedInUser = await getLoggedInUser();
-          if (!loggedInUser || loggedInUser.isAdmin) {
-              router.push('/login');
-              return;
-          }
-          setFacilitator(loggedInUser as Facilitator);
-
-          const [studentsData, classesData, journalsData] = await Promise.all([
-              getStudents(),
-              getClasses(),
-              getStimulationJournalLog()
-          ]);
-          setAllStudents(studentsData);
-          setAllClasses(classesData);
-          setJournals(journalsData);
-      } catch (error) {
-          toast({ title: "Gagal memuat data", variant: "destructive"});
-      } finally {
-          setIsLoading(false);
-      }
-  }, [router, toast]);
-
   useEffect(() => {
+    const fetchData = async () => {
+        setIsLoading(true);
+        try {
+            const facilitatorId = localStorage.getItem('loggedInFacilitatorId');
+            if (!facilitatorId) {
+                router.push('/login');
+                return;
+            }
+             const facilitatorsResponse = await fetch('/api/facilitators');
+            const allFacilitators: Facilitator[] = await facilitatorsResponse.json();
+            const loggedInFacilitator = allFacilitators.find(f => f.id === facilitatorId);
+
+            if (!loggedInFacilitator) {
+                router.push('/login');
+                return;
+            }
+            setFacilitator(loggedInFacilitator);
+
+
+            const [studentsData, classesData, journalsData] = await Promise.all([
+                getStudents(),
+                getClasses(),
+                getStimulationJournalLog()
+            ]);
+            setAllStudents(studentsData);
+            setAllClasses(classesData);
+            setJournals(journalsData);
+        } catch (error) {
+            toast({ title: "Gagal memuat data", variant: "destructive"});
+        } finally {
+            setIsLoading(false);
+        }
+    };
     fetchData();
-  }, [fetchData]);
+  }, [router, toast]);
 
 
   const allStudentNames = useMemo(() => allStudents.map(s => s.fullName), [allStudents]);
@@ -219,7 +227,7 @@ export default function StimulationPage() {
 
     try {
         await addStimulationJournalLog(newJournalEntry);
-        await fetchData();
+        router.refresh();
         setButtonState("saved");
         toast({
             title: "Data Tersimpan!",
@@ -274,7 +282,7 @@ export default function StimulationPage() {
   const handleDeleteJournal = async (journalId: string) => {
     try {
         await deleteStimulationJournal(journalId);
-        await fetchData();
+        router.refresh();
         toast({ title: "Catatan Dihapus", description: "Catatan kegiatan berhasil dihapus." });
     } catch (e) {
         toast({ title: "Gagal menghapus", variant: "destructive"});
