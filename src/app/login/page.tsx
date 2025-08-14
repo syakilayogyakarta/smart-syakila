@@ -37,6 +37,8 @@ export interface Facilitator {
     gender: "Laki-laki" | "Perempuan";
 }
 
+export const dynamic = 'force-dynamic';
+
 export default function LoginPage() {
   const router = useRouter()
   const { toast } = useToast();
@@ -53,6 +55,9 @@ export default function LoginPage() {
     async function fetchFacilitators() {
       try {
         const response = await fetch('/api/facilitators');
+        if (!response.ok) {
+          throw new Error('Failed to fetch');
+        }
         const data: Facilitator[] = await response.json();
         setFacilitators(data);
       } catch (error) {
