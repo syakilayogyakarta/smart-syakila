@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { getClasses, getStudentsByClass as fetchStudentsByClass, Student, Class } from "@/lib/data";
+import { getClasses, getStudentsByClass as fetchStudentsByClass, Student, Class, addSavingTransaction } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -25,7 +25,7 @@ export default function SavingsPage() {
   const [transactionDate, setTransactionDate] = useState<Date | undefined>(new Date());
   const [selectedClass, setSelectedClass] = useState<string>("");
   const [studentOptions, setStudentOptions] = useState<Student[]>([]);
-  const [selectedStudent, setSelectedStudent] = useState<string>("");
+  const [selectedStudentId, setSelectedStudentId] = useState<string>("");
   const [transactionType, setTransactionType] = useState<TransactionType>('setoran');
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
@@ -40,6 +40,7 @@ export default function SavingsPage() {
 
   useEffect(() => {
     async function fetchData() {
+        setIsLoading(true);
         try {
             const [classesData, studentsByClassData] = await Promise.all([
                 getClasses(),
@@ -58,12 +59,22 @@ export default function SavingsPage() {
 
   const handleClassChange = (className: string) => {
     setSelectedClass(className);
-    setSelectedStudent(""); // Reset student selection when class changes
+    setSelectedStudentId(""); // Reset student selection when class changes
     setStudentOptions(studentsByClass[className] || []);
   };
 
-  const handleSave = () => {
-    if (!selectedStudent || !amount) {
+  const resetForm = () => {
+      setSelectedStudentId("");
+      setSelectedClass("");
+      setAmount("");
+      setDescription("");
+      setTransactionType("setoran");
+      setTransactionDate(new Date());
+      setStudentOptions([]);
+  }
+
+  const handleSave = async () => {
+    if (!selectedStudentId || !amount) {
       setIsShaking(true);
       toast({
         title: "Data Tidak Lengkap",
@@ -75,32 +86,33 @@ export default function SavingsPage() {
     }
 
     setButtonState("loading");
-    // In a real app, you would call a function to save the transaction to the blob store.
-    console.log("Saving transaction:", {
-      date: transactionDate,
-      student: selectedStudent,
-      type: transactionType,
-      amount: parseFloat(amount),
-      description,
-    });
     
-    setTimeout(() => {
-      setButtonState("saved");
-      toast({
-        title: "Transaksi Berhasil!",
-        description: `Transaksi telah disimpan.`,
-      });
-      // Reset form
-      setSelectedStudent("");
-      setSelectedClass("");
-      setAmount("");
-      setDescription("");
-      setTransactionType("setoran");
-      setTransactionDate(new Date());
-      setStudentOptions([]);
-      
-      setTimeout(() => setButtonState("idle"), 2000);
-    }, 1500);
+    const transactionData = {
+        date: transactionDate?.toISOString() || new Date().toISOString(),
+        studentId: selectedStudentId,
+        type: transactionType,
+        amount: parseFloat(amount),
+        description,
+    };
+
+    try {
+        await addSavingTransaction(transactionData);
+        setButtonState("saved");
+        toast({
+            title: "Transaksi Berhasil!",
+            description: `Transaksi telah disimpan.`,
+        });
+        resetForm();
+        setTimeout(() => setButtonState("idle"), 2000);
+    } catch (e) {
+        console.error("Failed to save transaction:", e);
+        setButtonState("idle");
+        toast({
+            title: "Gagal Menyimpan",
+            description: "Terjadi kesalahan saat menyimpan transaksi.",
+            variant: "destructive",
+        });
+    }
   };
   
   const isSaveDisabled = buttonState !== 'idle';
@@ -173,7 +185,7 @@ export default function SavingsPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="student-select">Pilih Siswa</Label>
-                <Select onValueChange={setSelectedStudent} value={selectedStudent} disabled={!selectedClass}>
+                <Select onValueChange={setSelectedStudentId} value={selectedStudentId} disabled={!selectedClass}>
                   <SelectTrigger id="student-select" className="w-full">
                     <SelectValue placeholder="Pilih Siswa..." />
                   </SelectTrigger>
@@ -258,5 +270,3 @@ export default function SavingsPage() {
     </div>
   );
 }
-
-    

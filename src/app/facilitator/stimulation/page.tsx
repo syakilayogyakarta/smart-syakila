@@ -170,7 +170,7 @@ export default function StimulationPage() {
   };
 
   const addPersonalNote = () => {
-    setPersonalNotes(prev => [...prev, { id: `new-${Date.now()}`, studentId: "", note: "" }]);
+    setPersonalNotes(prev => [...prev, { id: crypto.randomUUID(), studentId: "", note: "" }]);
   };
 
   const updatePersonalNote = (id: string, field: 'studentId' | 'note', value: string) => {
@@ -209,7 +209,7 @@ export default function StimulationPage() {
       personalNotes: personalNotes
         .filter(pn => pn.studentId && pn.note)
         .map(pn => ({ 
-            id: Date.now(), 
+            id: crypto.randomUUID(), 
             studentName: allStudents.find(s => s.id === pn.studentId)?.fullName || 'Unknown', 
             note: pn.note, 
             facilitatorName: facilitator.fullName, 
@@ -246,8 +246,8 @@ export default function StimulationPage() {
     // For now, this will just update the local state. A proper backend would be needed for this to persist.
     
     const studentName = allStudents.find(s => s.id === noteData.studentId)?.fullName || 'Unknown';
-    const newNote = {
-        id: Date.now(),
+    const newNote: StimulationPersonalNote = {
+        id: crypto.randomUUID(),
         studentName: studentName,
         note: noteData.note,
         facilitatorName: facilitator.fullName,
@@ -570,5 +570,3 @@ export default function StimulationPage() {
     </div>
   );
 }
-
-    

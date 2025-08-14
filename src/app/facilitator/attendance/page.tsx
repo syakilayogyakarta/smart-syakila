@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getClasses, getStudentsByClass as fetchStudentsByClass, Student, Class } from "@/lib/data";
+import { getClasses, getStudentsByClass as fetchStudentsByClass, Student, Class, saveAttendanceLog } from "@/lib/data";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -42,6 +42,7 @@ export default function AttendancePage() {
 
   useEffect(() => {
     async function fetchData() {
+        setIsLoading(true);
         try {
             const [classesData, studentsByClassData] = await Promise.all([
                 getClasses(),
@@ -87,18 +88,31 @@ export default function AttendancePage() {
     setAttendance(prev => ({ ...prev, [studentId]: status }));
   };
   
-  const handleSave = () => {
+  const handleSave = async () => {
     setButtonState("loading");
-    console.log("Saving attendance:", attendance);
-    // Here you would call a function to save the attendance data to your backend/blob
-    setTimeout(() => {
-      setButtonState("saved");
-      toast({
-        title: "Sukses!",
-        description: "Data presensi berhasil disimpan.",
-      });
-      setTimeout(() => setButtonState("idle"), 2000);
-    }, 1500);
+    
+    const attendanceLog = {
+        date: new Date().toISOString(),
+        records: attendance,
+    };
+
+    try {
+        await saveAttendanceLog(attendanceLog);
+        setButtonState("saved");
+        toast({
+            title: "Sukses!",
+            description: "Data presensi berhasil disimpan.",
+        });
+        setTimeout(() => setButtonState("idle"), 2000);
+    } catch(e) {
+        console.error("Failed to save attendance:", e);
+        setButtonState("idle");
+        toast({
+            title: "Gagal Menyimpan",
+            description: "Terjadi kesalahan saat menyimpan data presensi.",
+            variant: "destructive",
+        });
+    }
   };
 
   const attendanceOptions: { id: AttendanceStatus; label: string; style: string; }[] = [
@@ -212,5 +226,3 @@ export default function AttendancePage() {
     </div>
   );
 }
-
-    

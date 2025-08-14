@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { getStudentProfileData, getAcademicJournalLog, getKegiatanForStudent, getClasses, updateStudent, getSubjects, Student, Class as AppClass, Subject } from "@/lib/data";
+import { getStudentProfileData, getAcademicJournalLog, getKegiatanForStudent, getClasses, updateStudent, getSubjects, Student, Class as AppClass, Subject, SavingTransaction } from "@/lib/data";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,8 +25,8 @@ type StudentProfile = Student & {
     attendance: { present: number; late: number; sick: number; excused: number };
     savings: {
         balance: number;
-        deposits: { date: string; description: string; amount: number }[];
-        withdrawals: { date: string; description: string; amount: number }[];
+        deposits: SavingTransaction[];
+        withdrawals: SavingTransaction[];
     }
 }
 
@@ -327,9 +327,9 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {studentProfile.savings.deposits.map((item: any, index: number) => (
+                            {studentProfile.savings.deposits.map((item, index) => (
                               <TableRow key={index}>
-                                <TableCell>{item.date}</TableCell>
+                                <TableCell>{new Date(item.date).toLocaleDateString('id-ID')}</TableCell>
                                 <TableCell className="text-right font-medium text-green-600">{formatCurrency(item.amount)}</TableCell>
                               </TableRow>
                             ))}
@@ -351,9 +351,9 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {studentProfile.savings.withdrawals.map((item: any, index: number) => (
+                            {studentProfile.savings.withdrawals.map((item, index) => (
                               <TableRow key={index}>
-                                <TableCell>{item.date}</TableCell>
+                                <TableCell>{new Date(item.date).toLocaleDateString('id-ID')}</TableCell>
                                 <TableCell className="text-right font-medium text-red-600">-{formatCurrency(item.amount)}</TableCell>
                               </TableRow>
                             ))}
@@ -520,6 +520,3 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
     </div>
   );
 }
-
-
-    

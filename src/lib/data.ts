@@ -2,12 +2,14 @@
 // This file will contain all the functions to interact with the Vercel Blob storage.
 // We will replace all the mock data with functions that fetch data from the blob storage.
 
-import { put, del, list, head } from '@vercel/blob';
+import { put, del, list } from '@vercel/blob';
 import { 
     DB_KEY_ACADEMIC_LOG,
     DB_KEY_ASSIGNMENTS,
+    DB_KEY_ATTENDANCE,
     DB_KEY_CLASSES,
     DB_KEY_FACILITATORS,
+    DB_KEY_SAVINGS,
     DB_KEY_STIMULATION_LOG,
     DB_KEY_STUDENTS,
     DB_KEY_SUBJECTS
@@ -80,7 +82,7 @@ export interface StimulationJournalLog {
     lokasi: string;
     catatanPenting: string;
     personalNotes: {
-        id: number;
+        id: string;
         studentName: string;
         note: string;
         facilitatorName: string;
@@ -88,33 +90,54 @@ export interface StimulationJournalLog {
     }[];
 }
 
+export interface AttendanceLog {
+    id: string;
+    date: string; // ISO string
+    records: {
+        [studentId: string]: "Hadir" | "Terlambat" | "Sakit" | "Izin";
+    };
+}
+
+export interface SavingTransaction {
+    id: string;
+    date: string; // ISO string
+    studentId: string;
+    type: 'setoran' | 'penarikan';
+    amount: number;
+    description: string;
+}
+
 // Helper function to fetch data from blob
-async function getFromBlob<T>(key: string): Promise<T[]> {
+async function getFromBlob<T>(key: string, isObject: boolean = false): Promise<T> {
     try {
-        const data = await list({ prefix: key });
-        if (data.blobs.length === 0) {
-            // If the blob doesn't exist, create it with an empty array
-            await saveToBlob(key, []);
-            return [];
+        const { blobs } = await list({ prefix: key, limit: 1 });
+        if (blobs.length === 0) {
+            // If the blob doesn't exist, create it with an empty array/object
+            const initialData = isObject ? {} : [];
+            await saveToBlob(key, initialData);
+            return initialData as T;
         };
-        const response = await fetch(data.blobs[0].url);
-        if (!response.ok) return [];
-        return await response.json() as T[];
+        const response = await fetch(blobs[0].url);
+        if (!response.ok) {
+            console.error(`Failed to fetch blob ${key}, status: ${response.status}`);
+            return (isObject ? {} : []) as T;
+        }
+        // Handle cases where the blob might be empty
+        const text = await response.text();
+        if (!text) {
+             return (isObject ? {} : []) as T;
+        }
+        return JSON.parse(text) as T;
     } catch (error) {
-        console.error(`Error fetching data for key ${key}:`, error);
-        return [];
+        console.error(`Error fetching or parsing data for key ${key}:`, error);
+        return (isObject ? {} : []) as T;
     }
 }
 
 // Helper function to save data to blob
 async function saveToBlob(key: string, data: any) {
-    // To ensure overwrite, we delete the old blob first if it exists.
-    try {
-        await del(key);
-    } catch (error) {
-        // Ignore if the blob doesn't exist, that's fine.
-    }
-
+    // Overwrite the blob by putting new content.
+    // The `put` operation in Vercel Blob automatically overwrites.
     await put(key, JSON.stringify(data, null, 2), {
         access: 'public',
         contentType: 'application/json',
@@ -123,7 +146,7 @@ async function saveToBlob(key: string, data: any) {
 
 // --- Facilitators ---
 export async function getFacilitators(): Promise<Facilitator[]> {
- return await getFromBlob<Facilitator>(DB_KEY_FACILITATORS);
+ return await getFromBlob<Facilitator[]>(DB_KEY_FACILITATORS);
 }
 
 export async function addFacilitator(facilitatorData: Omit<Facilitator, 'id'>) {
@@ -178,6 +201,7 @@ export async function getLoggedInUser() {
     if (facilitatorId) {
         // In a real app, you might want to re-validate the facilitatorId against the server
         // For this app, we'll fetch the list and find the user.
+        // This should be called from a client component to avoid build-time errors.
         const facilitators = await getFacilitators();
         const facilitator = facilitators.find(f => f.id === facilitatorId);
         if (facilitator) {
@@ -191,7 +215,7 @@ export async function getLoggedInUser() {
 
 // --- Classes ---
 export async function getClasses(): Promise<Class[]> {
-    return await getFromBlob<Class>(DB_KEY_CLASSES);
+    return await getFromBlob<Class[]>(DB_KEY_CLASSES);
 }
 export async function addClass(name: string): Promise<Class> {
     const classes = await getClasses();
@@ -219,7 +243,7 @@ export async function deleteClass(id: string) {
 
 // --- Students ---
 export async function getStudents(): Promise<Student[]> {
-    return await getFromBlob<Student>(DB_KEY_STUDENTS);
+    return await getFromBlob<Student[]>(DB_KEY_STUDENTS);
 }
 export async function getStudentsByClass() {
     const students = await getStudents();
@@ -257,7 +281,7 @@ export async function deleteStudent(id: string) {
 
 // --- Subjects ---
 export async function getSubjects(): Promise<Subject[]> {
-    return await getFromBlob<Subject>(DB_KEY_SUBJECTS);
+    return await getFromBlob<Subject[]>(DB_KEY_SUBJECTS);
 }
 export async function addSubject(name: string): Promise<Subject> {
     const subjects = await getSubjects();
@@ -286,25 +310,7 @@ export async function deleteSubject(id: string) {
 
 // --- Assignments ---
 export async function getFacilitatorAssignments(): Promise<FacilitatorAssignments> {
-    try {
-        const data = await list({ prefix: DB_KEY_ASSIGNMENTS });
-        if (data.blobs.length === 0) {
-            await saveToBlob(DB_KEY_ASSIGNMENTS, {});
-            return {};
-        }
-        const response = await fetch(data.blobs[0].url);
-        if (!response.ok) return {};
-        const assignmentsData = await response.json();
-        
-        if (Array.isArray(assignmentsData)) {
-            return {}; // Should be an object, not an array. Return empty to prevent errors.
-        }
-        return assignmentsData || {};
-
-    } catch (error) {
-        console.error(`Error fetching data for key ${DB_KEY_ASSIGNMENTS}:`, error);
-        return {};
-    }
+    return await getFromBlob<FacilitatorAssignments>(DB_KEY_ASSIGNMENTS, true);
 }
 export async function saveFacilitatorAssignments(assignments: FacilitatorAssignments) {
     await saveToBlob(DB_KEY_ASSIGNMENTS, assignments);
@@ -312,7 +318,7 @@ export async function saveFacilitatorAssignments(assignments: FacilitatorAssignm
 
 // --- Academic Journal ---
 export async function getAcademicJournalLog(): Promise<AcademicJournalLog[]> {
-    return await getFromBlob<AcademicJournalLog>(DB_KEY_ACADEMIC_LOG);
+    return await getFromBlob<AcademicJournalLog[]>(DB_KEY_ACADEMIC_LOG);
 }
 export async function addAcademicJournalLog(entry: Omit<AcademicJournalLog, 'id'>) {
     const logs = await getAcademicJournalLog();
@@ -342,7 +348,7 @@ export async function addPersonalNoteToAcademicLog(journalId: string, noteData: 
 
 // --- Stimulation Journal ---
 export async function getStimulationJournalLog(): Promise<StimulationJournalLog[]> {
-     return await getFromBlob<StimulationJournalLog>(DB_KEY_STIMULATION_LOG);
+     return await getFromBlob<StimulationJournalLog[]>(DB_KEY_STIMULATION_LOG);
 }
 export async function addStimulationJournalLog(entry: Omit<StimulationJournalLog, 'id'>) {
     const logs = await getStimulationJournalLog();
@@ -369,27 +375,81 @@ export async function getKegiatanForStudent(studentName: string) {
     return { history, personalNotes };
 };
 
-// This function needs to be adapted for savings and attendance once those features save to blob storage.
+// --- Attendance ---
+export async function getAttendanceLog(): Promise<AttendanceLog[]> {
+    return await getFromBlob<AttendanceLog[]>(DB_KEY_ATTENDANCE);
+}
+
+export async function saveAttendanceLog(log: Omit<AttendanceLog, 'id'>): Promise<AttendanceLog> {
+    const logs = await getAttendanceLog();
+    const newLog: AttendanceLog = { ...log, id: crypto.randomUUID() };
+    logs.unshift(newLog);
+    await saveToBlob(DB_KEY_ATTENDANCE, logs);
+    return newLog;
+}
+
+
+// --- Savings ---
+export async function getSavingsTransactions(): Promise<SavingTransaction[]> {
+    return await getFromBlob<SavingTransaction[]>(DB_KEY_SAVINGS);
+}
+
+export async function addSavingTransaction(transaction: Omit<SavingTransaction, 'id'>): Promise<SavingTransaction> {
+    const transactions = await getSavingsTransactions();
+    const newTransaction: SavingTransaction = { ...transaction, id: crypto.randomUUID() };
+    transactions.unshift(newTransaction);
+    await saveToBlob(DB_KEY_SAVINGS, transactions);
+    return newTransaction;
+}
+
+
+// --- Student Profile Data Aggregation ---
 export async function getStudentProfileData(studentId: string) {
-    const students = await getStudents();
-    const student = students.find(s => s.id === studentId);
+    const student = (await getStudents()).find(s => s.id === studentId);
     if (!student) return null;
 
     const classes = await getClasses();
     const studentClass = classes.find(c => c.id === student.classId);
+    
+    // Aggregate Attendance
+    const attendanceLogs = await getAttendanceLog();
+    const attendance = { present: 0, late: 0, sick: 0, excused: 0 };
+    attendanceLogs.forEach(log => {
+        const status = log.records[studentId];
+        if (status === 'Hadir') attendance.present++;
+        else if (status === 'Terlambat') attendance.late++;
+        else if (status === 'Sakit') attendance.sick++;
+        else if (status === 'Izin') attendance.excused++;
+    });
 
-    // TODO: Fetch and aggregate attendance and savings data from blob storage
-    // For now, return dummy data for these.
+    // Aggregate Savings
+    const savingsLogs = await getSavingsTransactions();
+    const studentSavings = savingsLogs.filter(t => t.studentId === studentId);
+    let balance = 0;
+    const deposits: SavingTransaction[] = [];
+    const withdrawals: SavingTransaction[] = [];
+    
+    // Sort transactions by date ascending to calculate balance correctly
+    studentSavings.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    
+    studentSavings.forEach(t => {
+        if (t.type === 'setoran') {
+            balance += t.amount;
+            deposits.push(t);
+        } else {
+            balance -= t.amount;
+            withdrawals.push(t);
+        }
+    });
+
     return {
         ...student,
         className: studentClass?.name || "Tidak ada kelas",
-        attendance: { present: 0, late: 0, sick: 0, excused: 0 },
+        attendance,
         savings: {
-            balance: 0,
-            deposits: [],
-            withdrawals: []
+            balance,
+            deposits: deposits.reverse(), // Show most recent first
+            withdrawals: withdrawals.reverse() // Show most recent first
         }
-    }
+    };
 }
-
-    
