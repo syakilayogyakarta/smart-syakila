@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { getStudentProfileData, getAcademicJournalLog, getKegiatanForStudent, getClasses, updateStudent, Student, Class as AppClass } from "@/lib/data";
+import { getStudentProfileData, getAcademicJournalLog, getKegiatanForStudent, getClasses, updateStudent, getSubjects, Student, Class as AppClass, Subject } from "@/lib/data";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,6 @@ type StudentProfile = Student & {
 }
 
 type EditableProfile = Partial<Pick<Student, "fullName" | "nickname" | "nisn" | "classId">>;
-
 
 const subjectIcons: { [key: string]: React.ElementType } = {
   "IPA": Atom,
@@ -70,6 +69,7 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
   const [academicData, setAcademicData] = useState<any>({ subjects: [] });
   const [studentKegiatanData, setStudentKegiatanData] = useState<any>({ history: [], personalNotes: [] });
   const [allClasses, setAllClasses] = useState<AppClass[]>([]);
+  const [allSubjects, setAllSubjects] = useState<Subject[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchAllData = useCallback(async () => {
@@ -89,37 +89,51 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
             classId: profileData.classId
         });
 
-        const [academicLog, stimulationLog, classesData] = await Promise.all([
+        const [academicLog, stimulationLog, classesData, subjectsData] = await Promise.all([
             getAcademicJournalLog(),
             getKegiatanForStudent(profileData.fullName),
             getClasses(),
+            getSubjects(),
         ]);
-
+        
         setAllClasses(classesData);
+        setAllSubjects(subjectsData);
         setStudentKegiatanData(stimulationLog);
         
-        // Process academic data
         const studentJournals = academicLog.filter(j => 
-            j.personalNotes.some((pn: any) => pn.studentId === studentId)
+            (j.studentActiveness && Object.keys(j.studentActiveness).includes(studentId)) || 
+            (j.personalNotes && j.personalNotes.some((pn: any) => pn.studentId === studentId))
         );
+
         const subjects: { [key: string]: any } = {};
 
         studentJournals.forEach(journal => {
-            // This needs to be adapted to use subjectId and fetch subject name
-            const subjectName = "Unknown Subject"; // Placeholder
+            const subjectInfo = subjectsData.find(s => s.id === journal.subjectId);
+            if (!subjectInfo) return;
+            const subjectName = subjectInfo.name;
+
             if (!subjects[subjectName]) {
                 subjects[subjectName] = {
                     name: subjectName,
                     icon: subjectIcons[subjectName] || BookCopy,
                     color: subjectColors[subjectName] || "text-foreground",
                     meetings: [],
-                    personalNotes: []
+                    personalNotes: [],
+                    totalActivity: 0,
+                    activityCount: 0,
                 };
             }
+            
+            if (journal.studentActiveness && journal.studentActiveness[studentId]) {
+                subjects[subjectName].totalActivity += journal.studentActiveness[studentId];
+                subjects[subjectName].activityCount++;
+            }
+            
             subjects[subjectName].meetings.push({
                 date: new Date(journal.timestamp).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }),
                 topic: journal.topic
             });
+
             const personalNote = journal.personalNotes.find((pn: any) => pn.studentId === studentId);
             if (personalNote) {
                 subjects[subjectName].personalNotes.push({
@@ -128,6 +142,15 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
                 });
             }
         });
+        
+        Object.keys(subjects).forEach(subjectName => {
+           if (subjects[subjectName].activityCount > 0) {
+              subjects[subjectName].averageActivity = subjects[subjectName].totalActivity / subjects[subjectName].activityCount;
+           } else {
+              subjects[subjectName].averageActivity = 0;
+           }
+        });
+
         setAcademicData({ subjects: Object.values(subjects) });
 
     } catch (error) {
@@ -407,8 +430,7 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
               <CardContent>
                 {academicData.subjects.length > 0 ? (
                   <div className="space-y-2">
-                    {academicData.subjects.map((subject: any) => {
-                      return (
+                    {academicData.subjects.map((subject: any) => (
                       <Dialog key={subject.name}>
                           <DialogTrigger asChild>
                             <Card className="hover:bg-primary/5 hover:shadow-md transition-all cursor-pointer">
@@ -485,7 +507,7 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
                             )}
                           </DialogContent>
                         </Dialog>
-                    )}})}
+                    ))}
                   </div>
                 ) : (
                   <div className="text-center text-muted-foreground p-8">Belum ada data akademik yang tercatat untuk siswa ini.</div>
@@ -498,3 +520,6 @@ export default function StudentDetailPage({ params }: { params: { studentId: str
     </div>
   );
 }
+
+
+    
