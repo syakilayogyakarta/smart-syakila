@@ -118,7 +118,8 @@ async function getFromBlob<T>(key: string, isObject: boolean = false): Promise<T
             await saveToBlob(key, initialData);
             return initialData as T;
         };
-        const response = await fetch(blobs[0].url);
+        // Explicitly disable caching for all data fetches from the blob.
+        const response = await fetch(blobs[0].url, { cache: 'no-store' });
         if (!response.ok) {
             console.error(`Failed to fetch blob ${key}, status: ${response.status}`);
             return (isObject ? {} : []) as T;
@@ -448,5 +449,3 @@ export async function getStudentProfileData(studentId: string) {
         }
     };
 }
-
-    
