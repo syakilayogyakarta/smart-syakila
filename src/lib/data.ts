@@ -154,10 +154,10 @@ async function getFromBlob<T>(key: string, isObject: boolean = false): Promise<T
 async function saveToBlob(key: string, data: any) {
     // Overwrite the file by deleting the old one and putting the new one.
     // This is more efficient than using list() to check for existence.
-    await del(key).catch(() => {}); // Ignore error if file doesn't exist
     await put(key, JSON.stringify(data, null, 2), {
         access: 'public',
         contentType: 'application/json',
+        allowOverwrite: true,
     });
 }
 
@@ -466,5 +466,3 @@ export async function getStudentProfileData(studentId: string) {
         }
     };
 }
-
-    
