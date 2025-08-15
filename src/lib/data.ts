@@ -109,32 +109,27 @@ export interface SavingTransaction {
     description: string;
 }
 
-const VERCEL_BLOB_STORE_ID = process.env.BLOB_READ_WRITE_TOKEN?.split("_")[2]?.toLowerCase();
-const VERCEL_BLOB_BASE_URL = VERCEL_BLOB_STORE_ID 
-    ? `https://${VERCEL_BLOB_STORE_ID}.public.blob.vercel-storage.com`
-    : '';
-
 // Helper function to fetch data from blob
 async function getFromBlob<T>(key: string, isObject: boolean = false): Promise<T> {
     const initialData = isObject ? {} : [];
-    if (!VERCEL_BLOB_BASE_URL) {
-        console.warn("Vercel Blob URL is not configured. Returning initial data.");
-        return initialData as T;
-    }
-
+    
     try {
-        const blobUrl = `${VERCEL_BLOB_BASE_URL}/${key}`;
-        const response = await fetch(blobUrl, { cache: 'no-store' });
+        // Use list with a prefix to find the specific blob. This is more reliable than constructing a public URL.
+        const { blobs } = await list({ prefix: key, limit: 1 });
 
-        if (response.status === 404) {
-             // File doesn't exist, create it with initial data and return it.
+        if (blobs.length === 0) {
+            // File doesn't exist, create it with initial data and return it.
+            console.log(`Blob with key "${key}" not found. Creating a new one.`);
             await saveToBlob(key, initialData);
             return initialData as T;
         }
 
+        const blob = blobs[0];
+        const response = await fetch(blob.url, { cache: 'no-store' });
+        
         if (!response.ok) {
-            // Handle other potential HTTP errors (e.g., 500, 403)
-            console.error(`Failed to fetch blob ${key}, status: ${response.status}`);
+            // Handle potential HTTP errors (e.g., 500, 403)
+            console.error(`Failed to fetch blob ${key} from URL ${blob.url}, status: ${response.status}`);
             return initialData as T;
         }
 
@@ -153,14 +148,14 @@ async function getFromBlob<T>(key: string, isObject: boolean = false): Promise<T
     }
 }
 
+
 // Helper function to save data to blob
 async function saveToBlob(key: string, data: any) {
-    // This now simply overwrites the file at the given key.
+    // Overwrite the file at the given key.
     await put(key, JSON.stringify(data, null, 2), {
-        access: 'public',
+        access: 'public', // 'public' is needed for the download URL from list() to be accessible
         contentType: 'application/json',
         addRandomSuffix: false, // Ensure the filename is exact
-        allowOverwrite: true,    // Explicitly allow overwriting
     });
 }
 
@@ -469,5 +464,3 @@ export async function getStudentProfileData(studentId: string) {
         }
     };
 }
-
-    
