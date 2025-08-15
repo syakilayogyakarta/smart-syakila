@@ -127,17 +127,19 @@ async function getFromBlob<T>(key: string, isObject: boolean = false): Promise<T
         const response = await fetch(blobUrl, { cache: 'no-store' });
 
         if (response.status === 404) {
-             // File doesn't exist, create it with initial data
+             // File doesn't exist, create it with initial data and return it.
             await saveToBlob(key, initialData);
             return initialData as T;
         }
 
         if (!response.ok) {
+            // Handle other potential HTTP errors (e.g., 500, 403)
             console.error(`Failed to fetch blob ${key}, status: ${response.status}`);
             return initialData as T;
         }
 
         const text = await response.text();
+        // Handle cases where the file exists but is empty
         if (!text) {
              return initialData as T;
         }
@@ -145,6 +147,7 @@ async function getFromBlob<T>(key: string, isObject: boolean = false): Promise<T
         return JSON.parse(text) as T;
 
     } catch (error) {
+        // Handle network errors or JSON parsing errors
         console.error(`Error fetching or parsing data for key ${key}:`, error);
         return initialData as T;
     }
@@ -152,12 +155,12 @@ async function getFromBlob<T>(key: string, isObject: boolean = false): Promise<T
 
 // Helper function to save data to blob
 async function saveToBlob(key: string, data: any) {
-    // Overwrite the file by deleting the old one and putting the new one.
-    // This is more efficient than using list() to check for existence.
+    // This now simply overwrites the file at the given key.
     await put(key, JSON.stringify(data, null, 2), {
         access: 'public',
         contentType: 'application/json',
-        allowOverwrite: true,
+        addRandomSuffix: false, // Ensure the filename is exact
+        allowOverwrite: true,    // Explicitly allow overwriting
     });
 }
 
@@ -466,3 +469,5 @@ export async function getStudentProfileData(studentId: string) {
         }
     };
 }
+
+    
