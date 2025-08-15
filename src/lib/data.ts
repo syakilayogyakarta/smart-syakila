@@ -109,38 +109,55 @@ export interface SavingTransaction {
     description: string;
 }
 
+const VERCEL_BLOB_STORE_ID = process.env.BLOB_READ_WRITE_TOKEN?.split("_")[2]?.toLowerCase();
+const VERCEL_BLOB_BASE_URL = VERCEL_BLOB_STORE_ID 
+    ? `https://${VERCEL_BLOB_STORE_ID}.public.blob.vercel-storage.com`
+    : '';
+
 // Helper function to fetch data from blob
 async function getFromBlob<T>(key: string, isObject: boolean = false): Promise<T> {
+    const initialData = isObject ? {} : [];
+    if (!VERCEL_BLOB_BASE_URL) {
+        console.warn("Vercel Blob URL is not configured. Returning initial data.");
+        return initialData as T;
+    }
+
     try {
-        const { blobs } = await list({ prefix: key, limit: 1 });
-        if (blobs.length === 0) {
-            const initialData = isObject ? {} : [];
+        const blobUrl = `${VERCEL_BLOB_BASE_URL}/${key}`;
+        const response = await fetch(blobUrl, { cache: 'no-store' });
+
+        if (response.status === 404) {
+             // File doesn't exist, create it with initial data
             await saveToBlob(key, initialData);
             return initialData as T;
-        };
-        // Explicitly disable caching for all data fetches from the blob.
-        const response = await fetch(blobs[0].url, { cache: 'no-store' });
+        }
+
         if (!response.ok) {
             console.error(`Failed to fetch blob ${key}, status: ${response.status}`);
-            return (isObject ? {} : []) as T;
+            return initialData as T;
         }
+
         const text = await response.text();
         if (!text) {
-             return (isObject ? {} : []) as T;
+             return initialData as T;
         }
+
         return JSON.parse(text) as T;
+
     } catch (error) {
         console.error(`Error fetching or parsing data for key ${key}:`, error);
-        return (isObject ? {} : []) as T;
+        return initialData as T;
     }
 }
 
 // Helper function to save data to blob
 async function saveToBlob(key: string, data: any) {
+    // Overwrite the file by deleting the old one and putting the new one.
+    // This is more efficient than using list() to check for existence.
+    await del(key).catch(() => {}); // Ignore error if file doesn't exist
     await put(key, JSON.stringify(data, null, 2), {
         access: 'public',
         contentType: 'application/json',
-        allowOverwrite: true,
     });
 }
 
@@ -449,3 +466,5 @@ export async function getStudentProfileData(studentId: string) {
         }
     };
 }
+
+    
