@@ -1,4 +1,5 @@
 
+
 'use server';
 
 // This file will contain all the functions to interact with the Vercel Blob storage.
@@ -114,27 +115,24 @@ async function getFromBlob<T>(key: string, isObject: boolean = false): Promise<T
     const initialData = isObject ? {} : [];
     
     try {
-        // Use list with a prefix to find the specific blob. This is more reliable than constructing a public URL.
         const { blobs } = await list({ prefix: key, limit: 1 });
 
         if (blobs.length === 0) {
-            // File doesn't exist, create it with initial data and return it.
             console.log(`Blob with key "${key}" not found. Creating a new one.`);
             await saveToBlob(key, initialData);
             return initialData as T;
         }
 
         const blob = blobs[0];
-        const response = await fetch(blob.url, { cache: 'no-store' });
+        const response = await fetch(blob.url); // Default cache is fine here
         
         if (!response.ok) {
-            // Handle potential HTTP errors (e.g., 500, 403)
-            console.error(`Failed to fetch blob ${key} from URL ${blob.url}, status: ${response.status}`);
-            return initialData as T;
+           console.error(`Failed to fetch blob ${key} from URL ${blob.url}, status: ${response.status}`);
+           // If we fail to fetch, it's safer to return initial data than to error out.
+           return initialData as T;
         }
 
         const text = await response.text();
-        // Handle cases where the file exists but is empty
         if (!text) {
              return initialData as T;
         }
@@ -142,7 +140,6 @@ async function getFromBlob<T>(key: string, isObject: boolean = false): Promise<T
         return JSON.parse(text) as T;
 
     } catch (error) {
-        // Handle network errors or JSON parsing errors
         console.error(`Error fetching or parsing data for key ${key}:`, error);
         return initialData as T;
     }
