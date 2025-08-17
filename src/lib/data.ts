@@ -124,11 +124,16 @@ async function getFromBlob<T>(key: string, isObject: boolean = false): Promise<T
         }
 
         const blob = blobs[0];
-        const response = await fetch(blob.url); // Default cache is fine here
+        const response = await fetch(blob.url, { cache: 'no-store' }); 
         
         if (!response.ok) {
            console.error(`Failed to fetch blob ${key} from URL ${blob.url}, status: ${response.status}`);
-           // If we fail to fetch, it's safer to return initial data than to error out.
+           // If we fail to fetch (e.g. 404 on a new deploy before file exists), create it.
+           if(response.status === 404) {
+               await saveToBlob(key, initialData);
+               return initialData as T;
+           }
+           // For other errors, it's safer to return initial data than to error out.
            return initialData as T;
         }
 
@@ -162,7 +167,7 @@ export async function getFacilitators(): Promise<Facilitator[]> {
 }
 
 export async function addFacilitator(facilitatorData: Omit<Facilitator, 'id'>) {
-    const facilitators = await getFacilitators();
+    const facilitators = await getFromBlob<Facilitator[]>(DB_KEY_FACILITATORS);
 
     if (facilitators.some(f => f.email === facilitatorData.email)) {
         throw new Error('A facilitator with this email already exists.');
@@ -175,7 +180,7 @@ export async function addFacilitator(facilitatorData: Omit<Facilitator, 'id'>) {
 }
 
 export async function updateFacilitator(id: string, data: Partial<Omit<Facilitator, 'id'>>) {
-    let facilitators = await getFacilitators();
+    let facilitators = await getFromBlob<Facilitator[]>(DB_KEY_FACILITATORS);
     const existingFacilitator = facilitators.find(f => f.email === data.email && f.id !== id);
     if (existingFacilitator) {
         throw new Error('Another facilitator with this email already exists.');
@@ -185,7 +190,7 @@ export async function updateFacilitator(id: string, data: Partial<Omit<Facilitat
 }
 
 export async function deleteFacilitator(id: string) {
-    let facilitators = await getFacilitators();
+    let facilitators = await getFromBlob<Facilitator[]>(DB_KEY_FACILITATORS);
     facilitators = facilitators.filter(f => f.id !== id);
     await saveToBlob(DB_KEY_FACILITATORS, facilitators);
 }
@@ -195,7 +200,7 @@ export async function getClasses(): Promise<Class[]> {
     return await getFromBlob<Class[]>(DB_KEY_CLASSES);
 }
 export async function addClass(name: string): Promise<Class> {
-    const classes = await getClasses();
+    const classes = await getFromBlob<Class[]>(DB_KEY_CLASSES);
      if (classes.some(c => c.name.toLowerCase() === name.toLowerCase())) {
         throw new Error('Class with this name already exists.');
     }
@@ -205,7 +210,7 @@ export async function addClass(name: string): Promise<Class> {
     return newClass;
 }
 export async function updateClass(id: string, name: string) {
-    let classes = await getClasses();
+    let classes = await getFromBlob<Class[]>(DB_KEY_CLASSES);
     if (classes.some(c => c.name.toLowerCase() === name.toLowerCase() && c.id !== id)) {
         throw new Error('Another class with this name already exists.');
     }
@@ -213,7 +218,7 @@ export async function updateClass(id: string, name: string) {
     await saveToBlob(DB_KEY_CLASSES, classes);
 }
 export async function deleteClass(id: string) {
-    let classes = await getClasses();
+    let classes = await getFromBlob<Class[]>(DB_KEY_CLASSES);
     classes = classes.filter(c => c.id !== id);
     await saveToBlob(DB_KEY_CLASSES, classes);
 }
@@ -233,7 +238,7 @@ export async function getStudentsByClass() {
     return studentsByClass;
 }
 export async function addStudent(student: Omit<Student, 'id'>) {
-    const students = await getStudents();
+    const students = await getFromBlob<Student[]>(DB_KEY_STUDENTS);
     if (student.nisn && students.some(s => s.nisn === student.nisn)) {
         throw new Error('A student with this NISN already exists.');
     }
@@ -242,7 +247,7 @@ export async function addStudent(student: Omit<Student, 'id'>) {
     await saveToBlob(DB_KEY_STUDENTS, students);
 }
 export async function updateStudent(id: string, data: Partial<Student>) {
-    let students = await getStudents();
+    let students = await getFromBlob<Student[]>(DB_KEY_STUDENTS);
     if (data.nisn && students.some(s => s.nisn === data.nisn && s.id !== id)) {
          throw new Error('Another student with this NISN already exists.');
     }
@@ -250,7 +255,7 @@ export async function updateStudent(id: string, data: Partial<Student>) {
     await saveToBlob(DB_KEY_STUDENTS, students);
 }
 export async function deleteStudent(id: string) {
-    let students = await getStudents();
+    let students = await getFromBlob<Student[]>(DB_KEY_STUDENTS);
     students = students.filter(s => s.id !== id);
     await saveToBlob(DB_KEY_STUDENTS, students);
 }
@@ -261,7 +266,7 @@ export async function getSubjects(): Promise<Subject[]> {
     return await getFromBlob<Subject[]>(DB_KEY_SUBJECTS);
 }
 export async function addSubject(name: string): Promise<Subject> {
-    const subjects = await getSubjects();
+    const subjects = await getFromBlob<Subject[]>(DB_KEY_SUBJECTS);
      if (subjects.some(s => s.name.toLowerCase() === name.toLowerCase())) {
         throw new Error('Subject with this name already exists.');
     }
@@ -271,7 +276,7 @@ export async function addSubject(name: string): Promise<Subject> {
     return newSubject;
 }
 export async function updateSubject(id: string, name: string) {
-    let subjects = await getSubjects();
+    let subjects = await getFromBlob<Subject[]>(DB_KEY_SUBJECTS);
     if (subjects.some(s => s.name.toLowerCase() === name.toLowerCase() && s.id !== id)) {
          throw new Error('Another subject with this name already exists.');
     }
@@ -279,7 +284,7 @@ export async function updateSubject(id: string, name: string) {
     await saveToBlob(DB_KEY_SUBJECTS, subjects);
 }
 export async function deleteSubject(id: string) {
-    let subjects = await getSubjects();
+    let subjects = await getFromBlob<Subject[]>(DB_KEY_SUBJECTS);
     subjects = subjects.filter(s => s.id !== id);
     await saveToBlob(DB_KEY_SUBJECTS, subjects);
 }
@@ -298,18 +303,18 @@ export async function getAcademicJournalLog(): Promise<AcademicJournalLog[]> {
     return await getFromBlob<AcademicJournalLog[]>(DB_KEY_ACADEMIC_LOG);
 }
 export async function addAcademicJournalLog(entry: Omit<AcademicJournalLog, 'id'>) {
-    const logs = await getAcademicJournalLog();
+    const logs = await getFromBlob<AcademicJournalLog[]>(DB_KEY_ACADEMIC_LOG);
     const newLog = { ...entry, id: crypto.randomUUID() };
     logs.unshift(newLog); // Add to the beginning
     await saveToBlob(DB_KEY_ACADEMIC_LOG, logs);
 }
 export async function deleteAcademicJournal(journalId: string) {
-    let logs = await getAcademicJournalLog();
+    let logs = await getFromBlob<AcademicJournalLog[]>(DB_KEY_ACADEMIC_LOG);
     logs = logs.filter(j => j.id !== journalId);
     await saveToBlob(DB_KEY_ACADEMIC_LOG, logs);
 }
 export async function addPersonalNoteToAcademicLog(journalId: string, noteData: AcademicJournalLog['personalNotes'][0]) {
-    let logs = await getAcademicJournalLog();
+    let logs = await getFromBlob<AcademicJournalLog[]>(DB_KEY_ACADEMIC_LOG);
     logs = logs.map(log => {
         if (log.id === journalId) {
             if (!log.personalNotes) {
@@ -328,13 +333,13 @@ export async function getStimulationJournalLog(): Promise<StimulationJournalLog[
      return await getFromBlob<StimulationJournalLog[]>(DB_KEY_STIMULATION_LOG);
 }
 export async function addStimulationJournalLog(entry: Omit<StimulationJournalLog, 'id'>) {
-    const logs = await getStimulationJournalLog();
+    const logs = await getFromBlob<StimulationJournalLog[]>(DB_KEY_STIMULATION_LOG);
     const newLog = { ...entry, id: crypto.randomUUID() };
     logs.unshift(newLog); // Add to the beginning
     await saveToBlob(DB_KEY_STIMULATION_LOG, logs);
 }
 export async function deleteStimulationJournal(journalId: string) {
-    let logs = await getStimulationJournalLog();
+    let logs = await getFromBlob<StimulationJournalLog[]>(DB_KEY_STIMULATION_LOG);
     logs = logs.filter(j => j.id !== journalId);
     await saveToBlob(DB_KEY_STIMULATION_LOG, logs);
 }
@@ -358,7 +363,7 @@ export async function getAttendanceLog(): Promise<AttendanceLog[]> {
 }
 
 export async function saveAttendanceLog(log: Omit<AttendanceLog, 'id'>): Promise<AttendanceLog> {
-    const logs = await getAttendanceLog();
+    const logs = await getFromBlob<AttendanceLog[]>(DB_KEY_ATTENDANCE);
     const newLog: AttendanceLog = { ...log, id: crypto.randomUUID() };
     logs.unshift(newLog);
     await saveToBlob(DB_KEY_ATTENDANCE, logs);
@@ -372,7 +377,7 @@ export async function getSavingsTransactions(): Promise<SavingTransaction[]> {
 }
 
 export async function addSavingTransaction(transaction: Omit<SavingTransaction, 'id'>): Promise<SavingTransaction> {
-    const transactions = await getSavingsTransactions();
+    const transactions = await getFromBlob<SavingTransaction[]>(DB_KEY_SAVINGS);
     const newTransaction: SavingTransaction = { ...transaction, id: crypto.randomUUID() };
     transactions.unshift(newTransaction);
     await saveToBlob(DB_KEY_SAVINGS, transactions);
