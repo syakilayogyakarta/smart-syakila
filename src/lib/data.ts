@@ -2,7 +2,7 @@
 
 'use server';
 
-import { put, list } from '@vercel/blob';
+import { put, del, list } from '@vercel/blob';
 import { 
     DB_KEY_ACADEMIC_LOG,
     DB_KEY_ASSIGNMENTS,
@@ -109,12 +109,11 @@ export interface SavingTransaction {
 
 // Helper function to save data to blob
 async function saveToBlob(key: string, data: any) {
-    // Overwrite the file at the given key.
     await put(key, JSON.stringify(data, null, 2), {
         access: 'public',
         contentType: 'application/json',
         addRandomSuffix: false,
-        allowOverwrite: true, // Explicitly allow overwriting
+        allowOverwrite: true,
     });
 }
 
@@ -132,7 +131,8 @@ async function getFromBlob<T>(key: string, isObject: boolean = false): Promise<T
         }
 
         const blob = blobs[0];
-        const response = await fetch(blob.url, { cache: 'no-store' }); 
+        // Add a timestamp to bypass CDN caching and ensure fresh data
+        const response = await fetch(`${blob.url}?_=${new Date().getTime()}`);
         
         if (!response.ok) {
            throw new Error(`Failed to fetch blob from ${blob.url}: ${response.statusText}`);
@@ -147,7 +147,6 @@ async function getFromBlob<T>(key: string, isObject: boolean = false): Promise<T
 
     } catch (error) {
         console.error(`Error in getFromBlob for key ${key}:`, error);
-        // Fallback to initial data to prevent app crash
         return initialData as T;
     }
 }
@@ -158,7 +157,7 @@ export async function getFacilitators(): Promise<Facilitator[]> {
  return await getFromBlob<Facilitator[]>(DB_KEY_FACILITATORS);
 }
 
-export async function addFacilitator(facilitatorData: Omit<Facilitator, 'id'>) {
+export async function addFacilitator(facilitatorData: Omit<Facilitator, 'id'>): Promise<Facilitator> {
     const facilitators = await getFromBlob<Facilitator[]>(DB_KEY_FACILITATORS);
 
     if (facilitators.some(f => f.email === facilitatorData.email)) {
