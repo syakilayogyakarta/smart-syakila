@@ -128,7 +128,7 @@ async function getFromBlob<T>(key: string, isObject: boolean = false): Promise<T
         
         if (!response.ok) {
            console.error(`Failed to fetch blob ${key} from URL ${blob.url}, status: ${response.status}`);
-           // If we fail to fetch (e.g. 404 on a new deploy before file exists), create it.
+            // If we fail to fetch (e.g. 404 on a new deploy before file exists), create it.
            if(response.status === 404) {
                await saveToBlob(key, initialData);
                return initialData as T;
