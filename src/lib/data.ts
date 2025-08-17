@@ -2,10 +2,7 @@
 
 'use server';
 
-// This file will contain all the functions to interact with the Vercel Blob storage.
-// We will replace all the mock data with functions that fetch data from the blob storage.
-
-import { put, del, list } from '@vercel/blob';
+import { put, list } from '@vercel/blob';
 import { 
     DB_KEY_ACADEMIC_LOG,
     DB_KEY_ASSIGNMENTS,
@@ -110,6 +107,17 @@ export interface SavingTransaction {
     description: string;
 }
 
+// Helper function to save data to blob
+async function saveToBlob(key: string, data: any) {
+    // Overwrite the file at the given key.
+    await put(key, JSON.stringify(data, null, 2), {
+        access: 'public',
+        contentType: 'application/json',
+        addRandomSuffix: false,
+        allowOverwrite: true, // Explicitly allow overwriting
+    });
+}
+
 // Helper function to fetch data from blob
 async function getFromBlob<T>(key: string, isObject: boolean = false): Promise<T> {
     const initialData = isObject ? {} : [];
@@ -127,14 +135,7 @@ async function getFromBlob<T>(key: string, isObject: boolean = false): Promise<T
         const response = await fetch(blob.url, { cache: 'no-store' }); 
         
         if (!response.ok) {
-           console.error(`Failed to fetch blob ${key} from URL ${blob.url}, status: ${response.status}`);
-            // If we fail to fetch (e.g. 404 on a new deploy before file exists), create it.
-           if(response.status === 404) {
-               await saveToBlob(key, initialData);
-               return initialData as T;
-           }
-           // For other errors, it's safer to return initial data than to error out.
-           return initialData as T;
+           throw new Error(`Failed to fetch blob from ${blob.url}: ${response.statusText}`);
         }
 
         const text = await response.text();
@@ -145,21 +146,12 @@ async function getFromBlob<T>(key: string, isObject: boolean = false): Promise<T
         return JSON.parse(text) as T;
 
     } catch (error) {
-        console.error(`Error fetching or parsing data for key ${key}:`, error);
+        console.error(`Error in getFromBlob for key ${key}:`, error);
+        // Fallback to initial data to prevent app crash
         return initialData as T;
     }
 }
 
-
-// Helper function to save data to blob
-async function saveToBlob(key: string, data: any) {
-    // Overwrite the file at the given key.
-    await put(key, JSON.stringify(data, null, 2), {
-        access: 'public', // 'public' is needed for the download URL from list() to be accessible
-        contentType: 'application/json',
-        addRandomSuffix: false, // Ensure the filename is exact
-    });
-}
 
 // --- Facilitators ---
 export async function getFacilitators(): Promise<Facilitator[]> {
@@ -227,6 +219,7 @@ export async function deleteClass(id: string) {
 export async function getStudents(): Promise<Student[]> {
     return await getFromBlob<Student[]>(DB_KEY_STUDENTS);
 }
+
 export async function getStudentsByClass() {
     const students = await getStudents();
     const classes = await getClasses();
@@ -237,6 +230,7 @@ export async function getStudentsByClass() {
     }
     return studentsByClass;
 }
+
 export async function addStudent(student: Omit<Student, 'id'>) {
     const students = await getFromBlob<Student[]>(DB_KEY_STUDENTS);
     if (student.nisn && students.some(s => s.nisn === student.nisn)) {
@@ -246,7 +240,8 @@ export async function addStudent(student: Omit<Student, 'id'>) {
     students.push(newStudent);
     await saveToBlob(DB_KEY_STUDENTS, students);
 }
-export async function updateStudent(id: string, data: Partial<Student>) {
+
+export async function updateStudent(id: string, data: Partial<Omit<Student, 'id' | 'gender'>>) {
     let students = await getFromBlob<Student[]>(DB_KEY_STUDENTS);
     if (data.nisn && students.some(s => s.nisn === data.nisn && s.id !== id)) {
          throw new Error('Another student with this NISN already exists.');
@@ -254,6 +249,7 @@ export async function updateStudent(id: string, data: Partial<Student>) {
     students = students.map(s => s.id === id ? { ...s, ...data } : s);
     await saveToBlob(DB_KEY_STUDENTS, students);
 }
+
 export async function deleteStudent(id: string) {
     let students = await getFromBlob<Student[]>(DB_KEY_STUDENTS);
     students = students.filter(s => s.id !== id);
@@ -384,35 +380,11 @@ export async function addSavingTransaction(transaction: Omit<SavingTransaction, 
     return newTransaction;
 }
 
-// Helper function to initialize all DB files if they don't exist
-async function initializeDatabase() {
-    await Promise.all([
-        getFacilitators(),
-        getClasses(),
-        getStudents(),
-        getSubjects(),
-        getFacilitatorAssignments(),
-        getAcademicJournalLog(),
-        getStimulationJournalLog(),
-        getAttendanceLog(),
-        getSavingsTransactions()
-    ]);
-}
-
-
 // --- User Session ---
 export async function getLoggedInUser(): Promise<(Facilitator & { isAdmin: false }) | { id: 'admin', fullName: string, nickname: string, isAdmin: true } | null> {
     // This is a server-side function, so we can't use localStorage here directly.
     // The logic has been moved to the client-side components (dashboard/page.tsx).
-    // This function can still be used to fetch facilitator data by ID if needed,
-    // but the session checking part is now on the client.
-
-    // Proactively initialize all database files on first load
-    await initializeDatabase();
-    
-    // The rest of the function is kept for potential server-side usage if needed,
-    // but the primary login logic is now client-side.
-    return null; // Return null as client-side will handle the session.
+    return null;
 }
 
 
