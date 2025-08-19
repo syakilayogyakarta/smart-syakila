@@ -295,7 +295,8 @@ export async function saveFacilitatorAssignments(assignments: FacilitatorAssignm
 
 // --- Academic Journal ---
 export async function getAcademicJournalLog(): Promise<AcademicJournalLog[]> {
-    return await getFromBlob<AcademicJournalLog[]>(DB_KEY_ACADEMIC_LOG);
+    const logs = await getFromBlob<AcademicJournalLog[]>(DB_KEY_ACADEMIC_LOG);
+    return logs.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 }
 export async function addAcademicJournalLog(entry: Omit<AcademicJournalLog, 'id'>) {
     const logs = await getFromBlob<AcademicJournalLog[]>(DB_KEY_ACADEMIC_LOG);
@@ -325,7 +326,8 @@ export async function addPersonalNoteToAcademicLog(journalId: string, noteData: 
 
 // --- Stimulation Journal ---
 export async function getStimulationJournalLog(): Promise<StimulationJournalLog[]> {
-     return await getFromBlob<StimulationJournalLog[]>(DB_KEY_STIMULATION_LOG);
+     const logs = await getFromBlob<StimulationJournalLog[]>(DB_KEY_STIMULATION_LOG);
+     return logs.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 }
 export async function addStimulationJournalLog(entry: Omit<StimulationJournalLog, 'id'>) {
     const logs = await getFromBlob<StimulationJournalLog[]>(DB_KEY_STIMULATION_LOG);

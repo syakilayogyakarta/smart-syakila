@@ -101,7 +101,6 @@ export default function JournalPage() {
   const [allStudents, setAllStudents] = useState<Student[]>([]);
   const [allClasses, setAllClasses] = useState<AppClass[]>([]);
   const [allSubjects, setAllSubjects] = useState<Subject[]>([]);
-  const [assignments, setAssignments] = useState<FacilitatorAssignments>({});
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -124,17 +123,15 @@ export default function JournalPage() {
             }
             setFacilitator(loggedInFacilitator);
 
-            const [studentsData, classesData, subjectsData, assignmentsData, journalsData] = await Promise.all([
+            const [studentsData, classesData, subjectsData, journalsData] = await Promise.all([
                 getStudents(),
                 getClasses(),
                 getSubjects(),
-                getFacilitatorAssignments(),
                 getAcademicJournalLog(),
             ]);
             setAllStudents(studentsData);
             setAllClasses(classesData);
             setAllSubjects(subjectsData);
-            setAssignments(assignmentsData);
             setJournals(journalsData);
         } catch (error) {
             toast({ title: "Gagal memuat data", description: "Terjadi kesalahan saat mengambil data dari server.", variant: "destructive" });
@@ -144,28 +141,6 @@ export default function JournalPage() {
     };
     fetchData();
   }, [router, toast]);
-  
-  const facilitatorData = useMemo(() => {
-    if (!facilitator) return null;
-    return assignments[facilitator.id];
-  }, [facilitator, assignments]);
-
-  const availableClasses = useMemo(() => {
-    if (!facilitatorData) return [];
-    return allClasses.filter(c => Object.keys(facilitatorData.classes).includes(c.id));
-  }, [facilitatorData, allClasses]);
-
-  const availableSubjectsForClass = useMemo(() => {
-    if (!facilitatorData || !selectedClassId) return [];
-    const subjectIds = facilitatorData.classes[selectedClassId] || [];
-    return allSubjects.filter(s => subjectIds.includes(s.id));
-  }, [facilitatorData, selectedClassId, allSubjects]);
-  
-  const availableGroupSubjects = useMemo(() => {
-    if (!facilitatorData) return [];
-    const subjectIds = facilitatorData.groups || [];
-    return allSubjects.filter(s => subjectIds.includes(s.id));
-  }, [facilitatorData, allSubjects]);
   
   const studentOptionsForGroupMode = useMemo(() => {
     if (mode !== 'kelompok' || !selectedSubjectId || !facilitator) return [];
@@ -410,14 +385,14 @@ export default function JournalPage() {
                     <Label className="font-semibold">Pilih Kelas</Label>
                     <Select onValueChange={handleClassChange} value={selectedClassId}>
                       <SelectTrigger><SelectValue placeholder="Pilih Kelas..." /></SelectTrigger>
-                      <SelectContent>{availableClasses.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                      <SelectContent>{allClasses.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
                     <Label className="font-semibold">Pilih Mata Pelajaran</Label>
                     <Select onValueChange={handleSubjectChange} value={selectedSubjectId} disabled={!selectedClassId}>
                       <SelectTrigger><SelectValue placeholder="Pilih Mata Pelajaran..." /></SelectTrigger>
-                      <SelectContent>{availableSubjectsForClass.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
+                      <SelectContent>{allSubjects.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
                 </div>
@@ -430,7 +405,7 @@ export default function JournalPage() {
                     <Label className="font-semibold">Pilih Mata Pelajaran Kelompok</Label>
                     <Select onValueChange={handleSubjectChange} value={selectedSubjectId}>
                       <SelectTrigger><SelectValue placeholder="Pilih Mata Pelajaran..." /></SelectTrigger>
-                      <SelectContent>{availableGroupSubjects.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
+                      <SelectContent>{allSubjects.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
                   {selectedSubjectId && (
