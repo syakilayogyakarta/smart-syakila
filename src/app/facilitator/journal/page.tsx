@@ -101,6 +101,7 @@ export default function JournalPage() {
   const [allStudents, setAllStudents] = useState<Student[]>([]);
   const [allClasses, setAllClasses] = useState<AppClass[]>([]);
   const [allSubjects, setAllSubjects] = useState<Subject[]>([]);
+  const [allFacilitators, setAllFacilitators] = useState<Facilitator[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -114,8 +115,9 @@ export default function JournalPage() {
             }
             // Fetch all facilitators and find the logged-in one
             const facilitatorsResponse = await fetch('/api/facilitators');
-            const allFacilitators: Facilitator[] = await facilitatorsResponse.json();
-            const loggedInFacilitator = allFacilitators.find(f => f.id === facilitatorId);
+            const facilitatorsData: Facilitator[] = await facilitatorsResponse.json();
+            setAllFacilitators(facilitatorsData);
+            const loggedInFacilitator = facilitatorsData.find(f => f.id === facilitatorId);
 
             if (!loggedInFacilitator) {
                 router.push('/login');
@@ -175,7 +177,7 @@ export default function JournalPage() {
   
   const handleClassChange = (classId: string) => {
     setSelectedClassId(classId);
-    setSelectedSubjectId("");
+    // setSelectedSubjectId(""); // No longer reset subject when class changes
     const students = allStudents.filter(s => s.classId === classId);
     const studentIds = students.map(s => s.id);
     setSelectedStudentIds(studentIds);
@@ -261,7 +263,7 @@ export default function JournalPage() {
 
     try {
         await addAcademicJournalLog(newJournalEntry);
-        router.refresh();
+        setJournals(await getAcademicJournalLog());
         setButtonState("saved");
         toast({
             title: "Jurnal Tersimpan!",
@@ -291,7 +293,7 @@ export default function JournalPage() {
 
     try {
         await addPersonalNoteToAcademicLog(journalId, newNote);
-        router.refresh();
+        setJournals(await getAcademicJournalLog());
         setNewNotes(prev => ({ ...prev, [journalId]: { studentId: "", note: "" } }));
         toast({ title: "Catatan Ditambahkan!" });
     } catch (e) {
@@ -306,7 +308,7 @@ export default function JournalPage() {
   const handleDeleteJournal = async (journalId: string) => {
     try {
         await deleteAcademicJournal(journalId);
-        router.refresh();
+        setJournals(await getAcademicJournalLog());
         toast({ title: "Jurnal Dihapus" });
     } catch (e) {
         toast({ title: "Gagal menghapus jurnal", variant: "destructive" });
@@ -317,12 +319,14 @@ export default function JournalPage() {
       if (journal.classId) {
           return allStudents.filter(s => s.classId === journal.classId);
       }
-      return allStudents;
+      // If no classId, it's a group, so find students by studentActiveness keys
+      const studentIdsInJournal = Object.keys(journal.studentActiveness);
+      return allStudents.filter(s => studentIdsInJournal.includes(s.id));
   };
 
   const getSubjectName = (subjectId: string) => allSubjects.find(s => s.id === subjectId)?.name || "N/A";
   const getClassName = (classId: string) => allClasses.find(c => c.id === classId)?.name || "Kelompok";
-  const getFacilitatorName = (facilitatorId: string) => facilitator?.fullName; // Simplified
+  const getFacilitatorName = (facilitatorId: string) => allFacilitators.find(f => f.id === facilitatorId)?.nickname || 'Admin';
   const getStudentName = (studentId: string) => allStudents.find(s => s.id === studentId)?.fullName || 'Siswa Dihapus';
   
   const isSaveDisabled = buttonState !== 'idle';
@@ -390,7 +394,7 @@ export default function JournalPage() {
                   </div>
                   <div className="space-y-2">
                     <Label className="font-semibold">Pilih Mata Pelajaran</Label>
-                    <Select onValueChange={handleSubjectChange} value={selectedSubjectId} disabled={!selectedClassId}>
+                    <Select onValueChange={handleSubjectChange} value={selectedSubjectId}>
                       <SelectTrigger><SelectValue placeholder="Pilih Mata Pelajaran..." /></SelectTrigger>
                       <SelectContent>{allSubjects.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
                     </Select>
@@ -576,7 +580,7 @@ export default function JournalPage() {
                             <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4 text-left w-full">
                                 <div className="font-semibold text-base">{getSubjectName(journal.subjectId)} - {getClassName(journal.classId)}</div>
                                 <div className="text-sm text-muted-foreground">
-                                    <span>{getFacilitatorName(journal.facilitatorId)}</span> | <ClientFormattedDate timestamp={journal.timestamp} />
+                                    <span>oleh {getFacilitatorName(journal.facilitatorId)}</span> | <ClientFormattedDate timestamp={journal.timestamp} />
                                 </div>
                             </div>
                         </AccordionTrigger>
@@ -598,7 +602,7 @@ export default function JournalPage() {
                                     <div key={note.id} className="p-3 rounded-md border bg-card">
                                         <p className="font-bold">{getStudentName(note.studentId)}</p>
                                         <p className="text-sm text-foreground/80 my-1">"{note.note}"</p>
-                                        <p className="text-xs text-muted-foreground text-right">- {getFacilitatorName(note.facilitatorId)}</p>
+                                        <p className="text-xs text-muted-foreground text-right">- oleh {getFacilitatorName(note.facilitatorId)}</p>
                                     </div>
                                 ))}
                                 {journal.personalNotes.length === 0 && <p className="text-sm text-muted-foreground">Belum ada catatan personal.</p>}
@@ -654,5 +658,7 @@ export default function JournalPage() {
     </div>
   );
 }
+
+    
 
     
